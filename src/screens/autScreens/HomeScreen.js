@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image} from 'react-native';
+import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 // Check the import statement for colors and parameters
@@ -28,10 +28,44 @@ const images = [
         id: 4,
         url: "https://images.unsplash.com/photo-1699728088600-6d684acbeada?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
         name: "Shawarma"
+    },
+    {
+        id: 5,
+        url: "https://www.wholesomeyum.com/wp-content/uploads/2023/02/wholesomeyum-Easy-Fried-Rice-Recipe-1.jpg",
+        name: "Fried rice"
+    },
+    {
+        id: 6,
+        url: "https://www.allrecipes.com/thmb/fFW1o307WSqFFYQ3-QXYVpnFj6E=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/48727-Mikes-homemade-pizza-DDMFS-beauty-4x3-BG-2974-a7a9842c14e34ca699f3b7d7143256cf.jpg",
+        name: "Pizza"
     }
-]
+];
 
-export default function HomeScreen() {
+const restaurants = [
+    {
+        id: 7,
+        name: "KFC",
+        image: "https://i.pinimg.com/originals/ae/39/f9/ae39f93b866896fd60da58cdd50f8f4e.jpg",
+        location: "Ikorodu, Lagos"
+    },
+    {
+        id: 8,
+        name: "Cold Stone Creamery",
+        image: "https://nigeria.tortoisepath.com/wp-content/uploads/2023/10/Cold-Stone-Creamery-Surulere-Lagos-Ghana-TortoisePathcom-3-jpeg.webp",
+        
+        location: "Ikorodu, Lagos"
+    },
+    {
+        id: 9,
+        name: "Chicken Republic",
+        image: "https://cdn.businessday.ng/wp-content/uploads/2024/04/0DDB85E1-624B-42A2-AE42-B5FC494AB507.png",
+        location: "Ikorodu, Lagos"
+    },
+    // Add more restaurants as needed
+];
+
+
+export default function HomeScreen({navigation}) {
 
 
     const [search, setSearch] = useState('');
@@ -44,17 +78,14 @@ export default function HomeScreen() {
     const handleLocationSearch = () => {
         console.log('Location Found')
     }
-    const sliderSettings = {
-        slidesToShow: 3,
-        slidesToScroll: 1,
-        infinite: false,
-      }
+    
+    const limitedRestaurants = restaurants.slice(0, 5);
 
       
     
 
     return( 
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
 
             <View style={styles.searchBarContainer}>
 
@@ -80,21 +111,90 @@ export default function HomeScreen() {
                 </View>
 
             </View>
-
+        <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
             <View style={styles.topCategoryContainer}>
                 <Text style={styles.topCatText}> Top Categories</Text> 
             </View>
 
             <View contentContainerStyle={styles.scrollViewContent}>
+            
             <ScrollView  horizontal={true} showsHorizontalScrollIndicator={false}>
             {images.map((item) => (
+                <TouchableOpacity onPress={handleFoodSearch}>
                 <View key={item.id} style={styles.imageContainer}>
                     <Image source={{ uri: item.url }} style={styles.image} />
                     <Text style={styles.imageName}>{item.name}</Text>
                 </View>
+                </TouchableOpacity>
             ))}
-        </ScrollView>
+            </ScrollView>
+            
             </View>
+
+            <View>
+                <Text style={[styles.topCatText, styles.topCategoryContainer]} > Popular Resturants</Text>
+            </View>
+
+            <View style={styles.scrollViewContent}>
+            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+                {limitedRestaurants.map((restaurant) => (
+                    <TouchableOpacity onPress={() => navigation.navigate('ResturantScreen')}>
+                    <View key={restaurant.id} style={styles.restaurantContainer}>
+                        <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
+                        <View style={styles.restaurantNameContainer}>
+                        <Text style={styles.name}>{restaurant.name}</Text>
+                        </View>
+                        <Text style={styles.price}>{restaurant.price}</Text>
+                        <Text style={styles.location}>{restaurant.location}</Text>
+                    </View>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+            </View>
+
+
+            <View>
+                <Text style={[styles.topCatText, styles.topCategoryContainer]} > Nearby Deal</Text>
+            </View>
+
+            <View style={styles.scrollViewContent}>
+            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+                {limitedRestaurants.map((restaurant) => (
+                    <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
+                    <View key={restaurant.id} style={styles.restaurantContainer}>
+                        <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
+                        <View style={styles.restaurantNameContainer}>
+                        <Text style={styles.name}>{restaurant.name}</Text>
+                        </View>
+                        <Text style={styles.price}>{restaurant.price}</Text>
+                        <Text style={styles.location}>{restaurant.location}</Text>
+                    </View>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+            </View>
+
+            <View style={styles.scrollViewContent}>
+            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+                {limitedRestaurants.map((restaurant) => (
+                    <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
+                    <View key={restaurant.id} style={styles.restaurantContainer}>
+                        <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
+                        <View style={styles.restaurantNameContainer}>
+                        <Text style={styles.name}>{restaurant.name}</Text>
+                        </View>
+                        <Text style={styles.price}>{restaurant.price}</Text>
+                        <Text style={styles.location}>{restaurant.location}</Text>
+                    </View>
+                    </TouchableOpacity>
+                ))}
+            </ScrollView>
+            </View>
+
+            </ScrollView>
+
+
+            
 
 
 
@@ -111,7 +211,7 @@ export default function HomeScreen() {
 
 
             
-        </View>
+        </SafeAreaView>
     )
 
     
@@ -125,10 +225,11 @@ const styles = StyleSheet.create({
         // justifyContent: 'center', // You can change this to 'flex-end' to move the button to the bottom
         // alignItems: 'center',
         backgroundColor: "#fffbf8",
-        padding: 30, // Optional padding for the container
+        padding: 20, // Optional padding for the container
         paddingTop:70,
         // minHeight: 1000, // Adjust this value as needed (e.g., minHeight: 700)
         // height:"100vh",
+        paddingBottom: 0,
       }, 
       locationContainer: {
         backgroundColor: "white",
@@ -198,7 +299,7 @@ scrollViewContent: {
 },
 imageContainer: {
     margin: 20, 
-    marginHorizontal: 18,// Add margin around each image
+    marginHorizontal: 5,// Add margin around each image
 },
 image: {
     width: 100, // Set image width
@@ -209,7 +310,51 @@ imageName: {
     marginTop: 5,
     fontSize: 16,
     textAlign:"center",
-    fontWeight: "200",
+    fontWeight: "500",
+},
+name: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 5,
+},
+price: {
+    fontSize: 14,
+    marginBottom: 5,
+},
+location: {
+    fontSize: 17,
+    color: "#555555",
+    position: "absolute",
+    padding:100,
+    paddingLeft:170,
+    paddingRight:12,
+    fontWeight: "bold",
+},
+restaurantContainer: {
+    marginRight: 10,
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    width: 300,
+    height:170,
+    
+},
+restaurantNameContainer: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 10,
+    borderTopRightRadius: 10,
+    borderBottomLeftRadius: 10,
+},
+restaurantDetails: {
+    padding: 10,
+},
+resturantImage: {
+    width: 150, // Set image width
+    height: 150, // Set image height
+    borderRadius: 20, // Add border radius for rounded corners
 },
 
       

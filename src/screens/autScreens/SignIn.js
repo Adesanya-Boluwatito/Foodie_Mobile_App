@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     }, 
   Headertext: {
     fontSize: 24,
-    // fontWeight: 'bold',
+    fontWeight: 'bold',
     color: colors.text, 
     // marginTop:250// Example usage of colors from global style
   },
