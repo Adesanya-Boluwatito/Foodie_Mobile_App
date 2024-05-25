@@ -7,6 +7,8 @@ import HomeScreen from './src/screens/autScreens/HomeScreen'
 import profile from './src/screens/autScreens/profile'
 import promoscreen from './src/screens/autScreens/promoScreen'
 import ResturantScreen from './src/screens/autScreens/ResturantScreen'
+import MyOrdersScreen from './src/screens/autScreens/MyOrdersScreen';
+import SignUpScreen from './src/screens/autScreens/SignUpScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer,  createAppContainer} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -124,6 +126,15 @@ function MyScreens() {
           headerShown: false, // Hide the status bar for SignIn screen
             }}/>
         <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{headerShown: true}}/>
+        <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{
+          headerShown: true,
+          title: 'My Order'}}/>
+
+        <Stack.Screen
+          name="SignUpScreen"
+          component={SignUpScreen}
+          options={{ headerShown: false }}
+        />
 
         <Stack.Screen name='MyTabs' component={MyTabs} options={{headerShown:false}}/>
 

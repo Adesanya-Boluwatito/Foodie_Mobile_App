@@ -1,12 +1,13 @@
 import React from "react"; 
 import { Text, View,StyleSheet, TouchableOpacity, Image } from "react-native"; 
 import { Ionicons } from "@expo/vector-icons"; 
+import { useNavigation } from '@react-navigation/native';
 
 
 
 
 const options = [
-    { label: 'My Orders', icon: 'list-circle' },
+    { label: 'My Orders', icon: 'list-circle' , screen:'MyOrdersScreen'},
     { label: 'Manage Addresses', icon: 'home' },
     { label: 'Payments', icon: 'card' },
     { label: 'Favourites', icon: 'star' },
@@ -15,6 +16,7 @@ const options = [
   ];
 
 export default function User() { 
+  const navigation = useNavigation();
 return ( 
 	<View style={styles.container}>
 
@@ -34,7 +36,7 @@ return (
 
         <View style={styles.optionsSection}>
           {options.map((option, index) => (
-            <TouchableOpacity key={index} style={styles.option}>
+            <TouchableOpacity key={index} style={styles.option} onPress={() => option.screen && navigation.navigate(option.screen)}>
               <Ionicons name={option.icon} size={24} color="#000" style={styles.icon} />
               <Text style={styles.optionText}>{option.label}</Text>
             </TouchableOpacity>
