@@ -3,7 +3,9 @@ import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingVie
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from '@react-navigation/native';
 import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification'
-import axios from 'axios';
+import { setDoc, collection, doc } from "firebase/firestore"
+import { auth , db} from '../../../firebaseconfi.js';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 
 
 // Check the import statement for colors and parameters
@@ -13,49 +15,62 @@ import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 export default function SignIn() {
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
-
     const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
-    const [isModalVisible, setIsModalVisible] = useState(false);
-
     const [showPassword, setShowPassword] = useState(false);
     const navigation = useNavigation();
-
 
     const togglePasswordVisibility = () => {
       setShowPassword(!showPassword);
     };
-
     
-
     const handleSignUp = async () => {
-    try {
-      const response = await axios.post('http://10.100.140.235:3000/auth/signup', {
-        name,
-        email,
-        password,
-      });
-      console.log(response.data);
-      navigation.navigate('Sign In');
-    } catch (error) {
-      // console.error('Error during sign up:', error.message);
-      if (error.response && error.response.status === 409) {
+      if (!name || !email || !password) {
         Toast.show({
           type: ALERT_TYPE.WARNING,
-          title: 'Email already Exists',
-          textBody: 'The email already exists in the system.',
+          title: 'Error',
+          textBody: 'Name, email, and password are required',
           button: 'Close',
         });
-      } else {
+        return;
+      }
+    
+      try {
+        // Create a new user with email and password
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        const userid = user.uid
+  
+    
+        // Add user details to Firestore
+        const docRef = doc(db, "users", userid);
+        await setDoc(docRef, {
+        displayName: name,
+        email: email,
+      });
+        
+        console.log('Document written with ID: ', docRef.id);
+        
+        Toast.show({
+          type: ALERT_TYPE.SUCCESS,
+          title: 'Success',
+          textBody: 'User created successfully!',
+          button: 'Close',
+        });
+    
+        navigation.navigate('HomeScreen');
+      } catch (error) {
+        console.error('Error adding document: ', error);
         Toast.show({
           type: ALERT_TYPE.DANGER,
           title: 'Error',
-          textBody: 'An error occurred during sign up. Please try again.',
+          textBody: error.message,
           button: 'Close',
         });
+
       }
-    }
-  };
+      setLoading(false)
+    };
+    
 
      
 
@@ -71,12 +86,6 @@ export default function SignIn() {
     <KeyboardAwareScrollView contentContainerStyle={styles.container} resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
         
       <Text style={styles.Headertext}>Sign Up</Text>
-
-           
-
-
-
-         
           <View >
             <TextInput
                 style = {styles.TextInput2}
@@ -94,8 +103,6 @@ export default function SignIn() {
                 placeholder='Email'
                 value={email}
                 onChangeText={setEmail}
-                
-            
             />
           </View>
 
@@ -127,11 +134,6 @@ export default function SignIn() {
               <Text style= {styles.buttonText}>Sign Up</Text>
           </View>    
           </TouchableOpacity>
-
-
-
-          
-          
 
           
         </View>

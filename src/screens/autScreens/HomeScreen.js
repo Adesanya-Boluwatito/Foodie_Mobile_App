@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView} from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-
 // Check the import statement for colors and parameters
-import { Button, Icon} from 'react-native-elements';
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
 

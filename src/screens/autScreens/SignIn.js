@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from '@react-navigation/native';
-import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
-import axios from 'axios'; // Make sure axios is imported
-
+import { signInWithEmailAndPassword } from "firebase/auth"
+import { ALERT_TYPE, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
+import { auth } from '../../../firebaseconfi.js';
 // Check the import statement for colors and parameters
-import { colors, parameters } from '../../global/style';
+import { colors } from '../../global/style';
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
-export default function SignIn() {
+
+export default function SignIn({promptAsync}) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(true);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -26,12 +28,16 @@ export default function SignIn() {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://10.100.140.235:3000/auth/signin', {
-        email,
-        password,
-      });
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      if (loading) {
+        return (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
+          </View>
+        );
+      }
       
-      console.log('Signed In');
+      console.log('Signed In', userCredential);
       
       // Show toast for successful login
       Toast.show({
@@ -40,29 +46,25 @@ export default function SignIn() {
         textBody: 'Login successful!',
         button: 'Close',
       });
+      setLoading(false);
       
       navigation.navigate('HomeScreen');
     } catch (error) {
-      if (error.response && error.response.status === 401) {
-        // Handle invalid password
-        const responseData = error.response.data;
-        if (responseData && responseData.error === 'Invalid password') {
-          Toast.show({
-            type: ALERT_TYPE.DANGER,
-            title: "Invalid Password",
-            textBody: 'The password you entered is incorrect.',
-            button: 'Close',
-          });
-        } else {
-          Toast.show({
-            type: ALERT_TYPE.DANGER,
-            title: "Invalid Credentials",
-            textBody: 'Incorrect email or password.',
-            button: 'Close',
-          });
-        }
+      if (error.code === 'auth/wrong-password') {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Invalid Password",
+          textBody: 'The password you entered is incorrect.',
+          button: 'Close',
+        });
+      } else if (error.code === 'auth/user-not-found') {
+        Toast.show({
+          type: ALERT_TYPE.DANGER,
+          title: "Invalid Credentials",
+          textBody: 'Incorrect email or password.',
+          button: 'Close',
+        });
       } else {
-        // Other errors
         Toast.show({
           type: ALERT_TYPE.DANGER,
           title: 'Error',
@@ -71,7 +73,11 @@ export default function SignIn() {
         });
       }
     }
+    setLoading(false)
   };
+
+  
+  
   
 
   const someAction = () => {
@@ -136,7 +142,7 @@ export default function SignIn() {
           </View>
 
           <View style={styles.googleButton}>
-            <TouchableOpacity onPress={handleForgotPassword} style={{ marginLeft: -35 }}>
+            <TouchableOpacity onPress={() => promptAsync()} style={{ marginLeft: -35 }}>
               <Text style={styles.googleText}>
                 Google
               </Text>
