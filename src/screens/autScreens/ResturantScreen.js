@@ -1,15 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
-const CartBanner = ({ itemCount, total }) => {
+const CartBanner = ({ itemCount, total, cartItems}) => {
+  const navigation = useNavigation();  // Use the hook here
+
+  const handleCheckout = () => {
+    navigation.navigate('Cart', { cartItems});
+  };
   return (
     <View style={styles.banner}>
       <Text style={styles.bannerText}>{itemCount} {itemCount === 1 ? 'Item' : 'Items'} | ₦ {total.toFixed(2)}</Text>
       <Text style={styles.bannerSubText}>Extra charges may apply</Text>
       <Button 
         title="CHECKOUT" 
-        onPress={() => console.log('Checkout')} 
+        onPress={handleCheckout}
         buttonStyle={styles.checkoutButton} 
         titleStyle={styles.checkoutButtonText} 
       />
@@ -18,8 +24,28 @@ const CartBanner = ({ itemCount, total }) => {
 };
 
 export default function ResturantScreen() {
+
+  
   const [cartItems, setCartItems] = useState({});
   const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+
+  
+  const route = useRoute();
+
+
+  useEffect(() => {
+    // Simulate fetching data
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+  if (route.params?.cartItems) {
+    setCartItems(route.params.cartItems);
+    const newTotal = Object.values(route.params.cartItems).reduce((sum, item) => sum + item.price * item.quantity, 0);
+    setTotal(newTotal);
+  }
+}, [route.params?.cartItems]);
 
   const addItemToCart = (item) => {
     setCartItems((prevCartItems) => {
@@ -83,6 +109,15 @@ export default function ResturantScreen() {
       );
     }
   };
+  const updateCart = (updatedCartItems) => {
+    setCartItems(updatedCartItems);
+  };
+
+  const restaurantDetails = {
+    name: 'McDonald\'s',
+    logo: 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png',
+    location: 'New York, USA',
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -93,8 +128,8 @@ export default function ResturantScreen() {
         />
 
         <View style={styles.header}>
-          <Text style={styles.title}>McDonald's</Text>
-          <Text style={styles.location}>New York, USA</Text>
+          <Text style={styles.title}>{restaurantDetails.name}</Text>
+          <Text style={styles.location}>{restaurantDetails.location}</Text>
           <View style={styles.ratingContainer}>
             <Icon name="star" type="font-awesome" color="#FFD700" />
             <Text style={styles.ratingText}>4.1 Ratings • 500+</Text>
@@ -134,7 +169,7 @@ export default function ResturantScreen() {
         </View>
 
       </ScrollView>
-      <CartBanner itemCount={getItemCount()} total={total} />
+      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurantDetails={restaurantDetails}/>
     </View>
   );
 };
