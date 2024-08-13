@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect,useRef } from 'react';
+import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import AntDesign from '@expo/vector-icons/AntDesign'
+import { auth, db } from '../../../firebaseconfi';
 
 const CartBanner = ({ itemCount, total, cartItems}) => {
   const navigation = useNavigation();  // Use the hook here
@@ -23,16 +25,28 @@ const CartBanner = ({ itemCount, total, cartItems}) => {
   );
 };
 
-export default function ResturantScreen() {
+export default function ResturantScreen({}) {
 
   
   const [cartItems, setCartItems] = useState({});
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-
-  
+  const navigation = useNavigation();
+  const [isFavourite, setIsFavourite] = useState({})
   const route = useRoute();
+  const { restaurant } = route.params
 
+  const handleChatService = () => {
+    navigation.navigate('Chat', { restaurantsId: restaurant.id, userId: UserId });
+}
+
+const toggleFavourites = () => {
+  setIsFavourite(!isFavourite)
+}
+
+const handlebackPree = () => {
+    navigation.goBack()
+}
 
   useEffect(() => {
     // Simulate fetching data
@@ -84,14 +98,14 @@ export default function ResturantScreen() {
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#FF4D4D' }]}
+            style={[styles.button, { backgroundColor: '#bf0603' }]}
             onPress={() => removeItemFromCart(item)}
           >
             <Text style={styles.buttonText}>-</Text>
           </TouchableOpacity>
           <Text style={styles.quantityText}>{itemInCart.quantity}</Text>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#FF4D4D' }]}
+            style={[styles.button, { backgroundColor: '#bf0603' }]}
             onPress={() => addItemToCart(item)}
           >
             <Text style={styles.buttonText}>+</Text>
@@ -119,25 +133,71 @@ export default function ResturantScreen() {
     location: 'New York, USA',
   };
 
+  const pan = useRef(new Animated.ValueXY({ x: 310, y: 260})).current;
+
+  const currentUser  = auth.currentUser
+  const UserId  = currentUser.uid
+
+  const panResponder = useRef (
+    PanResponder.create({
+      onMoveShouldSetPanResponder:() => true,
+      onPanResponderGrant: () => {
+        pan.setOffset({
+          x: pan.x._value,
+          y: pan.y._value,
+        });
+        pan.setValue({ x: 0, y:0});
+      },
+      onPanResponderMove: Animated.event(
+        [
+          null,
+          { dx: pan.x, dy: pan.y}
+        ],
+        { useNativeDriver: false}
+      ),
+      onPanResponderRelease: () => {
+        pan.flattenOffset();
+      }
+    })
+  ).current;
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
+        
         <Image
           source={{ uri: 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png' }}
-          style={{ width: '100%', height: 200, resizeMode: 'cover' }}
+          style={{ width: '100%', height: 300, resizeMode: 'cover' }}
         />
+          <View style={styles.backContainer}>
+            <TouchableOpacity style={styles.backButton} onPress={handlebackPree}>
+            <AntDesign name="left" size={20} color="#8b8c89" />
+            </TouchableOpacity>
+          </View>
+
+        
+
+        
 
         <View style={styles.header}>
+        <View style = {styles.headerCard}>
           <Text style={styles.title}>{restaurantDetails.name}</Text>
           <Text style={styles.location}>{restaurantDetails.location}</Text>
           <View style={styles.ratingContainer}>
             <Icon name="star" type="font-awesome" color="#FFD700" />
             <Text style={styles.ratingText}>4.1 Ratings • 500+</Text>
+
+            <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} >
+            <AntDesign name={isFavourite ? "hearto": "heart" } size={24} color="#bf0603" />
+            </TouchableOpacity>
           </View>
           <Text style={styles.deliveryTime}>45 Minutes (Delivery time)</Text>
           <Text style={styles.offer}>OFFER - 10% OFF ON ALL BEVERAGES</Text>
         </View>
+          
+        </View>
 
+    
         <View style={styles.menuItem}>
           <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
           <View style={styles.menuText}>
@@ -168,8 +228,29 @@ export default function ResturantScreen() {
           {renderItemButtons({ name: 'Mc Veggie mac', price: 1200 })}
         </View>
 
+        <View style={styles.menuItem}>
+          <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
+          <View style={styles.menuText}>
+            <Text style={styles.menuTitle}>Mc Veggie mac</Text>
+            <Text style={styles.menuDescription}>free fresh fries</Text>
+            <Text style={styles.menuPrice}>₦ 1200</Text>
+          </View>
+          {renderItemButtons({ name: 'Mc Veggie mac', price: 1200 })}
+        </View>
+
       </ScrollView>
-      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurantDetails={restaurantDetails}/>
+      
+      <Animated.View
+
+        {...panResponder.panHandlers}
+        style={[pan.getLayout(), styles.floaterStyle]}
+      ><TouchableOpacity  onPress={handleChatService}>
+        <AntDesign name="message1" size={24} color="white" />
+        </TouchableOpacity>
+      </Animated.View>
+      
+      {getItemCount() > 0 && (
+      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurantDetails={restaurantDetails}/>)}
     </View>
   );
 };
@@ -181,8 +262,28 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 20,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#ffff',
     alignItems: 'center',
+    position:"relative",
+    // flexDirection: "row",
+  },
+  headerCard: {
+  
+    backgroundColor: "#F9F9F9",
+    borderBlockColor: "#bf0603",
+    // elevation: 5,
+    borderRadius:10,
+    width:365,
+    padding: 20,
+    position: "absolute",
+    zIndex: 10,
+    bottom: -110,
+
+  },
+  favouriteButton: {
+      left:170,
+      bottom: 50,
+      flexDirection: "row",
   },
   title: {
     fontSize: 24,
@@ -225,6 +326,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     marginVertical: 5,
     borderRadius: 10,
+    top: 115, 
   },
   image: {
     width: 80,
@@ -263,7 +365,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FF4D4D',
+    backgroundColor: '#bf0603',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 5,
@@ -275,7 +377,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   addButton: {
-    backgroundColor: '#FF4D4D',
+    backgroundColor: '#bf0603',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 5,
@@ -311,7 +413,7 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   checkoutButton: {
-    backgroundColor: '#FF4D4D',
+    backgroundColor: '#bf0603',
     borderRadius: 5,
     paddingVertical: 10,
     paddingHorizontal: 20,
@@ -326,4 +428,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginHorizontal: 10,
   },
+  floaterStyle: {
+    //Here is the trick
+    position: 'absolute',
+    zIndex: 1,
+    width: 50,
+    borderRadius:10 ,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    right: 30,
+    bottom: 30,
+    backgroundColor:'#bf0603',
+ },
+ backContainer: {
+  flexDirection: "row",
+    
+ },
+ backButton:{
+  backgroundColor: "#fff",
+  borderRadius: 10,
+  position: "absolute",
+  zIndex: 5,
+  bottom:180,
+  left: 18,
+  width: 45,
+  height:40,
+  alignItems: "center",
+  justifyContent: "center",
+ },
+ scrollViewContainer: {
+  flex: 1,
+  paddingTop: 20, // Adjust to add spacing under the header card
+  paddingHorizontal: 10,
+},
 });

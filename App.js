@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { colors } from './src/global/style';
 import SignIn from './src/screens/autScreens/SignIn';
 import HomeScreen from './src/screens/autScreens/HomeScreen';
@@ -14,6 +14,7 @@ import MyOrdersScreen from './src/screens/autScreens/MyOrdersScreen';
 import SignUpScreen from './src/screens/autScreens/SignUpScreen';
 import PaymentOptionsScreen from './src/screens/autScreens/paymentMethod';
 import ManageAddressScreen from './src/screens/autScreens/manageScreen';
+import ChatScreen from './src/screens/autScreens/ChatScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -34,6 +35,7 @@ enableScreens(true);
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+const { width, height } = Dimensions.get("window")
 
 const CustomTabBarButton = ({ tabBarlabel, icon, focused }) => (
   <View style={{ backgroundColor: focused ? 'rgba(255,255,255, 0.35)' : 'transparent', borderRadius: 50, paddingTop: 2, marginRight: 8, flexDirection: 'row', alignItems: 'center', width: 100, height: 20, justifyContent: 'center', flex: 0.5 }}>
@@ -44,11 +46,16 @@ const CustomTabBarButton = ({ tabBarlabel, icon, focused }) => (
 
 function MyTabs() {
   return (
+    
     <Tab.Navigator screenOptions={{
       tabBarLabelPosition: "beside-icon",
+      tabBarHideOnKeyboard: true,
+      // keyboardHidesTabBar: true,
       tabBarLabelStyle: {
         fontWeight: "700",
-        fontSize: 15
+        fontSize: 15,
+        // tabBarPosition:'bottom',
+        position: 'absolute'
       },
       tabBarShowLabel: false,
       backgroundColor: 'white',
@@ -63,7 +70,8 @@ function MyTabs() {
         paddingHorizontal: 25,
         paddingBottom: 25,
       },
-      tabBarTransitionPreset: 'fade',
+      tabBarPosition:"bottom"
+      // tabBarTransitionPreset: 'fade',
     }}>
       <Tab.Screen name="Explore" component={HomeScreen} options={{
         headerShown: false,
@@ -124,7 +132,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
         {props => <SignIn {...props} promptAsync={promptAsync} />}
       </Stack.Screen>
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
-      <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: true }} />
+      <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'My Order' }} />
       <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
       <Stack.Screen name='MyTabs' component={MyTabs} options={{ headerShown: false }} />
@@ -132,6 +140,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name='Payment Option' component={PaymentOptionsScreen} options={{ headerShown: true, title: 'Payment' }} />
       <Stack.Screen name='Add Addy' component={AddNewAddressScreen} options={{ headerShown: true, title: 'Add Address' }} />
       <Stack.Screen name='Edit Address' component={EditAddressScreen} options={{ headerShown: true, title: 'Edit Address' }} />
+      <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Support Chat' }} />
       
     </Stack.Navigator>
   );
@@ -227,6 +236,11 @@ export default function App() {
 
   return (
 
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }}
+    >
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
      <NavigationContainer style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
       {loading ? (
@@ -236,10 +250,14 @@ export default function App() {
           </View>
         ) : (
           // Show MyScreens component when loading is false
+          <SafeAreaView style={{ flex: 1 }}>
           <MyScreens initialRoute={initialRoute} promptAsync={promptAsync} user={userInfo} />
+          </SafeAreaView>
         )}
 
     </NavigationContainer>
+    </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

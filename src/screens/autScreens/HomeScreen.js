@@ -63,9 +63,10 @@ const restaurants = [
 
 
 export default function HomeScreen({navigation}) {
-
+    
 
     const [search, setSearch] = useState('');
+    
 
 
     const handleFoodSearch = () => {
@@ -75,6 +76,10 @@ export default function HomeScreen({navigation}) {
     const handleLocationSearch = () => {
         console.log('Location Found')
     }
+
+    const handleRestaurantPress = (restaurant) => {
+    navigation.navigate('ResturantScreen', { restaurant });
+  }
     
     const limitedRestaurants = restaurants.slice(0, 5);
 
@@ -135,11 +140,12 @@ export default function HomeScreen({navigation}) {
             <View style={styles.scrollViewContent}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
                 {limitedRestaurants.map((restaurant) => (
-                    <TouchableOpacity onPress={() => navigation.navigate('ResturantScreen')}>
+                    <TouchableOpacity key={restaurant.id} onPress={() => handleRestaurantPress(restaurant)}>
+                        
                     <View key={restaurant.id} style={styles.restaurantContainer}>
                         <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
                         <View style={styles.restaurantNameContainer}>
-                        <Text style={styles.name}>{restaurant.name}</Text>
+                        <Text style={styles.name}>{restaurant.name} </Text>
                         </View>
                         <Text style={styles.price}>{restaurant.price}</Text>
                         <Text style={styles.location}>{restaurant.location}</Text>
