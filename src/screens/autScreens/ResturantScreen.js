@@ -6,11 +6,11 @@ import AntDesign from '@expo/vector-icons/AntDesign'
 import { auth, db } from '../../../firebaseconfi';
 
 
-const CartBanner = ({ itemCount, total, cartItems}) => {
+const CartBanner = ({ itemCount, total, cartItems, restaurantDetails}) => {
   const navigation = useNavigation();  // Use the hook here
 
   const handleCheckout = () => {
-    navigation.navigate('Cart', { cartItems});
+    navigation.navigate('Cart', { cartItems, restaurantDetails});
   };
   return (
     <View style={styles.banner}>
@@ -70,9 +70,10 @@ const handlebackPree = () => {
       } else {
         updatedCartItems[item.name] = { ...item, quantity: 1 };
       }
+      setTotal((prevTotal) => prevTotal + item.price)
       return updatedCartItems;
     });
-    setTotal((prevTotal) => prevTotal + item.price);
+    
   };
 
   const removeItemFromCart = (item) => {
@@ -130,7 +131,7 @@ const handlebackPree = () => {
 
   const restaurantDetails = {
     name: 'McDonald\'s',
-    logo: 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png',
+    logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYn09NjbsUHk7hyGuAqU-Ec5dNnoII3_2Mrw&s',
     location: 'New York, USA',
   };
 
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
   floaterStyle: {
     //Here is the trick
     position: 'absolute',
-    zIndex: 1,
+    zIndex: 20,
     width: 50,
     borderRadius:10 ,
     height: 50,

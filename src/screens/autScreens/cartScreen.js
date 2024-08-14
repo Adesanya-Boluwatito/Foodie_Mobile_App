@@ -1,49 +1,110 @@
-import React from 'react';
+import React, {useState, useEffect} from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign'
+
 
 export default function CartScreen({ route, navigation }) {
   const { cartItems = {}, restaurantDetails = {} } = route.params || {};
 
-  const getTotal = () => {
-    let total = 0;
-    Object.values(cartItems).forEach(item => {
-      total += item.price * item.quantity;
-    });
-    return total;
+  
+  const [updatedCartItems, setUpdatedCartItems] = useState(cartItems);
+  const [total, setTotal] = useState(0);
+
+
+  useEffect(() => {
+    setUpdatedCartItems(cartItems); // Update cart items when route.params changes
+  }, [cartItems]);
+
+  
+  useEffect(() => {
+    calculateTotal();
+  }, [updatedCartItems]);
+
+  const calculateTotal = () => {
+    const newTotal = Object.values(updatedCartItems).reduce((sum, item) => sum + item.price * item.quantity, 0);
+    setTotal(newTotal);
   };
+
+  const increaseQuantity = (item) => {
+    setUpdatedCartItems(prev => {
+      const updated = { ...prev };
+      if (updated[item.name]) {
+        updated[item.name].quantity += 1;
+        calculateTotal();
+      }
+      return updated;
+    });
+  };
+
+  const decreaseQuantity = (item) => {
+    setUpdatedCartItems(prev => {
+      const updated = { ...prev };
+      if (updated[item.name]) {
+        updated[item.name].quantity -= 1;
+        if (updated[item.name].quantity === 0) {
+          delete updated[item.name];
+        }
+        calculateTotal();
+      }
+      return updated;
+    });
+  };
+
+  const removeItem = (item) => {
+    setUpdatedCartItems(prev => {
+      const updated = { ...prev };
+      delete updated[item.name];
+      calculateTotal();
+      return updated;
+    });
+  };
+  const getTotal = () => {
+    return Object.values(updatedCartItems).reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+  };
+
+
+  const renderCartItem = ({ item }) => (
+    <View style={styles.cartItem}>
+      <Text style={styles.itemName}>{item.name}</Text>
+      <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text>
+      <View style={styles.quantityContainer}>
+        <TouchableOpacity onPress={() => decreaseQuantity(item)} style={styles.quantityButton}>
+          <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>-</Text>
+        </TouchableOpacity>
+        <Text style={styles.quantityText}>{item.quantity}</Text>
+        <TouchableOpacity onPress={() => increaseQuantity(item)} style={styles.quantityButton}>
+          <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>+</Text>
+        </TouchableOpacity>
+      </View>
+      <TouchableOpacity onPress={() => removeItem(item)} style={styles.removeButton}>
+        <Text style={styles.removeButtonText}>Remove</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Ionicons name="chevron-back" size={24} color="black" onPress={() => navigation.goBack()} />
+        <TouchableOpacity style={styles.backButton}>
+          <AntDesign name="left" size={20} color="#8b8c89" onPress={() => navigation.goBack()} />
+        </TouchableOpacity>
+        
         {restaurantDetails.logo && <Image source={{ uri: restaurantDetails.logo }} style={styles.logo} />}
         <View style={styles.restaurantInfo}>
           {restaurantDetails.name && <Text style={styles.restaurantName}>{restaurantDetails.name}</Text>}
           {restaurantDetails.location && <Text style={styles.restaurantLocation}>{restaurantDetails.location}</Text>}
         </View>
       </View>
-      <ScrollView style={styles.cartList}>
-        {Object.keys(cartItems).map((key) => {
-          const item = cartItems[key];
-          return (
-            <View key={key} style={styles.cartItem}>
-              <View style={styles.itemInfo}>
-                <Text style={styles.itemName}>{item.name}</Text>
-                <Text style={styles.itemDetails}>Regular</Text>
-                <TouchableOpacity style={styles.customizeButton}>
-                  <Text style={styles.customizeText}>Customize</Text>
-                  <Ionicons name="chevron-down" size={16} color="gray" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.itemControls}>
-                <TextInput style={styles.quantityInput} value={`${item.quantity}`} keyboardType="numeric" />
-                <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text>
-              </View>
-            </View>
-          );
-        })}
-      </ScrollView>
+      
+        <ScrollView style={styles.cartList}>
+        {Object.values(updatedCartItems).map((item) => renderCartItem({ item }))}
+        </ScrollView>
       <View style={styles.billDetails}>
         <Text style={styles.billHeader}>Bill Details</Text>
         <View style={styles.billRow}>
@@ -97,13 +158,15 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   logo: {
-    width: 50,
-    height: 50,
+    width: 55,
+    height: 60,
+    left: 15,
+    borderRadius:10,
   },
   restaurantInfo: {
     marginLeft: 10,
@@ -111,10 +174,12 @@ const styles = StyleSheet.create({
   restaurantName: {
     fontSize: 18,
     fontWeight: 'bold',
+    left: 12,
   },
   restaurantLocation: {
     fontSize: 14,
     color: 'gray',
+    left:12,
   },
   cartList: {
     flex: 1,
@@ -124,7 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
@@ -152,6 +217,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  quantityContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // padding:
+  },
+  quantityButton: {
+    width: 25,
+    height: 25,
+    borderRadius: 20,
+    backgroundColor: '#bf0603',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 5,
+    marginRight: 5,
+    fontSize: "bold",
+    fontSize: 20,
+  },
   quantityInput: {
     width: 30,
     height: 30,
@@ -160,6 +242,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginRight: 10,
   },
+  quantityText: {
+    fontSize: 15,
+    fontWeight: "bold",
+  },
+  // quantityButton: {
+  //   fontSize: 15,
+  //   fontWeight: "bold",
+  // },
   itemPrice: {
     fontSize: 16,
   },
@@ -259,4 +349,17 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#eee',
   },
+  backButton:{
+    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    // position: "absolute",
+    // zIndex: 10,
+    // bottom:180,
+    // left: 18,
+    width: 45,
+    height:40,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 5,
+   },
 });
