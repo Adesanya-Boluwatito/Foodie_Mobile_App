@@ -5,6 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { auth, db } from '../../../firebaseconfi';
 
+
 const CartBanner = ({ itemCount, total, cartItems}) => {
   const navigation = useNavigation();  // Use the hook here
 
@@ -163,23 +164,19 @@ const handlebackPree = () => {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-        
-        <Image
+
+       <View style={styles.header}>
+
+        <View style={styles.backContainer}>
+
+            <Image
           source={{ uri: 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png' }}
           style={{ width: '100%', height: 300, resizeMode: 'cover' }}
         />
-          <View style={styles.backContainer}>
             <TouchableOpacity style={styles.backButton} onPress={handlebackPree}>
             <AntDesign name="left" size={20} color="#8b8c89" />
             </TouchableOpacity>
           </View>
-
-        
-
-        
-
-        <View style={styles.header}>
         <View style = {styles.headerCard}>
           <Text style={styles.title}>{restaurantDetails.name}</Text>
           <Text style={styles.location}>{restaurantDetails.location}</Text>
@@ -189,7 +186,7 @@ const handlebackPree = () => {
 
             <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} >
             <AntDesign name={isFavourite ? "hearto": "heart" } size={24} color="#bf0603" />
-            </TouchableOpacity>
+            </TouchableOpacity> 
           </View>
           <Text style={styles.deliveryTime}>45 Minutes (Delivery time)</Text>
           <Text style={styles.offer}>OFFER - 10% OFF ON ALL BEVERAGES</Text>
@@ -197,7 +194,13 @@ const handlebackPree = () => {
           
         </View>
 
-    
+
+
+
+      
+        
+
+      <ScrollView contentContainerStyle={{ paddingBottom: 150 }}>    
         <View style={styles.menuItem}>
           <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
           <View style={styles.menuText}>
@@ -257,15 +260,16 @@ const handlebackPree = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    backgroundColor: '#fff',
+    // flex: 1,
+    // backgroundColor: '#fff',
   },
   header: {
-    padding: 20,
+    
     backgroundColor: '#ffff',
     alignItems: 'center',
     position:"relative",
     // flexDirection: "row",
+    zIndex:20,
   },
   headerCard: {
   
@@ -283,7 +287,7 @@ const styles = StyleSheet.create({
   favouriteButton: {
       left:170,
       bottom: 50,
-      flexDirection: "row",
+      // flexDirection: "row",
   },
   title: {
     fontSize: 24,
@@ -449,7 +453,7 @@ const styles = StyleSheet.create({
   backgroundColor: "#fff",
   borderRadius: 10,
   position: "absolute",
-  zIndex: 5,
+  zIndex: 10,
   bottom:180,
   left: 18,
   width: 45,
