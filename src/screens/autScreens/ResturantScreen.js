@@ -6,11 +6,12 @@ import AntDesign from '@expo/vector-icons/AntDesign'
 import { auth, db } from '../../../firebaseconfi';
 
 
-const CartBanner = ({ itemCount, total, cartItems, restaurantDetails}) => {
+const CartBanner = ({ itemCount, total, cartItems, restaurants}) => {
   const navigation = useNavigation();  // Use the hook here
+  
 
   const handleCheckout = () => {
-    navigation.navigate('Cart', { cartItems, restaurantDetails});
+    navigation.navigate('Cart', { cartItems, restaurants});
   };
   return (
     <View style={styles.banner}>
@@ -35,10 +36,11 @@ export default function ResturantScreen({}) {
   const navigation = useNavigation();
   const [isFavourite, setIsFavourite] = useState({})
   const route = useRoute();
-  const { restaurant } = route.params
+  const { restaurants } = route.params
+  
 
   const handleChatService = () => {
-    navigation.navigate('Chat', { restaurantsId: restaurant.id, userId: UserId });
+    navigation.navigate('Chat', {  userId: UserId });
 }
 
 const toggleFavourites = () => {
@@ -129,13 +131,9 @@ const handlebackPree = () => {
     setCartItems(updatedCartItems);
   };
 
-  const restaurantDetails = {
-    name: 'McDonald\'s',
-    logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYn09NjbsUHk7hyGuAqU-Ec5dNnoII3_2Mrw&s',
-    location: 'New York, USA',
-  };
+  
 
-  const pan = useRef(new Animated.ValueXY({ x: 310, y: 260})).current;
+  const pan = useRef(new Animated.ValueXY({ x: 310, y: 300})).current;
 
   const currentUser  = auth.currentUser
   const UserId  = currentUser.uid
@@ -179,11 +177,11 @@ const handlebackPree = () => {
             </TouchableOpacity>
           </View>
         <View style = {styles.headerCard}>
-          <Text style={styles.title}>{restaurantDetails.name}</Text>
-          <Text style={styles.location}>{restaurantDetails.location}</Text>
+          <Text style={styles.title}>{restaurants.name}</Text>
+          <Text style={styles.location}>{restaurants.details.location}</Text>
           <View style={styles.ratingContainer}>
             <Icon name="star" type="font-awesome" color="#FFD700" />
-            <Text style={styles.ratingText}>4.1 Ratings • 500+</Text>
+            <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
 
             <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} >
             <AntDesign name={isFavourite ? "hearto": "heart" } size={24} color="#bf0603" />
@@ -201,18 +199,21 @@ const handlebackPree = () => {
       
         
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 150 }}>    
-        <View style={styles.menuItem}>
-          <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 150 }}>   
+        {restaurants.details.menu.map((item, index) =>(
+          <View style={styles.menuItem}>
+          <Image source={{ uri: item.image}} style={styles.image} />
           <View style={styles.menuText}>
-            <Text style={styles.menuTitle}>Creamy nachos</Text>
-            <Text style={styles.menuDescription}>with mexican salad</Text>
-            <Text style={styles.menuPrice}>₦ 1520</Text>
+            <Text style={styles.menuTitle}>{item.name}</Text>
+            <Text style={styles.menuDescription}>{item.description}</Text>
+            <Text style={styles.menuPrice}>₦ {item.price.toFixed(2)}</Text>
           </View>
-          {renderItemButtons({ name: 'Creamy nachos', price: 1520 })}
+          {renderItemButtons(item)}
         </View>
+        ))} 
+        
 
-        <View style={styles.menuItem}>
+        {/* <View style={styles.menuItem}>
           <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
           <View style={styles.menuText}>
             <Text style={styles.menuTitle}>Maharaja mac</Text>
@@ -220,9 +221,9 @@ const handlebackPree = () => {
             <Text style={styles.menuPrice}>₦ 1010</Text>
           </View>
           {renderItemButtons({ name: 'Maharaja mac', price: 1010 })}
-        </View>
+        </View> */}
 
-        <View style={styles.menuItem}>
+        {/* <View style={styles.menuItem}>
           <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
           <View style={styles.menuText}>
             <Text style={styles.menuTitle}>Mc Veggie mac</Text>
@@ -230,9 +231,9 @@ const handlebackPree = () => {
             <Text style={styles.menuPrice}>₦ 1200</Text>
           </View>
           {renderItemButtons({ name: 'Mc Veggie mac', price: 1200 })}
-        </View>
+        </View> */}
 
-        <View style={styles.menuItem}>
+        {/* <View style={styles.menuItem}>
           <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
           <View style={styles.menuText}>
             <Text style={styles.menuTitle}>Mc Veggie mac</Text>
@@ -240,7 +241,7 @@ const handlebackPree = () => {
             <Text style={styles.menuPrice}>₦ 1200</Text>
           </View>
           {renderItemButtons({ name: 'Mc Veggie mac', price: 1200 })}
-        </View>
+        </View> */}
 
       </ScrollView>
       
@@ -254,7 +255,7 @@ const handlebackPree = () => {
       </Animated.View>
       
       {getItemCount() > 0 && (
-      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurantDetails={restaurantDetails}/>)}
+      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurants={restaurants}/>)}
     </View>
   );
 };
@@ -286,7 +287,7 @@ const styles = StyleSheet.create({
 
   },
   favouriteButton: {
-      left:170,
+      left:250,
       bottom: 50,
       // flexDirection: "row",
   },

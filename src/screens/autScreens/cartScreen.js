@@ -2,21 +2,27 @@ import React, {useState, useEffect} from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign'
+import { useAddress } from '../../components/AddressContext';
 
 
 export default function CartScreen({ route, navigation }) {
-  const { cartItems = {}, restaurantDetails = {} } = route.params || {};
+  const { cartItems = {}, restaurants = {} } = route.params || {};
 
   
   const [updatedCartItems, setUpdatedCartItems] = useState(cartItems);
   const [total, setTotal] = useState(0);
+  const {defaultAddress} = useAddress();
+
+  const handleChangeAddress = () => {
+      navigation.navigate('Manage Add')
+  }
 
 
   useEffect(() => {
     setUpdatedCartItems(cartItems); // Update cart items when route.params changes
   }, [cartItems]);
 
-  
+
   useEffect(() => {
     calculateTotal();
   }, [updatedCartItems]);
@@ -69,8 +75,10 @@ export default function CartScreen({ route, navigation }) {
 
   const renderCartItem = ({ item }) => (
     <View style={styles.cartItem}>
-      <Text style={styles.itemName}>{item.name}</Text>
-      <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text>
+      <View style={styles.itemDetailsContainer}>
+        <Text style={styles.itemName}>{item.name}</Text>
+      </View>
+      {/* <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text> */}
       <View style={styles.quantityContainer}>
         <TouchableOpacity onPress={() => decreaseQuantity(item)} style={styles.quantityButton}>
           <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>-</Text>
@@ -95,10 +103,10 @@ export default function CartScreen({ route, navigation }) {
           <AntDesign name="left" size={20} color="#8b8c89" onPress={() => navigation.goBack()} />
         </TouchableOpacity>
         
-        {restaurantDetails.logo && <Image source={{ uri: restaurantDetails.logo }} style={styles.logo} />}
+        {/* {restaurantDetails.logo && <Image source={{ uri: restaurantDetails.logo }} style={styles.logo} />} */}
         <View style={styles.restaurantInfo}>
-          {restaurantDetails.name && <Text style={styles.restaurantName}>{restaurantDetails.name}</Text>}
-          {restaurantDetails.location && <Text style={styles.restaurantLocation}>{restaurantDetails.location}</Text>}
+          {restaurants?.name && <Text style={styles.restaurantName}>{restaurants.name}</Text>}
+          {restaurants.details.location && <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>}
         </View>
       </View>
       
@@ -113,19 +121,19 @@ export default function CartScreen({ route, navigation }) {
         </View>
         <View style={styles.billRow}>
           <Text style={styles.billLabel}>Restaurant Charges</Text>
-          <Text style={styles.billValue}>₦ {3.00.toFixed(2)}</Text>
+          <Text style={styles.billValue}>₦ {restaurants.details.restaurantCharges.toFixed(2)}</Text>
         </View>
         <View style={styles.billRow}>
           <Text style={styles.billLabel}>Delivery Fee</Text>
-          <Text style={styles.billValue}>₦ {1.00.toFixed(2)}</Text>
+          <Text style={styles.billValue}>₦ {restaurants.details.deliveryFee.toFixed(2)}</Text>
         </View>
         <View style={styles.billRow}>
           <Text style={styles.billLabel}>Offer 10% OFF</Text>
-          <Text style={styles.billValue}>₦ {-getTotal() * 0.1.toFixed(2)}</Text>
+          <Text style={styles.billValue}>₦ {(-getTotal() * restaurants.details.discount).toFixed(2)}</Text>
         </View>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>To Pay</Text>
-          <Text style={styles.totalValue}>₦ {(getTotal() + 3.00 + 1.00 - getTotal() * 0.1).toFixed(2)}</Text>
+          <Text style={styles.totalValue}>₦ {(getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount).toFixed(2)}</Text>
         </View>
       </View>
       <View style={styles.discountContainer}>
@@ -135,11 +143,20 @@ export default function CartScreen({ route, navigation }) {
         </TouchableOpacity>
       </View>
       <View style={styles.deliveryDetails}>
-        <Text style={styles.deliveryLabel}>Deliver to Work</Text>
-        <TouchableOpacity>
-          <Text style={styles.changeText}>CHANGE</Text>
+      {defaultAddress ? (
+          <View style={styles.addressContainer}>
+            <Text style={styles.addressHeader}>Default Address:</Text>
+            <Text style={styles.addressDetails}>{defaultAddress.details}</Text>
+            <Text style={styles.addressDetails}>{defaultAddress.country}</Text>
+            <Text style={styles.addressDetails}>{defaultAddress.type}</Text>
+          </View>
+        ) : (
+          <Text>No default address set</Text>
+          
+        )}
+        <TouchableOpacity onPress={handleChangeAddress}>
+          <Text > Change </Text>
         </TouchableOpacity>
-        <Text style={styles.deliveryAddress}>201, Dev mall, near iskon cross roads...</Text>
       </View>
       <TouchableOpacity style={styles.paymentButton} onPress={() => navigation.navigate('Checkout')}>
         <Text style={styles.paymentButtonText}>MAKE PAYMENT</Text>
@@ -200,6 +217,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  itemDetailsContainer: {
+    flex: 1, // Takes up the available space
+    paddingRight: 10, // Space between the item name and quantity buttons
+  },
   itemDetails: {
     fontSize: 14,
     color: 'gray',
@@ -220,6 +241,8 @@ const styles = StyleSheet.create({
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: "space-between",
+    width: 100,
     // padding:
   },
   quantityButton: {
@@ -314,6 +337,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    flexDirection: "row",
   },
   deliveryLabel: {
     fontSize: 16,

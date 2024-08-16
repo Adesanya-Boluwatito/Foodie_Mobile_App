@@ -8,6 +8,7 @@ import Profile from './src/screens/autScreens/profile';
 import PromoScreen from './src/screens/autScreens/promoScreen';
 import CartScreen from './src/screens/autScreens/cartScreen';
 import ResturantScreen from './src/screens/autScreens/ResturantScreen';
+import { AddressProvider } from './src/components/AddressContext';
 import AddNewAddressScreen from './src/screens/autScreens/AddNewAddressScreen';
 import EditAddressScreen from './src/screens/autScreens/EditAddressScreen';
 import MyOrdersScreen from './src/screens/autScreens/MyOrdersScreen';
@@ -241,7 +242,8 @@ export default function App() {
       style={{ flex: 1 }}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-     <NavigationContainer style={styles.container}>
+      <AddressProvider>
+        <NavigationContainer style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
       {loading ? (
           // Show loading indicator while loading is true
@@ -256,6 +258,8 @@ export default function App() {
         )}
 
     </NavigationContainer>
+      </AddressProvider>
+     
     </ScrollView>
     </KeyboardAvoidingView>
   );

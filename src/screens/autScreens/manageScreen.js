@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator  } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { auth, db } from '../../../firebaseconfi';
-import {doc, onSnapshot, collection, deleteDoc  } from 'firebase/firestore';
+import {doc, onSnapshot, collection, deleteDoc, getDocs, updateDoc, writeBatch  } from 'firebase/firestore';
+import { useAddress } from '../../components/AddressContext';
 
 const ManageAddressScreen = ({ navigation }) => {
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setLoading] = useState(true);
+  const { defaultAddress, setDefaultAddress : setDefaultAddressInContext } = useAddress();
 
   useEffect(() => {
     const currentUser = auth.currentUser;
@@ -20,12 +22,15 @@ const ManageAddressScreen = ({ navigation }) => {
           ...doc.data(),
         }));
         setAddresses(newAddresses);
-        setLoading(false); 
+        setLoading(false);
+        
+        const defaultAddr = newAddresses.find(address => address.isDefault);
+        setDefaultAddress(defaultAddr);
       });
 
       return () => unsubscribe();
     }
-  }, []);
+  }, [setDefaultAddressInContext]);
 
   const deleteAddress = (id) => {
     Alert.alert(
@@ -54,6 +59,48 @@ const ManageAddressScreen = ({ navigation }) => {
     );
   };
 
+  const setDefaultAddress = async (id) => {
+    try {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        const uid = currentUser.uid;
+        const addressesRef = collection(db, `addresses/${uid}/userAddresses`);
+  
+        // Fetch all addresses
+        const snapshot = await getDocs(addressesRef);
+        if (!snapshot.empty) {
+          const batch = writeBatch(db); // Initialize a batch
+  
+          // Update all addresses to not default
+          snapshot.docs.forEach((doc) => {
+            batch.update(doc.ref, { isDefault: false });
+          });
+  
+          // Set the selected address as default
+          const addressDocRef = doc(db, `addresses/${uid}/userAddresses`, id);
+          batch.update(addressDocRef, { isDefault: true });
+  
+          // Commit the batch update
+          await batch.commit();
+          console.log('Default address updated successfully!');
+  
+          // Find the updated default address
+          const updatedDefaultAddress = snapshot.docs.find(doc => doc.id === id);
+          if (updatedDefaultAddress) {
+            setDefaultAddressInContext({ id, ...updatedDefaultAddress.data() });
+          } else {
+            console.error('Updated default address not found.');
+          }
+        } else {
+          console.error('No addresses found to update.');
+        }
+      }
+    } catch (error) {
+      console.error('Error updating default address: ', error);
+    }
+  };
+  
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -72,8 +119,18 @@ const ManageAddressScreen = ({ navigation }) => {
               <Text style={styles.addressType}>{address.type}</Text>
               <Text style={styles.addressDetails}>{address.details}</Text>
               <Text style={styles.addressDetails}>{address.country}</Text>
+              {address.isDefault && (
+                <Text style={styles.defaultTag}>Default Address</Text>
+              )}
             </View>
             <View style={styles.buttonContainer}>
+            <TouchableOpacity
+                style={styles.setDefaultButton}
+                onPress={() => setDefaultAddress(address.id)}
+              >
+                <Text style={styles.buttonText}>SET DEFAULT</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={styles.editButton}
                 onPress={() => navigation.navigate('Edit Address', { ...address })}
@@ -144,6 +201,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
+  },
+  setDefaultButton: {
+    borderWidth: 1,
+    borderColor: '#00C851',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginRight: 8,
   },
   buttonText: {
     color: '#FF3D00',

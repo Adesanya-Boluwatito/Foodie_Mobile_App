@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView} from 'react-native';
-// Check the import statement for colors and parameters
+import restaurantsData from "../../components/data/restaurants_feed.json"
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 
 
@@ -38,28 +38,28 @@ const images = [
     }
 ];
 
-const restaurants = [
-    {
-        id: 7,
-        name: "KFC",
-        image: "https://i.pinimg.com/originals/ae/39/f9/ae39f93b866896fd60da58cdd50f8f4e.jpg",
-        location: "Ikorodu, Lagos"
-    },
-    {
-        id: 8,
-        name: "Cold Stone Creamery",
-        image: "https://nigeria.tortoisepath.com/wp-content/uploads/2023/10/Cold-Stone-Creamery-Surulere-Lagos-Ghana-TortoisePathcom-3-jpeg.webp",
+// const restaurants = [
+//     {
+//         id: 7,
+//         name: "KFC",
+//         image: "https://i.pinimg.com/originals/ae/39/f9/ae39f93b866896fd60da58cdd50f8f4e.jpg",
+//         location: "Ikorodu, Lagos"
+//     },
+//     {
+//         id: 8,
+//         name: "Cold Stone Creamery",
+//         image: "https://nigeria.tortoisepath.com/wp-content/uploads/2023/10/Cold-Stone-Creamery-Surulere-Lagos-Ghana-TortoisePathcom-3-jpeg.webp",
         
-        location: "Ikorodu, Lagos"
-    },
-    {
-        id: 9,
-        name: "Chicken Republic",
-        image: "https://cdn.businessday.ng/wp-content/uploads/2024/04/0DDB85E1-624B-42A2-AE42-B5FC494AB507.png",
-        location: "Ikorodu, Lagos"
-    },
-    // Add more restaurants as needed
-];
+//         location: "Ikorodu, Lagos"
+//     },
+//     {
+//         id: 9,
+//         name: "Chicken Republic",
+//         image: "https://cdn.businessday.ng/wp-content/uploads/2024/04/0DDB85E1-624B-42A2-AE42-B5FC494AB507.png",
+//         location: "Ikorodu, Lagos"
+//     },
+//     // Add more restaurants as needed
+// ];
 
 
 export default function HomeScreen({navigation}) {
@@ -68,6 +68,7 @@ export default function HomeScreen({navigation}) {
     const [search, setSearch] = useState('');
     
 
+    const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating).slice(0,5);
 
     const handleFoodSearch = () => {
         // Add your logic for handling food search here
@@ -77,11 +78,11 @@ export default function HomeScreen({navigation}) {
         console.log('Location Found')
     }
 
-    const handleRestaurantPress = (restaurant) => {
-    navigation.navigate('ResturantScreen', { restaurant });
+    const handleRestaurantPress = (restaurants) => {
+    navigation.navigate('ResturantScreen', { restaurants });
   }
     
-    const limitedRestaurants = restaurants.slice(0, 5);
+    // const limitedRestaurants = restaurants.slice(0, 5);
 
       
     
@@ -139,16 +140,16 @@ export default function HomeScreen({navigation}) {
 
             <View style={styles.scrollViewContent}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {limitedRestaurants.map((restaurant) => (
-                    <TouchableOpacity key={restaurant.id} onPress={() => handleRestaurantPress(restaurant)}>
+                {sortedRestauarnts.map((restaurants, index) => (
+                    <TouchableOpacity key={index} onPress={() => handleRestaurantPress(restaurants)}>
                         
-                    <View key={restaurant.id} style={styles.restaurantContainer}>
-                        <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
+                    <View style={styles.restaurantContainer}>
+                        <Image source={{ uri: restaurants.details.logo}} style={styles.resturantImage} />
                         <View style={styles.restaurantNameContainer}>
-                        <Text style={styles.name}>{restaurant.name} </Text>
+                        <Text style={styles.name}>{restaurants.name} </Text>
                         </View>
-                        <Text style={styles.price}>{restaurant.price}</Text>
-                        <Text style={styles.location}>{restaurant.location}</Text>
+                        {/* <Text style={styles.price}>{restaurant.price}</Text> */}
+                        <Text style={styles.location}>{restaurants.details.location}</Text>
                     </View>
                     </TouchableOpacity>
                 ))}
@@ -162,22 +163,22 @@ export default function HomeScreen({navigation}) {
 
             <View style={styles.scrollViewContent}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {limitedRestaurants.map((restaurant) => (
-                    <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
-                    <View key={restaurant.id} style={styles.restaurantContainer}>
-                        <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
+                {sortedRestauarnts.map((restaurants, index) => (
+                    <TouchableOpacity key={index} onPress={() => navigation.navigate('Restaurant')}>
+                    <View style={styles.restaurantContainer}>
+                        <Image source={{ uri: restaurants.details.logo }} style={styles.resturantImage} />
                         <View style={styles.restaurantNameContainer}>
-                        <Text style={styles.name}>{restaurant.name}</Text>
+                        <Text style={styles.name}>{restaurants.name}</Text>
                         </View>
-                        <Text style={styles.price}>{restaurant.price}</Text>
-                        <Text style={styles.location}>{restaurant.location}</Text>
+                        {/* <Text style={styles.price}>{restaurant.price}</Text> */}
+                        <Text style={styles.location}>{restaurants.details.location}</Text>
                     </View>
                     </TouchableOpacity>
                 ))}
             </ScrollView>
             </View>
 
-            <View style={styles.scrollViewContent}>
+            {/* <View style={styles.scrollViewContent}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
                 {limitedRestaurants.map((restaurant) => (
                     <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
@@ -192,7 +193,7 @@ export default function HomeScreen({navigation}) {
                     </TouchableOpacity>
                 ))}
             </ScrollView>
-            </View>
+            </View> */}
 
             </ScrollView>
 
