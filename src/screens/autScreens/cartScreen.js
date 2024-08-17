@@ -1,8 +1,9 @@
 import React, {useState, useEffect} from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { useAddress } from '../../components/AddressContext';
+import EmptyCartScreen from './emptyCartScreen';
 
 
 export default function CartScreen({ route, navigation }) {
@@ -72,9 +73,13 @@ export default function CartScreen({ route, navigation }) {
     );
   };
 
+  if (Object.keys(updatedCartItems).length === 0) {
+    return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
+  }
+
 
   const renderCartItem = ({ item }) => (
-    <View style={styles.cartItem}>
+    <View style={styles.cartItem} key={item.name}>
       <View style={styles.itemDetailsContainer}>
         <Text style={styles.itemName}>{item.name}</Text>
       </View>
@@ -145,18 +150,22 @@ export default function CartScreen({ route, navigation }) {
       <View style={styles.deliveryDetails}>
       {defaultAddress ? (
           <View style={styles.addressContainer}>
-            <Text style={styles.addressHeader}>Default Address:</Text>
+            <View style={styles.addressDesign}>
+              <FontAwesome name={defaultAddress.type === 'Home' ? 'home' : 'briefcase'} size={24} color="gray" />
+            <Text style={styles.addressHeader}>Deliver To {defaultAddress.type}</Text>
+
+            <TouchableOpacity onPress={handleChangeAddress} style={styles.changeButton}>
+            <FontAwesome name="edit" size={24} color="black" />
+            </TouchableOpacity>
+            </View>
             <Text style={styles.addressDetails}>{defaultAddress.details}</Text>
-            <Text style={styles.addressDetails}>{defaultAddress.country}</Text>
-            <Text style={styles.addressDetails}>{defaultAddress.type}</Text>
+            
           </View>
         ) : (
           <Text>No default address set</Text>
           
         )}
-        <TouchableOpacity onPress={handleChangeAddress}>
-          <Text > Change </Text>
-        </TouchableOpacity>
+        
       </View>
       <TouchableOpacity style={styles.paymentButton} onPress={() => navigation.navigate('Checkout')}>
         <Text style={styles.paymentButtonText}>MAKE PAYMENT</Text>
@@ -186,17 +195,22 @@ const styles = StyleSheet.create({
     borderRadius:10,
   },
   restaurantInfo: {
-    marginLeft: 10,
+    marginLeft: 20,
+    alignItems:"center",
+    justifyContent: "center",
+    flex: 0.8, 
   },
   restaurantName: {
     fontSize: 18,
     fontWeight: 'bold',
-    left: 12,
+    textAlign: "center"
+    
   },
   restaurantLocation: {
     fontSize: 14,
     color: 'gray',
-    left:12,
+    // left:90,
+    textAlign: "center"
   },
   cartList: {
     flex: 1,
@@ -280,9 +294,10 @@ const styles = StyleSheet.create({
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    
   },
   billHeader: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 10,
   },
@@ -292,7 +307,8 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   billLabel: {
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: "400",
     color: 'gray',
   },
   billValue: {
@@ -321,6 +337,7 @@ const styles = StyleSheet.create({
   discountInput: {
     flex: 1,
     borderColor: '#ccc',
+    borderRadius: 15,
     borderWidth: 1,
     padding: 10,
     marginRight: 10,
@@ -344,15 +361,28 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  changeText: {
-    fontSize: 14,
-    color: 'red',
-    textDecorationLine: 'underline',
-    marginBottom: 5,
-  },
-  deliveryAddress: {
-    fontSize: 14,
+
+  addressContainer: {
+    // fontSize: 14,
     color: 'gray',
+  },
+  addressDesign: {
+    flexDirection: "row",
+  },
+  addressHeader: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      left: 10,
+      marginBottom: 10,
+  },
+  addressDetails: {
+      fontSize: 17,
+      color: "grey",
+      // marginTop: 9,
+      // left: 34,
+  },
+  changeButton: {
+      left: 200,
   },
   paymentButton: {
     backgroundColor: '#bf0603',

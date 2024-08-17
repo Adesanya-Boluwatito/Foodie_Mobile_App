@@ -22,10 +22,15 @@ const ManageAddressScreen = ({ navigation }) => {
           ...doc.data(),
         }));
         setAddresses(newAddresses);
+        const defaultAddr = newAddresses.find(address => address.isDefault);
+      if (defaultAddr) {
+        setDefaultAddressInContext(defaultAddr);
+      } else {
+        setDefaultAddressInContext(null); // Ensure no old default is persisted
+      }
         setLoading(false);
         
-        const defaultAddr = newAddresses.find(address => address.isDefault);
-        setDefaultAddress(defaultAddr);
+        
       });
 
       return () => unsubscribe();
