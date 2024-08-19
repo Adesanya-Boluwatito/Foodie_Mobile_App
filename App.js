@@ -16,6 +16,7 @@ import SignUpScreen from './src/screens/autScreens/SignUpScreen';
 import PaymentOptionsScreen from './src/screens/autScreens/paymentMethod';
 import ManageAddressScreen from './src/screens/autScreens/manageScreen';
 import ChatScreen from './src/screens/autScreens/ChatScreen';
+import { ToastProvider } from 'react-native-toast-notifications'
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -152,7 +153,7 @@ const redirectUris = makeRedirectUri({ useProxy: true });
 export default function App() {
   const [initialRoute, setInitialRoute] = useState('Sign In'); 
   const [userInfo, setUserInfo] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: CLIENT_ID,
     redirectUri: redirectUris
@@ -179,61 +180,41 @@ export default function App() {
 
   const checkLocalUser = async () => {
     try {
-      setLoading(true)
-      const userJSON = await AsyncStorage.getItem('@user')
+      const userJSON = await AsyncStorage.getItem('@user');
       const userData = userJSON ? JSON.parse(userJSON) : null;
-      // console.log("local storage", userData)
-      setUserInfo(userData)
+      setUserInfo(userData);
       setInitialRoute(userData ? 'HomeScreen' : 'Sign In');
-    } catch(e) {
-      alert(e.message)
-    }finally {
-      setLoading(false)
+    } catch (error) {
+      console.error(error.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    if (response?.type === 'success') {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential)
-        .then((userCredential) => {
-          const user = userCredential.user;
-          setUserInfo(user);
-          setInitialRoute('HomeScreen');
-        })
-        .catch((error) => {
-          console.error('Authentication error:', error);
-        });
-    } else if (response?.type === 'error') {
-      console.error('Authentication error:', response.error);
-    }
-  }, [response]);
-
-  React.useEffect(() => {
-    clearLocalUser();
-    checkLocalUser()
-    const unsub = onAuthStateChanged(auth, async(user) => {
-      if(user) {
-        console.log(JSON.stringify(user, null,2))
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (user) {
         setUserInfo(user);
         setInitialRoute('HomeScreen');
-        await AsyncStorage.setItem('@user', JSON.stringify(user))
+        await AsyncStorage.setItem('@user', JSON.stringify(user));
       } else {
         setUserInfo(null);
         setInitialRoute('Sign In');
-        console.log("else")
       }
-    })
-    return () => unsub();
-  }, [])
+    });
 
-  if (loading) 
+    checkLocalUser();
+
+    return () => unsub();
+  }, []);
+
+  if (loading) {
     return (
-      <View style = {{flex: 1, alignItems: "center", justifyContent: "center"}}>
-          <ActivityIndicator size={"large"}/>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#FF4D4D" />
       </View>
-  )
+    );
+  }
 
   return (
 
@@ -242,10 +223,11 @@ export default function App() {
       style={{ flex: 1 }}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+      <ToastProvider>
       <AddressProvider>
         <NavigationContainer style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
-      {loading ? (
+        <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
+        {loading ? (
           // Show loading indicator while loading is true
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#bf0603" />
@@ -257,8 +239,9 @@ export default function App() {
           </SafeAreaView>
         )}
 
-    </NavigationContainer>
-      </AddressProvider>
+      </NavigationContainer>
+        </AddressProvider>
+      </ToastProvider>
      
     </ScrollView>
     </KeyboardAvoidingView>

@@ -8,6 +8,7 @@ import { auth } from '../../../firebaseconfi.js';
 // Check the import statement for colors and parameters
 import { colors } from '../../global/style';
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function SignIn({promptAsync}) {
@@ -15,7 +16,7 @@ export default function SignIn({promptAsync}) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -27,53 +28,17 @@ export default function SignIn({promptAsync}) {
   };
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      if (loading) {
-        return (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#0000ff" />
-          </View>
-        );
-      }
-      
-      console.log('Signed In', userCredential);
-      
-      // Show toast for successful login
-      Toast.show({
-        type: ALERT_TYPE.SUCCESS,
-        title: 'Success',
-        textBody: 'Login successful!',
-        button: 'Close',
-      });
-      setLoading(false);
-      
-      navigation.navigate('HomeScreen');
+      const user = userCredential.user;
+      await AsyncStorage.setItem('@user', JSON.stringify(user));
+      navigation.replace('HomeScreen'); // Replace current screen with HomeScreen
     } catch (error) {
-      if (error.code === 'auth/wrong-password') {
-        Toast.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Invalid Password",
-          textBody: 'The password you entered is incorrect.',
-          button: 'Close',
-        });
-      } else if (error.code === 'auth/user-not-found') {
-        Toast.show({
-          type: ALERT_TYPE.DANGER,
-          title: "Invalid Credentials",
-          textBody: 'Incorrect email or password.',
-          button: 'Close',
-        });
-      } else {
-        Toast.show({
-          type: ALERT_TYPE.DANGER,
-          title: 'Error',
-          textBody: 'An error occurred during sign in. Please try again.',
-          button: 'Close',
-        });
-      }
+      alert('Login failed: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
   };
 
   
@@ -122,7 +87,7 @@ export default function SignIn({promptAsync}) {
           </View>
           <TouchableOpacity onPress={handleLogin}>
             <View style={styles.signIn}>
-              <Text style={styles.buttonText}>Sign In</Text>
+            {loading ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
             </View>
           </TouchableOpacity>
         </View>

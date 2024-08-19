@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView} from 'react-native';
+import React, { useState,useEffect } from 'react';
+import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView, Alert} from 'react-native';
 import restaurantsData from "../../components/data/restaurants_feed.json"
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
+import { useToast } from "react-native-toast-notifications"
 
 
 
@@ -38,45 +40,70 @@ const images = [
     }
 ];
 
-// const restaurants = [
-//     {
-//         id: 7,
-//         name: "KFC",
-//         image: "https://i.pinimg.com/originals/ae/39/f9/ae39f93b866896fd60da58cdd50f8f4e.jpg",
-//         location: "Ikorodu, Lagos"
-//     },
-//     {
-//         id: 8,
-//         name: "Cold Stone Creamery",
-//         image: "https://nigeria.tortoisepath.com/wp-content/uploads/2023/10/Cold-Stone-Creamery-Surulere-Lagos-Ghana-TortoisePathcom-3-jpeg.webp",
-        
-//         location: "Ikorodu, Lagos"
-//     },
-//     {
-//         id: 9,
-//         name: "Chicken Republic",
-//         image: "https://cdn.businessday.ng/wp-content/uploads/2024/04/0DDB85E1-624B-42A2-AE42-B5FC494AB507.png",
-//         location: "Ikorodu, Lagos"
-//     },
-//     // Add more restaurants as needed
-// ];
 
 
 export default function HomeScreen({navigation}) {
     
 
     const [search, setSearch] = useState('');
+    const [location, setLocation] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
+    const [address, setAddress] = useState(null);
+    const [sortedRestaurants, setSortedRestaurants] = useState([]);
+    const toast = useToast();
     
 
-    const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating).slice(0,5);
+
+    useEffect(() => {
+        const sorted = [...restaurantsData.restaurants]
+          .sort((a, b) => b.details.rating - a.details.rating)
+          .slice(0, 5);
+        setSortedRestaurants(sorted);
+      }, []);
+    // const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating - a.details.rating).slice(0,5);
 
     const handleFoodSearch = () => {
         // Add your logic for handling food search here
         console.log('Food Found');
     }
-    const handleLocationSearch = () => {
-        console.log('Location Found')
+    const handleLocationSearch = async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      setErrorMsg('Permission to access location was denied');
+      Alert.alert('Permission denied', 'You need to enable location permissions to use this feature.');
+      return;
     }
+
+    try {
+      // Get the current location
+      const location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+
+      if (location) {
+        // Reverse geocode the coordinates to get a human-readable address
+        const [reverseGeocodeResult] = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+
+        // Format the address (landmark or key location)
+        if (reverseGeocodeResult) {
+          const formattedAddress = `${reverseGeocodeResult.name || ''} ${reverseGeocodeResult.street || ''}, ${reverseGeocodeResult.city || ''}, ${reverseGeocodeResult.region || ''}`;
+          setAddress(formattedAddress);
+          toast.show("Location Found", {
+            type: "success",
+            placement: "top",
+            duration: 4000,
+            offsetTop: 30,
+            animationType:'zoom-in'
+          })
+        }
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to get location information. Please try again.');
+    }
+        console.log('Location Found')
+    };
 
     const handleRestaurantPress = (restaurants) => {
     navigation.navigate('ResturantScreen', { restaurants });
@@ -99,6 +126,11 @@ export default function HomeScreen({navigation}) {
                     </TouchableOpacity>
 
                 </View>
+                {/* {address && (
+          <Text style={styles.addressText}>
+            {address}
+          </Text>
+        )} */}
 
                 <View style={[styles.TextInput1, styles.shadowProp]}>
                     <TextInput
@@ -123,8 +155,8 @@ export default function HomeScreen({navigation}) {
             
             <ScrollView  horizontal={true} showsHorizontalScrollIndicator={false}>
             {images.map((item) => (
-                <TouchableOpacity onPress={handleFoodSearch}>
-                <View key={item.id} style={styles.imageContainer}>
+                <TouchableOpacity key={item.id} onPress={handleFoodSearch}>
+                <View  style={styles.imageContainer}>
                     <Image source={{ uri: item.url }} style={styles.image} />
                     <Text style={styles.imageName}>{item.name}</Text>
                 </View>
@@ -140,8 +172,8 @@ export default function HomeScreen({navigation}) {
 
             <View style={styles.scrollViewContent}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {sortedRestauarnts.map((restaurants, index) => (
-                    <TouchableOpacity key={index} onPress={() => handleRestaurantPress(restaurants)}>
+                {sortedRestaurants.map((restaurants, index) => (
+                    <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
                         
                     <View style={styles.restaurantContainer}>
                         <Image source={{ uri: restaurants.details.logo}} style={styles.resturantImage} />
@@ -163,8 +195,8 @@ export default function HomeScreen({navigation}) {
 
             <View style={styles.scrollViewContent}>
             <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {sortedRestauarnts.map((restaurants, index) => (
-                    <TouchableOpacity key={index} onPress={() => navigation.navigate('Restaurant')}>
+                {sortedRestaurants.map((restaurants, index) => (
+                    <TouchableOpacity key={restaurants.id} onPress={() => navigation.navigate('Restaurant')}>
                     <View style={styles.restaurantContainer}>
                         <Image source={{ uri: restaurants.details.logo }} style={styles.resturantImage} />
                         <View style={styles.restaurantNameContainer}>

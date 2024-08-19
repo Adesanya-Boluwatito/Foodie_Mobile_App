@@ -200,8 +200,8 @@ const handlebackPree = () => {
         
 
       <ScrollView contentContainerStyle={{ paddingBottom: 150 }}>   
-        {restaurants.details.menu.map((item, index) =>(
-          <View style={styles.menuItem}>
+        {restaurants.details.menu.map((item) =>(
+          <View style={styles.menuItem} key={item.id}>
           <Image source={{ uri: item.image}} style={styles.image} />
           <View style={styles.menuText}>
             <Text style={styles.menuTitle}>{item.name}</Text>

@@ -36,7 +36,7 @@ export default function User() {
             if (docSnap.exists()) {
               displayName = docSnap.data().displayName;
             } else {
-              console.log("No such document!");
+              // console.log("No such document!");
             }
           } catch (error) {
             console.error("Error fetching user data: ", error);
