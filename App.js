@@ -8,6 +8,7 @@ import Profile from './src/screens/autScreens/profile';
 import PromoScreen from './src/screens/autScreens/promoScreen';
 import CartScreen from './src/screens/autScreens/cartScreen';
 import ResturantScreen from './src/screens/autScreens/ResturantScreen';
+import OffersScreen from './src/screens/autScreens/offerScreen';
 import { AddressProvider } from './src/components/AddressContext';
 import AddNewAddressScreen from './src/screens/autScreens/AddNewAddressScreen';
 import EditAddressScreen from './src/screens/autScreens/EditAddressScreen';
@@ -143,6 +144,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name='Add Addy' component={AddNewAddressScreen} options={{ headerShown: true, title: 'Add Address' }} />
       <Stack.Screen name='Edit Address' component={EditAddressScreen} options={{ headerShown: true, title: 'Edit Address' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Support Chat' }} />
+      <Stack.Screen name="OfferScreen" component={OffersScreen} options={{ headerShown: false }}/>
       
     </Stack.Navigator>
   );

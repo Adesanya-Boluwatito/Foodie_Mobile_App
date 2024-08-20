@@ -1,209 +1,121 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, FlatList } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
-import { MaterialIcons, FontAwesome } from '@expo/vector-icons';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, FlatList } from 'react-native';
+import TabSelector from '../../components/TabSelector';
 
-const transactions = [
-  { id: '1', type: 'Credit', amount: '$200.00', date: '2024-06-01' },
-  { id: '2', type: 'Debit', amount: '$50.00', date: '2024-06-02' },
-  { id: '3', type: 'Credit', amount: '$100.00', date: '2024-06-03' },
-  { id: '4', type: 'Debit', amount: '$25.00', date: '2024-06-04' },
+
+const offersData = [
+  { id: '1', name: "McDonald's", rating: 4.1, time: '40-50 mins', price: '€30.0 for two', discount: '10% OFF', image: 'path_to_image' },
+  { id: '2', name: "Lucky's", rating: 4.2, time: '40-50 mins', price: '€30.0 for two', discount: '10% OFF', image: 'path_to_image' },
 ];
 
-const WalletScreen = () => {
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerText}>My Wallet</Text>
-        <TouchableOpacity>
-          <MaterialIcons name="account-balance-wallet" size={28} color="white" />
-        </TouchableOpacity>
-      </View>
+const freeDeliveryData = [
+  { id: '1', name: "Monginis Cake", category: 'Desserts', rating: 4.1, time: '40-50 mins', price: '€14.20', image: 'path_to_image' },
+  { id: '2', name: "Biriyani", category: 'Rice meals', rating: 4.1, time: '40-50 mins', price: '€14.20', image: 'path_to_image' },
+];
 
-      {/* Virtual Card */}
-      <ImageBackground
-        // source={{ uri: 'https://i.imgur.com/rjqiKRJ.png' }}
-        // style={styles.card}
-        // imageStyle={styles.cardImage}
-      >
-        <LinearGradient
-          colors={['rgba(255,0,0,0.8)', 'rgba(255,0,0,0.6)', 'rgba(255,0,0,0.4)']}
-          // style={styles.cardOverlay}
-        >
-          <View style={styles.cardContent}>
-            <Text style={styles.cardTitle}>VIRTUAL CARD</Text>
-            <Text style={styles.cardNumber}>**** **** **** 1234</Text>
-            <View style={styles.cardDetails}>
-              <Text style={styles.cardLabel}>Card Holder</Text>
-              <Text style={styles.cardValue}>John Doe</Text>
-            </View>
-            <View style={styles.cardDetails}>
-              <Text style={styles.cardLabel}>Expires</Text>
-              <Text style={styles.cardValue}>12/24</Text>
-            </View>
-          </View>
-        </LinearGradient>
-      </ImageBackground>
-
-      {/* Wallet Actions */}
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionButton}>
-          <FontAwesome name="plus-circle" size={24} color="white" />
-          <Text style={styles.actionText}>Add Money</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <FontAwesome name="history" size={24} color="white" />
-          <Text style={styles.actionText}>Transaction History</Text>
-        </TouchableOpacity>
+export default function OffersScreen() {
+  const renderOfferItem = ({ item }) => (
+    <TouchableOpacity style={styles.offerCard}>
+      <Image source={{ uri: item.image }} style={styles.offerImage} />
+      <View style={styles.offerTextContainer}>
+        <Text style={styles.offerTitle}>{item.name}</Text>
+        <Text style={styles.offerInfo}>{item.time} • {item.price}</Text>
+        <Text style={styles.offerDiscount}>{item.discount}</Text>
       </View>
-
-      {/* Balance Info */}
-      <View style={styles.balanceInfo}>
-        <Text style={styles.balanceTitle}>Current Balance</Text>
-        <Text style={styles.balanceAmount}>₦1,234,560</Text>
-      </View>
-
-      {/* Recent Transactions */}
-      <View style={styles.transactionsContainer}>
-        <Text style={styles.transactionsTitle}>Recent Transactions</Text>
-        <FlatList
-          data={transactions}
-          renderItem={({ item }) => (
-            <View style={styles.transactionItem}>
-              <Text style={styles.transactionType}>{item.type}</Text>
-              <Text style={styles.transactionAmount}>{item.amount}</Text>
-              <Text style={styles.transactionDate}>{item.date}</Text>
-            </View>
-          )}
-          keyExtractor={item => item.id}
-        />
-      </View>
-    </View>
+    </TouchableOpacity>
   );
-};
+
+  const renderFreeDeliveryItem = ({ item }) => (
+    <TouchableOpacity style={styles.freeDeliveryCard}>
+      <Image source={{ uri: item.image }} style={styles.freeDeliveryImage} />
+      <View style={styles.freeDeliveryTextContainer}>
+        <Text style={styles.freeDeliveryTitle}>{item.name}</Text>
+        <Text style={styles.freeDeliveryCategory}>{item.category}</Text>
+        <Text style={styles.freeDeliveryInfo}>{item.time} • {item.price}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  return (
+    <ScrollView style={styles.container}>
+      {/* Header */}
+      <View style={styles.navigationcontainer}>
+        <TabSelector selectedTab="restaurants" />
+      </View>
+      
+
+      {/* Banners */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bannerContainer}>
+        <View style={styles.bannerCard}>
+          <Text style={styles.bannerDiscount}>20% DISCOUNT</Text>
+          <Text style={styles.bannerInfo}>Up to $25 discount on Foodie Fridays</Text>
+          <Text style={styles.bannerValidity}>Valid till 30th September 2019</Text>
+        </View>
+        {/* Add more banner cards as needed */}
+      </ScrollView>
+
+      {/* Today's Offers */}
+      <Text style={styles.sectionTitle}>Today's Offers</Text>
+      <FlatList
+        horizontal
+        data={offersData}
+        renderItem={renderOfferItem}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+      />
+
+      {/* Free Delivery */}
+      <View style={styles.freeDeliveryHeader}>
+        <Text style={styles.sectionTitle}>Free Delivery *</Text>
+        <TouchableOpacity>
+          <Text style={styles.viewAllText}>View all</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        horizontal
+        data={freeDeliveryData}
+        renderItem={renderFreeDeliveryItem}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+      />
+
+      {/* All Offers */}
+      <View style={styles.freeDeliveryHeader}>
+        <Text style={styles.sectionTitle}>All offers</Text>
+        <TouchableOpacity>
+          <Text style={styles.viewAllText}>View all</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Add more cards for all offers similar to above sections */}
+    </ScrollView>
+  );
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    minHeight:100,
-    backgroundColor: '#000000',
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  headerText: {
-    fontSize: 24,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  card: {
-    width: '100%',
-    height: 200,
-    borderRadius: 15,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  cardImage: {
-    borderRadius: 15,
-  },
-  cardOverlay: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'space-between',
-  },
-  cardContent: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  cardTitle: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  cardNumber: {
-    fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  cardDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  cardLabel: {
-    fontSize: 14,
-    color: 'white',
-  },
-  cardValue: {
-    fontSize: 14,
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ff0000',
-    padding: 10,
-    borderRadius: 10,
-    width: '48%',
-    justifyContent: 'center',
-  },
-  actionText: {
-    color: 'white',
-    marginLeft: 10,
-    fontWeight: 'bold',
-  },
-  balanceInfo: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  balanceTitle: {
-    fontSize: 16,
-    color: 'white',
-  },
-  balanceAmount: {
-    fontSize: 32,
-    color: 'white',
-    fontWeight: 'bold',
-    marginTop: 10,
-  },
-  transactionsContainer: {
-    flex: 1,
-  },
-  transactionsTitle: {
-    fontSize: 18,
-    color: 'white',
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  transactionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    backgroundColor: '#333',
-    borderRadius: 10,
-    marginBottom: 10,
-  },
-  transactionType: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  transactionAmount: {
-    color: 'white',
-  },
-  transactionDate: {
-    color: 'white',
-  },
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop:80, },
+  // navigationcontainer:{ borderBlockColor:"#bf0603", borderWidth:1, height:120,padding:0,} ,
+  headerContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 16, paddingTop:35, borderBlockColor:"#bf0603",borderWidth:1 },
+  headerButton: { paddingHorizontal: 16, paddingVertical: 8, borderWidth: 0, borderBlockColor:"#bf0603", },
+  activeHeaderButton: { backgroundColor: '#bf0603' },
+  headerText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
+  bannerContainer: { marginVertical: 16 },
+  bannerCard: { backgroundColor: '#f96d15', padding: 16, borderRadius: 8, marginRight: 16 },
+  bannerDiscount: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  bannerInfo: { fontSize: 14, color: '#fff', marginVertical: 4 },
+  bannerValidity: { fontSize: 12, color: '#fff' },
+  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginVertical: 8 },
+  offerCard: { marginRight: 16, width: 150 },
+  offerImage: { width: '100%', height: 100, borderRadius: 8 },
+  offerTextContainer: { marginTop: 8 },
+  offerTitle: { fontSize: 14, fontWeight: 'bold' },
+  offerInfo: { fontSize: 12, color: '#777' },
+  offerDiscount: { fontSize: 12, color: '#bf0603', fontWeight: 'bold' },
+  freeDeliveryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 },
+  viewAllText: { color: '#bf0603', fontSize: 14, fontWeight: 'bold' },
+  freeDeliveryCard: { marginRight: 16, width: 150, marginBottom: 16 },
+  freeDeliveryImage: { width: '100%', height: 80, borderRadius: 8 },
+  freeDeliveryTextContainer: { marginTop: 8 },
+  freeDeliveryTitle: { fontSize: 14, fontWeight: 'bold' },
+  freeDeliveryCategory: { fontSize: 12, color: '#777' },
+  freeDeliveryInfo: { fontSize: 12, color: '#777' },
 });
-
-export default WalletScreen;
