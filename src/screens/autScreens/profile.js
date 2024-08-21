@@ -10,7 +10,7 @@ const options = [
   { label: 'My Orders', icon: 'list-circle', screen: 'MyOrdersScreen' },
   { label: 'Manage Addresses', icon: 'home', screen:'Manage Add' },
   { label: 'Payments', icon: 'card', scree:'Payment Option' },
-  { label: 'Favourites', icon: 'star' },
+  { label: 'Favourites', icon: 'heart', screen:"FavouriteScreen" },
   { label: 'Help', icon: 'help-circle-sharp' },
   { label: 'Logout', icon: 'log-out' },
 ];

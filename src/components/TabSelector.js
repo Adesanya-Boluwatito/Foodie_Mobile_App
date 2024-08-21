@@ -31,23 +31,27 @@ const TabSelector = ({ selectedTab }) => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    borderRadius: 5,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#FF3B30',
+    borderColor: '#bf0603',
     overflow: 'hidden',
+    width:250,
+    height:50,
+    alignSelf: "center",
   },
   tab: {
-    flex: 1,
+    flex: 0.6,
     paddingVertical: 10,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
+    // paddingBottom:10,
   },
   activeTab: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: '#bf0603',
   },
   tabText: {
-    color: '#FF3B30',
+    color: '#bf0603',
     fontWeight: 'bold',
   },
   activeTabText: {

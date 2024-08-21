@@ -45,12 +45,12 @@ export default function PromoScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16 },
-  headerContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 16 },
+  container: { flex: 1, backgroundColor: '#fffbf8', paddingHorizontal: 16, paddingTop:80, },
+  // headerContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 16, paddingTop:35, borderBlockColor:"#bf0603",borderWidth:1},
   headerButton: { paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1, borderColor: '#ddd', borderRadius: 8 },
   activeHeaderButton: { backgroundColor: '#bf0603' },
   headerText: { fontSize: 16, fontWeight: 'bold', color: '#fff' },
-  promoCard: { backgroundColor: '#f9f9f9', padding: 16, borderRadius: 8, marginBottom: 16 },
+  promoCard: { backgroundColor: '#f9f9f9', padding: 16, borderRadius: 8, marginBottom: 16, marginTop:18,},
   promoHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   promoPlatform: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   promoCode: { fontSize: 14, fontWeight: 'bold', color: '#bf0603' },

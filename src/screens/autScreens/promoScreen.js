@@ -92,7 +92,7 @@ export default function OffersScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 16, paddingTop:80, },
+  container: { flex: 1, backgroundColor: '#fffbf8', paddingHorizontal: 16, paddingTop:80, },
   // navigationcontainer:{ borderBlockColor:"#bf0603", borderWidth:1, height:120,padding:0,} ,
   headerContainer: { flexDirection: 'row', justifyContent: 'center', marginVertical: 16, paddingTop:35, borderBlockColor:"#bf0603",borderWidth:1 },
   headerButton: { paddingHorizontal: 16, paddingVertical: 8, borderWidth: 0, borderBlockColor:"#bf0603", },

@@ -10,32 +10,32 @@ import { useToast } from "react-native-toast-notifications"
 const images = [
     {
         id: 1,
-        url: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=1780&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        url: "https://i.pinimg.com/564x/b8/b5/d7/b8b5d7b7bb12ba423afc38d3401025c1.jpg",
         name: "Jollof Rice"
     },
     {
         id: 2,
-        url: "https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        url: "https://i.pinimg.com/564x/a9/b8/a2/a9b8a266a4c061ca6ab6af63cf2e7caa.jpg",
         name: "Ice cream"
     },
     {
         id: 3,
-        url: "https://images.unsplash.com/photo-1481070555726-e2fe8357725c?q=80&w=1935&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        url: "https://i.pinimg.com/564x/1e/65/4f/1e654fac595d426d7ffffccd754b5977.jpg",
         name:"Burger"
     },
     {
         id: 4,
-        url: "https://images.unsplash.com/photo-1699728088600-6d684acbeada?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+        url: "https://i.pinimg.com/564x/bf/97/51/bf9751c3245329ba2c05457d264418bb.jpg",
         name: "Shawarma"
     },
     {
         id: 5,
-        url: "https://www.wholesomeyum.com/wp-content/uploads/2023/02/wholesomeyum-Easy-Fried-Rice-Recipe-1.jpg",
+        url: "https://i.pinimg.com/564x/4c/c7/9f/4cc79f76b53e00505c9facf01811f952.jpg",
         name: "Fried rice"
     },
     {
         id: 6,
-        url: "https://www.allrecipes.com/thmb/fFW1o307WSqFFYQ3-QXYVpnFj6E=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/48727-Mikes-homemade-pizza-DDMFS-beauty-4x3-BG-2974-a7a9842c14e34ca699f3b7d7143256cf.jpg",
+        url: "https://i.pinimg.com/564x/b1/4e/96/b14e967be4d2d4d121ec19d6de13ea7c.jpg",
         name: "Pizza"
     }
 ];
@@ -166,8 +166,11 @@ export default function HomeScreen({navigation}) {
             
             </View>
 
-            <View>
+            <View style={{flexDirection:"row"}}>
                 <Text style={[styles.topCatText, styles.topCategoryContainer]} > Popular Resturants</Text>
+                <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
+                    <Text style={styles.viewallText}> View all</Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.scrollViewContent}>
@@ -330,7 +333,7 @@ scrollViewContent: {
     flexWrap: 'wrap', // Wrap items to next line if needed
     padding: 10, // Add padding between images
     alignItems: 'center', // Center items horizontally
-    paddingVertical: 10, // Add vertical padding
+    paddingVertical: 17, // Add vertical padding
     
 },
 imageContainer: {
@@ -370,7 +373,7 @@ restaurantContainer: {
     marginRight: 10,
     padding: 10,
     backgroundColor: "#f0f0f0",
-    borderRadius: 10,
+    borderRadius: 20,
     width: 300,
     height:170,
     
@@ -391,6 +394,17 @@ resturantImage: {
     width: 150, // Set image width
     height: 150, // Set image height
     borderRadius: 20, // Add border radius for rounded corners
+},
+viewallContainer: {
+    left:120,
+    top:32,
+    
+},
+viewallText: {
+    color: "gray",
+    fontWeight: '600',
+    fontSize: 15,
+    textAlign:"center"
 },
 
       

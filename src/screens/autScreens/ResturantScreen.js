@@ -4,6 +4,7 @@ import { Button, Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { auth, db } from '../../../firebaseconfi';
+import { doc,  getDoc, deleteDoc, setDoc } from "firebase/firestore"
 
 
 const CartBanner = ({ itemCount, total, cartItems, restaurants}) => {
@@ -34,7 +35,7 @@ export default function ResturantScreen({}) {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
-  const [isFavourite, setIsFavourite] = useState({})
+  const [isFavourite, setIsFavourite] = useState(false)
   const route = useRoute();
   const { restaurants } = route.params
   
@@ -43,9 +44,53 @@ export default function ResturantScreen({}) {
     navigation.navigate('Chat', {  userId: UserId });
 }
 
-const toggleFavourites = () => {
-  setIsFavourite(!isFavourite)
-}
+const toggleFavourites = async () => {
+  try {
+    const userId = auth.currentUser.uid;
+    const restaurantId = restaurants.id; // Assuming you have a unique ID for each restaurant
+
+    const favRef = doc(db, "users", userId, "favourites", restaurantId);
+    const favDoc = await getDoc(favRef);
+
+    if (favDoc.exists()) {
+      // If it's already a favorite, remove it
+      await deleteDoc(favRef);
+      setIsFavourite(false);
+    } else {
+      // Otherwise, add it to favorites
+      await setDoc(favRef, {
+        id: restaurantId,
+        name: restaurants.name,
+        details: restaurants.details, // Include any additional details needed
+      });
+      setIsFavourite(true);
+    }
+  } catch (error) {
+    console.error("Error updating favorites: ", error);
+  }
+};
+useEffect(() => {
+  const fetchFavouriteStatus = async () => {
+    try {
+      const userId = auth.currentUser.uid;
+      const restaurantId = restaurants.id;
+      const favRef = doc(db, "users", userId, "favourites", restaurantId);
+      const favDoc = await getDoc(favRef);
+
+      if (favDoc.exists()) {
+        setIsFavourite(true);
+      } else {
+        setIsFavourite(false);
+      }
+    } catch (error) {
+      console.error("Error checking favorite status: ", error);
+    }
+  };
+
+  fetchFavouriteStatus();
+}, [restaurants]);
+
+
 
 const handlebackPree = () => {
     navigation.goBack()
@@ -161,6 +206,8 @@ const handlebackPree = () => {
     })
   ).current;
 
+  const fallbackImageUri = 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png';
+
   return (
     <View style={{ flex: 1 }}>
 
@@ -169,7 +216,7 @@ const handlebackPree = () => {
         <View style={styles.backContainer}>
 
             <Image
-          source={{ uri: 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png' }}
+          source={{ uri: restaurants.details.coverImage || fallbackImageUri }}
           style={{ width: '100%', height: 300, resizeMode: 'cover' }}
         />
             <TouchableOpacity style={styles.backButton} onPress={handlebackPree}>
@@ -184,7 +231,7 @@ const handlebackPree = () => {
             <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
 
             <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} >
-            <AntDesign name={isFavourite ? "hearto": "heart" } size={24} color="#bf0603" />
+            <AntDesign name={isFavourite ? "heart": "hearto" } size={24} color="#bf0603" />
             </TouchableOpacity> 
           </View>
           <Text style={styles.deliveryTime}>45 Minutes (Delivery time)</Text>

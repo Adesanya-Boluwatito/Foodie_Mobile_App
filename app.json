@@ -4,6 +4,9 @@
     "slug": "client",
     "version": "1.0.0",
     "orientation": "portrait",
+    "developmentClient": {
+      "timeout": 200000
+    },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme":"com.anonymous.client",

@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, SafeAreaView, ActivityIndicator, Dimensions, Ke
 import { colors } from './src/global/style';
 import SignIn from './src/screens/autScreens/SignIn';
 import HomeScreen from './src/screens/autScreens/HomeScreen';
+import AllRestaurants from './src/screens/autScreens/AllRestaurants';
 import Profile from './src/screens/autScreens/profile';
 import PromoScreen from './src/screens/autScreens/promoScreen';
 import CartScreen from './src/screens/autScreens/cartScreen';
@@ -17,6 +18,7 @@ import SignUpScreen from './src/screens/autScreens/SignUpScreen';
 import PaymentOptionsScreen from './src/screens/autScreens/paymentMethod';
 import ManageAddressScreen from './src/screens/autScreens/manageScreen';
 import ChatScreen from './src/screens/autScreens/ChatScreen';
+import FavouritesScreen from './src/screens/autScreens/FavouriteScreen';
 import { ToastProvider } from 'react-native-toast-notifications'
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -145,12 +147,14 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name='Edit Address' component={EditAddressScreen} options={{ headerShown: true, title: 'Edit Address' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Support Chat' }} />
       <Stack.Screen name="OfferScreen" component={OffersScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="AllRestaurants" component={AllRestaurants} options={{ headerShown: false }}/>
+      <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ headerShown: false }}/>
       
     </Stack.Navigator>
   );
 }
 
-const redirectUris = makeRedirectUri({ useProxy: true });
+const redirectUris = makeRedirectUri({ useProxy: false });
 
 export default function App() {
   const [initialRoute, setInitialRoute] = useState('Sign In'); 
