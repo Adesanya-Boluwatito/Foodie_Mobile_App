@@ -36,6 +36,7 @@ export default function ResturantScreen({}) {
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
   const [isFavourite, setIsFavourite] = useState(false)
+  const [isFavouriteButtonDisabled, setIsFavouriteButtonDisabled] = useState(false);
   const route = useRoute();
   const { restaurants } = route.params
   
@@ -45,30 +46,35 @@ export default function ResturantScreen({}) {
 }
 
 const toggleFavourites = async () => {
+  setIsFavourite(prevState => !prevState); // Immediate toggle
+  setIsFavouriteButtonDisabled(true);
+
   try {
     const userId = auth.currentUser.uid;
-    const restaurantId = restaurants.id; // Assuming you have a unique ID for each restaurant
+    const restaurantId = restaurants.id;
 
     const favRef = doc(db, "users", userId, "favourites", restaurantId);
-    const favDoc = await getDoc(favRef);
 
-    if (favDoc.exists()) {
-      // If it's already a favorite, remove it
+    if (isFavourite) {
+      // The user has unfavored, so remove from Firestore
       await deleteDoc(favRef);
-      setIsFavourite(false);
     } else {
-      // Otherwise, add it to favorites
+      // The user has favored, so add to Firestore
       await setDoc(favRef, {
         id: restaurantId,
         name: restaurants.name,
-        details: restaurants.details, // Include any additional details needed
+        details: restaurants.details,
       });
-      setIsFavourite(true);
     }
   } catch (error) {
     console.error("Error updating favorites: ", error);
+    // Revert the toggle in case of error
+    setIsFavourite(prevState => !prevState);
+  } finally {
+    setIsFavouriteButtonDisabled(false);
   }
 };
+
 useEffect(() => {
   const fetchFavouriteStatus = async () => {
     try {
@@ -230,7 +236,7 @@ const handlebackPree = () => {
             <Icon name="star" type="font-awesome" color="#FFD700" />
             <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
 
-            <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} >
+            <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} disabled={isFavouriteButtonDisabled} >
             <AntDesign name={isFavourite ? "heart": "hearto" } size={24} color="#bf0603" />
             </TouchableOpacity> 
           </View>

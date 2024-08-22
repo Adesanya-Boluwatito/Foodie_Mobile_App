@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, FlatList } from 'react-native';
 import TabSelector from '../../components/TabSelector';
+import restaurantsData from "../../components/data/restaurants_feed.json"
 
 
 const offersData = [
@@ -14,24 +15,59 @@ const freeDeliveryData = [
 ];
 
 export default function OffersScreen() {
+
+const [sortedRestauarnts, setSortedRestaurants] = useState([])
+const [filteredRestaurants, setFilteredResturant] = useState([])
+
+useEffect(() => {
+  // console.log('restaurantsData:', restaurantsData);
+  if (restaurantsData && restaurantsData.restaurants) {
+    const sorted = [...restaurantsData.restaurants]
+      .sort((a, b) => b.details.discount - a.details.discount)
+      .slice(0, 7);
+    setSortedRestaurants(sorted);
+  } else {
+    console.error("restaurantsData or restaurantsData.restaurants is undefined");
+  }
+}, []);
+
+useEffect(() => {
+  if (restaurantsData && restaurantsData.restaurants) {
+    const freeDeliveryRestaurants = restaurantsData.restaurants
+      .filter((restaurants) => restaurants.details.freeDelivery)  // Filter by free delivery
+      .sort((a, b) => b.details.discount - a.details.discount)
+      .slice(0,7); // Sort by discount if needed
+
+    setFilteredResturant(freeDeliveryRestaurants);
+  } else {
+    console.error("restaurantsData or restaurantsData.restaurants is undefined");
+  }
+}, []);
+
+  
+
+
+
+
   const renderOfferItem = ({ item }) => (
     <TouchableOpacity style={styles.offerCard}>
-      <Image source={{ uri: item.image }} style={styles.offerImage} />
+      <Image source={{ uri: item.details.logo }} style={styles.offerImage} />
       <View style={styles.offerTextContainer}>
         <Text style={styles.offerTitle}>{item.name}</Text>
-        <Text style={styles.offerInfo}>{item.time} • {item.price}</Text>
-        <Text style={styles.offerDiscount}>{item.discount}</Text>
+        <Text style={styles.offerInfo}>{item.details.offerData} • {item.price}</Text>
+        <Text style={styles.offerDiscount}>{item.details.discount * 100}% OFF</Text>
+
       </View>
     </TouchableOpacity>
   );
 
   const renderFreeDeliveryItem = ({ item }) => (
     <TouchableOpacity style={styles.freeDeliveryCard}>
-      <Image source={{ uri: item.image }} style={styles.freeDeliveryImage} />
+      <Image source={{ uri: item.details.logo }} style={styles.freeDeliveryImage} />
       <View style={styles.freeDeliveryTextContainer}>
         <Text style={styles.freeDeliveryTitle}>{item.name}</Text>
-        <Text style={styles.freeDeliveryCategory}>{item.category}</Text>
-        <Text style={styles.freeDeliveryInfo}>{item.time} • {item.price}</Text>
+        {/* <Text style={styles.freeDeliveryCategory}>{item.details.description}</Text> */}
+        {/* <Text style={styles.freeDeliveryInfo}>{item.time} • {item.price}</Text> */}
       </View>
     </TouchableOpacity>
   );
@@ -56,13 +92,15 @@ export default function OffersScreen() {
 
       {/* Today's Offers */}
       <Text style={styles.sectionTitle}>Today's Offers</Text>
+      {/* <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.bannerContainer}> */}
       <FlatList
         horizontal
-        data={offersData}
+        data={sortedRestauarnts}
         renderItem={renderOfferItem}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
       />
+      {/* </ScrollView> */}
 
       {/* Free Delivery */}
       <View style={styles.freeDeliveryHeader}>
@@ -73,7 +111,7 @@ export default function OffersScreen() {
       </View>
       <FlatList
         horizontal
-        data={freeDeliveryData}
+        data={filteredRestaurants}
         renderItem={renderFreeDeliveryItem}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}

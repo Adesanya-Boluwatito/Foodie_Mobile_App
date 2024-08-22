@@ -23,10 +23,10 @@ import { ToastProvider } from 'react-native-toast-notifications'
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Fontisto } from '@expo/vector-icons';
 import {CLIENT_ID} from '@env'
 import 'react-native-gesture-handler';
-import { enableScreens } from 'react-native-screens';
+// import { enableScreens } from 'react-native-screens';
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from "expo-web-browser";
@@ -36,15 +36,28 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 WebBrowser.maybeCompleteAuthSession();
-enableScreens(true);
+// enableScreens(true);
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
-const { width, height } = Dimensions.get("window")
+
+const getIconComponent = (icon, focused) => {
+  const fontAwesomeIcons = ['compass','shopping-cart',
+    'wallet',
+    'user-circle',
+    // add more Font Awesome icon names here
+  ];
+
+  if (fontAwesomeIcons.includes(icon)) {
+    return <FontAwesome5 name={icon} size={focused ? 25 : 27} color={focused ? 'white' : 'black'} />;
+  } else {
+    return <Fontisto name={icon} size={focused ? 25 : 27} color={focused ? 'white' : 'black'} />;
+  }
+};
 
 const CustomTabBarButton = ({ tabBarlabel, icon, focused }) => (
   <View style={{ backgroundColor: focused ? 'rgba(255,255,255, 0.35)' : 'transparent', borderRadius: 50, paddingTop: 2, marginRight: 8, flexDirection: 'row', alignItems: 'center', width: 100, height: 20, justifyContent: 'center', flex: 0.5 }}>
-    <FontAwesome5 name={icon} size={focused ? 25 : 27} color={focused ? 'white' : 'black'} />
+    {getIconComponent(icon, focused)}
     {focused && <Text style={{ color: focused ? 'white' : 'black', textAlign: 'center', fontSize: 15, paddingLeft: 8, fontWeight: 'bold' }}>{tabBarlabel}</Text>}
   </View>
 );
@@ -88,6 +101,16 @@ function MyTabs() {
           />
         ),
       }} />
+      <Tab.Screen name="Wallet" component={PromoScreen} options={{
+        headerShown: false,
+        tabBarIcon: ({ focused }) => (
+          <CustomTabBarButton
+            icon="shopping-sale"
+            focused={focused}
+            tabBarlabel="Promo"
+          />
+        ),
+      }} />
       <Tab.Screen name="Cart" component={CartScreen} options={{
         headerShown: false,
         tabBarIcon: ({ focused }) => (
@@ -98,16 +121,7 @@ function MyTabs() {
           />
         ),
       }} />
-      <Tab.Screen name="Wallet" component={PromoScreen} options={{
-        headerShown: false,
-        tabBarIcon: ({ focused }) => (
-          <CustomTabBarButton
-            icon="wallet"
-            focused={focused}
-            tabBarlabel="Wallet"
-          />
-        ),
-      }} />
+      
       <Tab.Screen name="User" component={Profile} options={{
         headerShown: false,
         tabBarIcon: ({ focused }) => (
@@ -160,10 +174,17 @@ export default function App() {
   const [initialRoute, setInitialRoute] = useState('Sign In'); 
   const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [request, response, promptAsync] = Google.useAuthRequest({
+  const [request, response, promptAsync, error] = Google.useAuthRequest({
     androidClientId: CLIENT_ID,
-    redirectUri: redirectUris
+    scopes: ['openid', 'profile', 'email'],
+    redirectUri: makeRedirectUri({ useProxy: false }),
+
   });
+
+  if (error) {
+    console.error(error.message);
+    // Handle the error case
+  }
 
 
   useEffect(() => {
@@ -175,42 +196,84 @@ export default function App() {
     return () => clearTimeout(timer); // Cleanup the timer on unmount or dependency change
   }, []);
 
-  const clearLocalUser = async () => {
-    try {
-      await AsyncStorage.removeItem('@user');
-    } catch (e) {
-      alert(e.message);
-    }
-  };
 
 
   const checkLocalUser = async () => {
     try {
       const userJSON = await AsyncStorage.getItem('@user');
       const userData = userJSON ? JSON.parse(userJSON) : null;
-      setUserInfo(userData);
-      setInitialRoute(userData ? 'HomeScreen' : 'Sign In');
+      if (userData && userData.uid) {
+        setUserInfo(userData);
+        setInitialRoute('HomeScreen');
+      } else {
+        setUserInfo(null);
+        setInitialRoute('Sign In');
+      }
     } catch (error) {
       console.error(error.message);
+      if (error.code === 'ERR_STORAGE_FULL') {
+        console.error('Storage is full. Please free up some space.');
+      } else {
+        console.error('Error reading from storage:', error.message);
+      }
+      setUserInfo(null);
+      setInitialRoute('Sign In');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    if (response) {
+      const { authentication } = response;
+      const credential = GoogleAuthProvider.credential(authentication.idToken, authentication.accessToken);
+      signInWithCredential(auth, credential)
+        .then((result) => {
+          const user = result.user;
+          setUserInfo(user);
+          setInitialRoute('HomeScreen');
+        })
+        .catch((error) => {
+          console.error(error.message);
+        });
+    }
+  }, [response]);
+
+  useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (user) {
+        try {
+          await AsyncStorage.setItem('@user', JSON.stringify(user));
+        } catch (error) {
+          console.error(error.message);
+          // Handle storage error case
+          if (error.code === 'ERR_STORAGE_FULL') {
+            console.error('Storage is full. Please free up some space.');
+          } else {
+            console.error('Error writing to storage:', error.message);
+          }
+        }
         setUserInfo(user);
         setInitialRoute('HomeScreen');
-        await AsyncStorage.setItem('@user', JSON.stringify(user));
       } else {
+        try {
+          await AsyncStorage.removeItem('@user');
+        } catch (error) {
+          console.error(error.message);
+          // Handle storage error case
+          if (error.code === 'ERR_STORAGE_FULL') {
+            console.error('Storage is full. Please free up some space.');
+          } else {
+            console.error('Error removing from storage:', error.message);
+          }
+        }
         setUserInfo(null);
         setInitialRoute('Sign In');
       }
     });
-
+  
     checkLocalUser();
-
+  
     return () => unsub();
   }, []);
 
@@ -224,14 +287,11 @@ export default function App() {
 
   return (
 
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1 }}
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+    
+
       <ToastProvider>
       <AddressProvider>
-        <NavigationContainer style={styles.container}>
+        <NavigationContainer >
         <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
         {loading ? (
           // Show loading indicator while loading is true
@@ -249,8 +309,8 @@ export default function App() {
         </AddressProvider>
       </ToastProvider>
      
-    </ScrollView>
-    </KeyboardAvoidingView>
+    
+   
   );
 }
 
