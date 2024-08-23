@@ -67,41 +67,43 @@ export default function HomeScreen({navigation}) {
         console.log('Food Found');
     }
     const handleLocationSearch = async () => {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setErrorMsg('Permission to access location was denied');
-      Alert.alert('Permission denied', 'You need to enable location permissions to use this feature.');
-      return;
-    }
+    //     const { status } = await Location.requestForegroundPermissionsAsync();
+    //     navigation.navigate("Map")
+    // if (status !== 'granted') {
+    //   setErrorMsg('Permission to access location was denied');
+    //   Alert.alert('Permission denied', 'You need to enable location permissions to use this feature.');
+    //   return;
+    // }
 
-    try {
-      // Get the current location
-      const location = await Location.getCurrentPositionAsync({});
-      setLocation(location);
+    // try {
+    //   // Get the current location
+    //   const location = await Location.getCurrentPositionAsync({});
+    //   setLocation(location);
 
-      if (location) {
-        // Reverse geocode the coordinates to get a human-readable address
-        const [reverseGeocodeResult] = await Location.reverseGeocodeAsync({
-          latitude: location.coords.latitude,
-          longitude: location.coords.longitude,
-        });
+    //   if (location) {
+    //     // Reverse geocode the coordinates to get a human-readable address
+    //     const [reverseGeocodeResult] = await Location.reverseGeocodeAsync({
+    //       latitude: location.coords.latitude,
+    //       longitude: location.coords.longitude,
+    //     });
 
-        // Format the address (landmark or key location)
-        if (reverseGeocodeResult) {
-          const formattedAddress = `${reverseGeocodeResult.name || ''} ${reverseGeocodeResult.street || ''}, ${reverseGeocodeResult.city || ''}, ${reverseGeocodeResult.region || ''}`;
-          setAddress(formattedAddress);
-          toast.show("Location Found", {
-            type: "success",
-            placement: "top",
-            duration: 4000,
-            offsetTop: 30,
-            animationType:'zoom-in'
-          })
-        }
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to get location information. Please try again.');
-    }
+    //     // Format the address (landmark or key location)
+    //     if (reverseGeocodeResult) {
+    //       const formattedAddress = `${reverseGeocodeResult.name || ''} ${reverseGeocodeResult.street || ''}, ${reverseGeocodeResult.city || ''}, ${reverseGeocodeResult.region || ''}`;
+    //       setAddress(formattedAddress);
+    //       toast.show("Location Found", {
+    //         type: "success",
+    //         placement: "top",
+    //         duration: 4000,
+    //         offsetTop: 30,
+    //         animationType:'zoom-in'
+    //       })
+    //     }
+    //   }
+    // } catch (error) {
+    //   Alert.alert('Error', 'Failed to get location information. Please try again.');
+    // }
+        navigation.navigate("Map")
         console.log('Location Found')
     };
 

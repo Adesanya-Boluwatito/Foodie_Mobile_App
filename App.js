@@ -10,6 +10,7 @@ import PromoScreen from './src/screens/autScreens/promoScreen';
 import CartScreen from './src/screens/autScreens/cartScreen';
 import ResturantScreen from './src/screens/autScreens/ResturantScreen';
 import OffersScreen from './src/screens/autScreens/offerScreen';
+import MapScreen from  './src/screens/autScreens/mapScreen';
 import { AddressProvider } from './src/components/AddressContext';
 import AddNewAddressScreen from './src/screens/autScreens/AddNewAddressScreen';
 import EditAddressScreen from './src/screens/autScreens/EditAddressScreen';
@@ -163,6 +164,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name="OfferScreen" component={OffersScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="AllRestaurants" component={AllRestaurants} options={{ headerShown: false }}/>
       <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }}/>
       
     </Stack.Navigator>
   );

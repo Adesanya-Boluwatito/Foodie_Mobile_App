@@ -10,14 +10,20 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "scheme":"com.anonymous.client",
-    "plugins" : [
-      [
-        "expo-location", 
-        {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
-        }
-      ]
-    ],
+    "plugins": [
+  [
+    "expo-location",
+    {
+      "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+    }
+  ],
+  [
+    "@rnmapbox/maps",
+    {
+      "RNMapboxMapsDownloadToken": "sk.eyJ1IjoiYm9sdXdhdGl0byIsImEiOiJjbTA2c2FoY2cwdjNhMmtzNHYzYzFldTJkIn0.2uiDD1mEfbiH4a68p_MoAQ"
+    }
+  ]
+],
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
