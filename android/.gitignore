@@ -11,6 +11,8 @@ local.properties
 *.iml
 *.hprof
 .cxx/
+gradle.properties
 
 # Bundle artifacts
 *.jsbundle
+gradle.properties

@@ -18,6 +18,7 @@ web-build/
 
 # Metro
 .metro-health-check*
+gradle.properties
 
 # debug
 npm-debug.*
