@@ -7,7 +7,7 @@ export const AddressContext = createContext();
 // Create a Provider component
 export const AddressProvider = ({ children }) => {
   const [defaultAddress, setDefaultAddress] = useState(null);
-
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     // Load the default address from AsyncStorage when the app starts
@@ -19,19 +19,25 @@ export const AddressProvider = ({ children }) => {
         }
       } catch (error) {
         console.error("Failed to load default address:", error);
+      } finally {
+        setIsInitialized(true);
       }
     };
 
     loadDefaultAddress();
   }, []);
 
-  const updateDefaultAddress = (newDefault) => {
-    setDefaultAddress(newDefault);
-    AsyncStorage.setItem('defaultAddress', JSON.stringify(newDefault));
+  const updateDefaultAddress = async (newDefault) => {
+    try {
+      setDefaultAddress(newDefault);
+      await AsyncStorage.setItem('defaultAddress', JSON.stringify(newDefault));
+    } catch (error) {
+      console.error("Failed to update default address:", error);
+    }
   };
 
   return (
-    <AddressContext.Provider value={{ defaultAddress, setDefaultAddress:updateDefaultAddress }}>
+    <AddressContext.Provider value={{ defaultAddress, setDefaultAddress: updateDefaultAddress, isInitialized }}>
       {children}
     </AddressContext.Provider>
   );

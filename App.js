@@ -12,7 +12,10 @@ import ResturantScreen from './src/screens/autScreens/ResturantScreen';
 import OffersScreen from './src/screens/autScreens/offerScreen';
 import MapScreen from  './src/screens/autScreens/mapScreen';
 import { AddressProvider } from './src/components/AddressContext';
+import { PaymentProvider } from './src/components/paymentContext';
+import {GroupOrderProvider} from './src/components/GroupOrderContext'
 import AddNewAddressScreen from './src/screens/autScreens/AddNewAddressScreen';
+import GroupOrderScreen from './src/screens/autScreens/GroupOrderScreen';
 import EditAddressScreen from './src/screens/autScreens/EditAddressScreen';
 import MyOrdersScreen from './src/screens/autScreens/MyOrdersScreen';
 import SignUpScreen from './src/screens/autScreens/SignUpScreen';
@@ -165,6 +168,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name="AllRestaurants" component={AllRestaurants} options={{ headerShown: false }}/>
       <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="GroupOrder" component={GroupOrderScreen} options={{ headerShown: false }}/>
       
     </Stack.Navigator>
   );
@@ -291,25 +295,30 @@ export default function App() {
 
     
 
-      <ToastProvider>
-      <AddressProvider>
-        <NavigationContainer >
-        <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
-        {loading ? (
-          // Show loading indicator while loading is true
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#bf0603" />
-          </View>
-        ) : (
-          // Show MyScreens component when loading is false
-          <SafeAreaView style={{ flex: 1 }}>
-          <MyScreens initialRoute={initialRoute} promptAsync={promptAsync} user={userInfo} />
-          </SafeAreaView>
-        )}
+      <GroupOrderProvider>
+        <PaymentProvider>
+           <AddressProvider>
+              <NavigationContainer >
+                  <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
+                  {loading ? (
+                    // Show loading indicator while loading is true
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator size="large" color="#bf0603" />
+                    </View>
+                  ) : (
+                    // Show MyScreens component when loading is false
+                    <SafeAreaView style={{ flex: 1 }}>
+                    <MyScreens initialRoute={initialRoute} promptAsync={promptAsync} user={userInfo} />
+                    </SafeAreaView>
+                  )}
 
-      </NavigationContainer>
-        </AddressProvider>
-      </ToastProvider>
+              </NavigationContainer>
+            </AddressProvider>
+        </PaymentProvider>
+      </GroupOrderProvider>
+        
+     
+      
      
     
    

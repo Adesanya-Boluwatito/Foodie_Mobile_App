@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator  } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { auth, db } from '../../../firebaseconfi';
@@ -8,36 +8,47 @@ import { useAddress } from '../../components/AddressContext';
 const ManageAddressScreen = ({ navigation }) => {
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setLoading] = useState(true);
-  const { defaultAddress, setDefaultAddress : setDefaultAddressInContext } = useAddress();
+  const { defaultAddress, setDefaultAddress: setDefaultAddressInContext } = useAddress();
 
-  useEffect(() => {
+  // Fetch addresses and set default address in context
+  const fetchAddresses = useCallback(async () => {
     const currentUser = auth.currentUser;
-    if (currentUser) {
-      const uid = currentUser.uid;
-      const addressesRef = collection(db, `addresses/${uid}/userAddresses`);
+    if (!currentUser) return;
 
-      const unsubscribe = onSnapshot(addressesRef, (snapshot) => {
-        const newAddresses = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setAddresses(newAddresses);
-        const defaultAddr = newAddresses.find(address => address.isDefault);
-      if (defaultAddr) {
-        setDefaultAddressInContext(defaultAddr);
-      } else {
-        setDefaultAddressInContext(null); // Ensure no old default is persisted
-      }
-        setLoading(false);
-        
-        
-      });
+    const uid = currentUser.uid;
+    const addressesRef = collection(db, `addresses/${uid}/userAddresses`);
 
-      return () => unsubscribe();
-    }
+    const unsubscribe = onSnapshot(addressesRef, (snapshot) => {
+      const newAddresses = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setAddresses(newAddresses);
+
+      // Set the default address in the context
+      const defaultAddr = newAddresses.find(address => address.isDefault);
+      setDefaultAddressInContext(defaultAddr || null);
+
+      setLoading(false);
+    } , (error) => {
+      console.error("Error fetching addresses:", error);
+      setLoading(false);
+    }); 
+  
+
+    return unsubscribe;
   }, [setDefaultAddressInContext]);
 
-  const deleteAddress = (id) => {
+  useEffect(() => {
+    const unsubscribe = fetchAddresses();
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe(); // Call unsubscribe function if it's a function
+      }
+    };
+  }, [fetchAddresses]);
+
+  const deleteAddress = async (id) => {
     Alert.alert(
       'Delete Address',
       'Are you sure you want to delete this address?',
@@ -48,12 +59,12 @@ const ManageAddressScreen = ({ navigation }) => {
           onPress: async () => {
             try {
               const currentUser = auth.currentUser;
-              if (currentUser) {
-                const uid = currentUser.uid;
-                const addressDocRef = doc(db, `addresses/${uid}/userAddresses`, id);
-                await deleteDoc(addressDocRef);
-                console.log('Address deleted successfully!');
-              }
+              if (!currentUser) return;
+
+              const uid = currentUser.uid;
+              const addressDocRef = doc(db, `addresses/${uid}/userAddresses`, id);
+              await deleteDoc(addressDocRef);
+              console.log('Address deleted successfully!');
             } catch (error) {
               console.error('Error deleting address: ', error);
             }
@@ -67,44 +78,43 @@ const ManageAddressScreen = ({ navigation }) => {
   const setDefaultAddress = async (id) => {
     try {
       const currentUser = auth.currentUser;
-      if (currentUser) {
-        const uid = currentUser.uid;
-        const addressesRef = collection(db, `addresses/${uid}/userAddresses`);
-  
-        // Fetch all addresses
-        const snapshot = await getDocs(addressesRef);
-        if (!snapshot.empty) {
-          const batch = writeBatch(db); // Initialize a batch
-  
-          // Update all addresses to not default
-          snapshot.docs.forEach((doc) => {
-            batch.update(doc.ref, { isDefault: false });
-          });
-  
-          // Set the selected address as default
-          const addressDocRef = doc(db, `addresses/${uid}/userAddresses`, id);
-          batch.update(addressDocRef, { isDefault: true });
-  
-          // Commit the batch update
-          await batch.commit();
-          console.log('Default address updated successfully!');
-  
-          // Find the updated default address
-          const updatedDefaultAddress = snapshot.docs.find(doc => doc.id === id);
-          if (updatedDefaultAddress) {
-            setDefaultAddressInContext({ id, ...updatedDefaultAddress.data() });
-          } else {
-            console.error('Updated default address not found.');
-          }
-        } else {
-          console.error('No addresses found to update.');
-        }
+      if (!currentUser) return;
+
+      const uid = currentUser.uid;
+      const addressesRef = collection(db, `addresses/${uid}/userAddresses`);
+
+      // Fetch all addresses
+      const snapshot = await getDocs(addressesRef);
+      if (snapshot.empty) {
+        console.error('No addresses found to update.');
+        return;
       }
+
+      const batch = writeBatch(db);
+
+      // Update all addresses to not default
+      snapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, { isDefault: false });
+      });
+
+      // Set the selected address as default
+      const addressDocRef = doc(db, `addresses/${uid}/userAddresses`, id);
+      batch.update(addressDocRef, { isDefault: true });
+
+      // Commit the batch update
+      await batch.commit();
+      console.log('Default address updated successfully!');
+
+      // Update local state to reflect changes immediately
+      setAddresses(prevAddresses => prevAddresses.map(address => ({
+        ...address,
+        isDefault: address.id === id,
+      })));
+      setDefaultAddressInContext(id);
     } catch (error) {
       console.error('Error updating default address: ', error);
     }
   };
-  
 
   if (isLoading) {
     return (

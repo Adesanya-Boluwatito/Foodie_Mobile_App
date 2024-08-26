@@ -72,6 +72,19 @@ export default function CartScreen({ route, navigation }) {
       0
     );
   };
+  const calculateTotalItems = () => {
+    return Object.values(updatedCartItems).reduce((sum, item) => sum + item.quantity, 0);
+  };
+  
+  const handleMakePayment = () => {
+    const totalItems = calculateTotalItems();
+    const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
+  
+    navigation.navigate('Payment Option', {
+      totalItems,
+      totalPrice: totalPrice.toFixed(2),
+    });
+  };
 
   if (Object.keys(updatedCartItems).length === 0) {
     return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
@@ -167,7 +180,7 @@ export default function CartScreen({ route, navigation }) {
         )}
         
       </View>
-      <TouchableOpacity style={styles.paymentButton} onPress={() => navigation.navigate('Checkout')}>
+      <TouchableOpacity style={styles.paymentButton} onPress={handleMakePayment}>
         <Text style={styles.paymentButtonText}>MAKE PAYMENT</Text>
       </TouchableOpacity>
       

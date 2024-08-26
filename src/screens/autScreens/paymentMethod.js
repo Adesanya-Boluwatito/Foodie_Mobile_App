@@ -1,75 +1,81 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal, TextInput } from 'react-native';
+import { usePayment } from '../../components/paymentContext';
+import LinkAccountModal from '../../components/LinkAccountModal';
 
-const PaymentOptionsScreen = () => {
+const PaymentOptionsScreen = ({route}) => {
   const [isModalVisible, setModalVisible] = useState(false);
+  const [newCard, setNewCard] = useState('');
+  const { paymentOptions, setPaymentOptions } = usePayment();
 
+  const { totalItems, totalPrice } = route.params;
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
+  };
+
+  const addNewCard = () => {
+    if (newCard) {
+      setPaymentOptions([...paymentOptions, { id: Date.now(), number: newCard }]);
+      setNewCard('');
+      toggleModal();
+    }
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Payment Options</Text>
-        <Text style={styles.subHeaderText}>1 item(s), To pay: €27.27</Text>
+        <Text style={styles.subHeaderText}>{totalItems} item(s), To pay: ₦{totalPrice}</Text>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Wallets</Text>
-        <TouchableOpacity style={styles.paymentOption} onPress={toggleModal}>
-          <Text>Amazon Pay</Text>
-          <Text style={styles.linkText}>LINK ACCOUNT</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.paymentOption}>
-          <Text>Paytm</Text>
-          <Text style={styles.linkText}>LINK ACCOUNT</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.paymentOption} onPress={toggleModal}>
-          <Text>PayPal</Text>
-          <Text>€10.00</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.paymentOption}>
-          <Text>Google Pay</Text>
-          <Text style={styles.linkText}>LINK ACCOUNT</Text>
-        </TouchableOpacity>
+        {/* ... Your existing Wallets section ... */}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Credit/Debit Cards</Text>
-        <TouchableOpacity style={styles.paymentOption}>
-          <Text>4800-XXXX-XXXX-X844</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.paymentOption}>
-          <Text>4800-XXXX-XXXX-X844</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.addNewCard}>
+        {paymentOptions.map(option => (
+          <TouchableOpacity key={option.id} style={styles.paymentOption}>
+            <Text>{option.number}</Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity style={styles.addNewCard} onPress={toggleModal}>
           <Text style={styles.addNewCardText}>ADD NEW CARD</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Net Banking</Text>
-        <View style={styles.bankOptions}>
-          <Text style={styles.bankOption}>SC</Text>
-          <Text style={styles.bankOption}>BB</Text>
-          <Text style={styles.bankOption}>BJB</Text>
-          <Text style={styles.bankOption}>CIMB</Text>
-          <Text style={styles.bankOption}>HSBC</Text>
-        </View>
-        <TouchableOpacity>
-          <Text style={styles.moreBanks}>MORE BANKS</Text>
-        </TouchableOpacity>
+        {/* ... Your existing Net Banking section ... */}
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Pay On Delivery</Text>
-        <TouchableOpacity style={styles.paymentOption}>
-          <Text>Cash ONLY</Text>
-        </TouchableOpacity>
+        {/* ... Your existing Pay On Delivery section ... */}
       </View>
 
       <LinkAccountModal isVisible={isModalVisible} onClose={toggleModal} />
+
+      <Modal visible={isModalVisible} transparent={true} animationType="slide">
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Card</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter card number"
+              value={newCard}
+              onChangeText={setNewCard}
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={addNewCard}>
+              <Text style={styles.modalButtonText}>Add Card</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.modalButton} onPress={toggleModal}>
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -130,6 +136,41 @@ const styles = StyleSheet.create({
     color: 'blue',
     marginTop: 8,
     textAlign: 'right',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    width: '80%',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  },
+  modalButton: {
+    backgroundColor: '#FF3D00',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

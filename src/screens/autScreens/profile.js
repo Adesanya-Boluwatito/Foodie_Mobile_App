@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const options = [
   { label: 'My Orders', icon: 'list-circle', screen: 'MyOrdersScreen' },
   { label: 'Manage Addresses', icon: 'home', screen:'Manage Add' },
-  { label: 'Payments', icon: 'card', scree:'Payment Option' },
+  { label: 'Payments', icon: 'card', screen:'Payment Option' },
   { label: 'Favourites', icon: 'heart', screen:"FavouriteScreen" },
   { label: 'Help', icon: 'help-circle-sharp' },
   { label: 'Logout', icon: 'log-out' },
