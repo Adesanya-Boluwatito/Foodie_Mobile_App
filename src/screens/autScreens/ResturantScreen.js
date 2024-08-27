@@ -264,38 +264,6 @@ const handlebackPree = () => {
           {renderItemButtons(item)}
         </View>
         ))} 
-        
-
-        {/* <View style={styles.menuItem}>
-          <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
-          <View style={styles.menuText}>
-            <Text style={styles.menuTitle}>Maharaja mac</Text>
-            <Text style={styles.menuDescription}>with fresh fries</Text>
-            <Text style={styles.menuPrice}>₦ 1010</Text>
-          </View>
-          {renderItemButtons({ name: 'Maharaja mac', price: 1010 })}
-        </View> */}
-
-        {/* <View style={styles.menuItem}>
-          <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
-          <View style={styles.menuText}>
-            <Text style={styles.menuTitle}>Mc Veggie mac</Text>
-            <Text style={styles.menuDescription}>free fresh fries</Text>
-            <Text style={styles.menuPrice}>₦ 1200</Text>
-          </View>
-          {renderItemButtons({ name: 'Mc Veggie mac', price: 1200 })}
-        </View> */}
-
-        {/* <View style={styles.menuItem}>
-          <Image source={{ uri: 'https://wildflourskitchen.com/wp-content/uploads/2017/06/Chicken-Big-Mac-2.png.webp' }} style={styles.image} />
-          <View style={styles.menuText}>
-            <Text style={styles.menuTitle}>Mc Veggie mac</Text>
-            <Text style={styles.menuDescription}>free fresh fries</Text>
-            <Text style={styles.menuPrice}>₦ 1200</Text>
-          </View>
-          {renderItemButtons({ name: 'Mc Veggie mac', price: 1200 })}
-        </View> */}
-
       </ScrollView>
       
       <Animated.View

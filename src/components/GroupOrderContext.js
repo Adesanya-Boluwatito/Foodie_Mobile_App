@@ -1,47 +1,52 @@
-// GroupOrderContext.js
-import React, { createContext, useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 
-export const GroupOrderContext = createContext();
+const CartContext = createContext();
 
-export const GroupOrderProvider = ({ children }) => {
-  const [groupOrder, setGroupOrder] = useState({
-    deliveryAddress: '',
-    guests: [],
-  });
+export const CartProvider = ({ children }) => {
+  const [cartItems, setCartItems] = useState({});
 
-  const addGuest = (guestName) => {
-    setGroupOrder(prevOrder => ({
-      ...prevOrder,
-      guests: [...prevOrder.guests, { name: guestName, items: [], total: 0 }],
-    }));
-  };
-
-  const addItemToGuestCart = (guestName, item) => {
-    setGroupOrder(prevOrder => {
-      const updatedGuests = prevOrder.guests.map(guest => {
-        if (guest.name === guestName) {
-          return {
-            ...guest,
-            items: [...guest.items, item],
-            total: guest.total + item.price,
-          };
-        }
-        return guest;
-      });
-      return { ...prevOrder, guests: updatedGuests };
+  const addToCart = (item) => {
+    setCartItems((prev) => {
+      const updated = { ...prev };
+      if (updated[item.name]) {
+        updated[item.name].quantity += item.quantity;
+      } else {
+        updated[item.name] = item;
+      }
+      return updated;
     });
   };
 
-  const setDeliveryAddress = (address) => {
-    setGroupOrder(prevOrder => ({
-      ...prevOrder,
-      deliveryAddress: address,
-    }));
+  const clearCart = () => {
+    setCartItems({});
+  };
+
+  const removeItem = (item) => {
+    setCartItems((prev) => {
+      const updated = { ...prev };
+      delete updated[item.name];
+      return updated;
+    });
+  };
+
+  const updateItemQuantity = (item, quantity) => {
+    setCartItems((prev) => {
+      const updated = { ...prev };
+      if (updated[item.name]) {
+        updated[item.name].quantity = quantity;
+        if (quantity === 0) {
+          delete updated[item.name];
+        }
+      }
+      return updated;
+    });
   };
 
   return (
-    <GroupOrderContext.Provider value={{ groupOrder, addGuest, addItemToGuestCart, setDeliveryAddress }}>
+    <CartContext.Provider value={{ cartItems, addToCart, clearCart, removeItem, updateItemQuantity }}>
       {children}
-    </GroupOrderContext.Provider>
+    </CartContext.Provider>
   );
 };
+
+export const useCart = () => useContext(CartContext);

@@ -13,7 +13,7 @@ import OffersScreen from './src/screens/autScreens/offerScreen';
 import MapScreen from  './src/screens/autScreens/mapScreen';
 import { AddressProvider } from './src/components/AddressContext';
 import { PaymentProvider } from './src/components/paymentContext';
-import {GroupOrderProvider} from './src/components/GroupOrderContext'
+import {CartProvider} from './src/components/GroupOrderContext'
 import AddNewAddressScreen from './src/screens/autScreens/AddNewAddressScreen';
 import GroupOrderScreen from './src/screens/autScreens/GroupOrderScreen';
 import EditAddressScreen from './src/screens/autScreens/EditAddressScreen';
@@ -295,7 +295,7 @@ export default function App() {
 
     
 
-      <GroupOrderProvider>
+      <CartProvider>
         <PaymentProvider>
            <AddressProvider>
               <NavigationContainer >
@@ -315,7 +315,7 @@ export default function App() {
               </NavigationContainer>
             </AddressProvider>
         </PaymentProvider>
-      </GroupOrderProvider>
+      </CartProvider>
         
      
       

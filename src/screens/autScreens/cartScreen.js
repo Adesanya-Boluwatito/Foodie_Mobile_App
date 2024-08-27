@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { useAddress } from '../../components/AddressContext';
@@ -17,7 +17,9 @@ export default function CartScreen({ route, navigation }) {
   const handleChangeAddress = () => {
       navigation.navigate('Manage Add')
   }
-
+  const handleAddnewPack = () => {
+      navigation.navigate('Explore')
+    }
 
   useEffect(() => {
     setUpdatedCartItems(cartItems); // Update cart items when route.params changes
@@ -27,6 +29,8 @@ export default function CartScreen({ route, navigation }) {
   useEffect(() => {
     calculateTotal();
   }, [updatedCartItems]);
+
+  
 
   const calculateTotal = () => {
     const newTotal = Object.values(updatedCartItems).reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -146,7 +150,7 @@ export default function CartScreen({ route, navigation }) {
           <Text style={styles.billValue}>₦ {restaurants.details.deliveryFee.toFixed(2)}</Text>
         </View>
         <View style={styles.billRow}>
-          <Text style={styles.billLabel}>Offer 10% OFF</Text>
+          <Text style={styles.billLabel}>Offer {restaurants.details.discount * 100}% OFF</Text>
           <Text style={styles.billValue}>₦ {(-getTotal() * restaurants.details.discount).toFixed(2)}</Text>
         </View>
         <View style={styles.totalRow}>
@@ -178,8 +182,14 @@ export default function CartScreen({ route, navigation }) {
           <Text>No default address set</Text>
           
         )}
-        
       </View>
+      
+        <View>
+          <TouchableOpacity style={styles.newPack} onPress={handleAddnewPack}> 
+           <Text style={styles.newPackText}>Add Another pack</Text> 
+            </TouchableOpacity>
+        </View>
+
       <TouchableOpacity style={styles.paymentButton} onPress={handleMakePayment}>
         <Text style={styles.paymentButtonText}>MAKE PAYMENT</Text>
       </TouchableOpacity>
@@ -429,4 +439,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     elevation: 5,
    },
+   newPack: {
+      padding:10,
+      alignContent: "center",
+      alignSelf: "center",
+   },
+   newPackText: {
+      color: "#bf0603"
+   }
 });

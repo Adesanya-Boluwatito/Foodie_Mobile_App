@@ -27,7 +27,9 @@ const ManageAddressScreen = ({ navigation }) => {
 
       // Set the default address in the context
       const defaultAddr = newAddresses.find(address => address.isDefault);
-      setDefaultAddressInContext(defaultAddr || null);
+      if (defaultAddr?.id !== defaultAddress?.id) {
+        setDefaultAddressInContext(defaultAddr || null);
+      }
 
       setLoading(false);
     } , (error) => {
@@ -37,7 +39,7 @@ const ManageAddressScreen = ({ navigation }) => {
   
 
     return unsubscribe;
-  }, [setDefaultAddressInContext]);
+  }, [auth.currentUser, setDefaultAddressInContext, defaultAddress]);
 
   useEffect(() => {
     const unsubscribe = fetchAddresses();
