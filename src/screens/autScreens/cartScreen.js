@@ -16,31 +16,41 @@ export default function CartScreen({ route, navigation }) {
 
 
   useEffect(() => {
-    if (Object.keys(cartItems).length > 0 && packs.length === 0) {
-      // Create the first pack when the checkout button is clicked for the first order
-      setPacks([cartItems]);
+    if (Object.keys(cartItems).length > 0) {
+      // Only add to packs if cartItems are not already included
+      const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(cartItems));
+      if (!packExists) {
+        setPacks(prevPacks => [...prevPacks, cartItems]);
+      }
     }
   }, [cartItems]);
 
   const handleChangeAddress = () => {
       navigation.navigate('Manage Add')
   }
-  const handleAddnewPack = () => {
+  const handleAddNewPack = () => {
     if (Object.keys(updatedCartItems).length > 0) {
-      setPacks(prevPacks => {
-        const newPacks = [...prevPacks, updatedCartItems];
+      // Ensure only new packs are added
+      const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(updatedCartItems));
+      if (!packExists) {
+        const newPacks = [...packs, updatedCartItems];
         if (newPacks.length > 3) {
-          newPacks.shift(); // Ensure only 3 packs are stored
+          newPacks.shift(); // Keep only the last 3 packs
         }
-        return newPacks;
-      });
+        setPacks(newPacks);
+      }
     }
-    
+  
     // Reset the cart for new items
     setUpdatedCartItems({});
     navigation.navigate('Explore');
-  }
+  };
 
+  useEffect(() => {
+    console.log("Current cartItems:", cartItems);
+    console.log("Current packs:", packs);
+  }, [cartItems, packs]);
+  
     const handleDeletePack = (packIndex) => {
       setPacks(prevPacks => {
         const updatedPacks = prevPacks.filter((_, index) => index !== packIndex);
@@ -243,7 +253,7 @@ export default function CartScreen({ route, navigation }) {
       </View>
       
         <View>
-          <TouchableOpacity style={styles.newPack} onPress={handleAddnewPack}> 
+          <TouchableOpacity style={styles.newPack} onPress={handleAddNewPack}> 
            <Text style={styles.newPackText}>Add Another pack</Text> 
             </TouchableOpacity>
         </View>
