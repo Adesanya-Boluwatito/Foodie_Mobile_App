@@ -8,21 +8,59 @@ import EmptyCartScreen from './emptyCartScreen';
 
 export default function CartScreen({ route, navigation }) {
   const { cartItems = {}, restaurants = {} } = route.params || {};
-
-  
   const [updatedCartItems, setUpdatedCartItems] = useState(cartItems);
   const [total, setTotal] = useState(0);
   const {defaultAddress} = useAddress();
+  const [packs, setPacks] = useState([])
+  const [isEmpty, setIsEmpty] = useState(false);
+
+
+  useEffect(() => {
+    if (Object.keys(cartItems).length > 0 && packs.length === 0) {
+      // Create the first pack when the checkout button is clicked for the first order
+      setPacks([cartItems]);
+    }
+  }, [cartItems]);
 
   const handleChangeAddress = () => {
       navigation.navigate('Manage Add')
   }
   const handleAddnewPack = () => {
-      navigation.navigate('Explore')
+    if (Object.keys(updatedCartItems).length > 0) {
+      setPacks(prevPacks => {
+        const newPacks = [...prevPacks, updatedCartItems];
+        if (newPacks.length > 3) {
+          newPacks.shift(); // Ensure only 3 packs are stored
+        }
+        return newPacks;
+      });
     }
+    
+    // Reset the cart for new items
+    setUpdatedCartItems({});
+    navigation.navigate('Explore');
+  }
+
+    const handleDeletePack = (packIndex) => {
+      setPacks(prevPacks => {
+        const updatedPacks = prevPacks.filter((_, index) => index !== packIndex);
+  
+        // Remove items from updatedCartItems related to the deleted pack
+        const updatedItems = { ...updatedCartItems };
+        delete updatedItems[packIndex];
+  
+        // Re-map the keys if needed, e.g., after removing pack 1 from packs [0, 1, 2]
+        setUpdatedCartItems(updatedItems);
+
+        setIsEmpty(updatedPacks.length === 0);
+  
+        return updatedPacks;
+      });
+    };
 
   useEffect(() => {
-    setUpdatedCartItems(cartItems); // Update cart items when route.params changes
+    setUpdatedCartItems(cartItems);
+    calculateTotal(); // Update cart items when route.params changes
   }, [cartItems]);
 
 
@@ -33,41 +71,46 @@ export default function CartScreen({ route, navigation }) {
   
 
   const calculateTotal = () => {
-    const newTotal = Object.values(updatedCartItems).reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const newTotal = Object.values(updatedCartItems).reduce((sum, restaurantCart) => {
+      return sum + Object.values(restaurantCart || {}).reduce(
+        (subSum, item) => subSum + item.price * item.quantity,
+        0
+      );
+    }, 0);
     setTotal(newTotal);
   };
 
-  const increaseQuantity = (item) => {
-    setUpdatedCartItems(prev => {
-      const updated = { ...prev };
-      if (updated[item.name]) {
-        updated[item.name].quantity += 1;
-        calculateTotal();
+  const increaseQuantity = (packIndex,restaurantId, item) => {
+    setPacks(prevPacks => {
+      const updatedPacks = [...prevPacks];
+      if (updatedPacks[packIndex] && updatedPacks[packIndex][restaurantId] && updatedPacks[packIndex][restaurantId][item.name]) {
+        updatedPacks[packIndex][restaurantId][item.name].quantity += 1;
       }
-      return updated;
+      return updatedPacks;
     });
   };
 
-  const decreaseQuantity = (item) => {
-    setUpdatedCartItems(prev => {
-      const updated = { ...prev };
-      if (updated[item.name]) {
-        updated[item.name].quantity -= 1;
-        if (updated[item.name].quantity === 0) {
-          delete updated[item.name];
+  const decreaseQuantity = (packIndex,restaurantId, item) => {
+    setPacks(prevPacks => {
+      const updatedPacks = [...prevPacks];
+      if (updatedPacks[packIndex] && updatedPacks[packIndex][restaurantId] && updatedPacks[packIndex][restaurantId][item.name]) {
+        updatedPacks[packIndex][restaurantId][item.name].quantity -= 1;
+        if (updatedPacks[packIndex][restaurantId][item.name].quantity === 0) {
+          delete updatedPacks[packIndex][restaurantId][item.name];
         }
-        calculateTotal();
       }
-      return updated;
+      return updatedPacks;
     });
   };
+  
 
-  const removeItem = (item) => {
-    setUpdatedCartItems(prev => {
-      const updated = { ...prev };
-      delete updated[item.name];
-      calculateTotal();
-      return updated;
+  const removeItem = (packIndex, restaurantId, item) => {
+    setPacks(prevPacks => {
+      const updatedPacks = [...prevPacks];
+      if (updatedPacks[packIndex] && updatedPacks[packIndex][restaurantId]) {
+        delete updatedPacks[packIndex][restaurantId][item.name];
+      }
+      return updatedPacks;
     });
   };
   const getTotal = () => {
@@ -90,27 +133,28 @@ export default function CartScreen({ route, navigation }) {
     });
   };
 
-  if (Object.keys(updatedCartItems).length === 0) {
+  if (Object.keys(updatedCartItems).length === 0 || packs.length===0) {
     return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
   }
+  
 
 
-  const renderCartItem = ({ item }) => (
+  const renderCartItem = ({ packIndex, restaurantId, item }) => (
     <View style={styles.cartItem} key={item.name}>
       <View style={styles.itemDetailsContainer}>
         <Text style={styles.itemName}>{item.name}</Text>
       </View>
       {/* <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text> */}
       <View style={styles.quantityContainer}>
-        <TouchableOpacity onPress={() => decreaseQuantity(item)} style={styles.quantityButton}>
+        <TouchableOpacity onPress={() => decreaseQuantity(packIndex, restaurantId, item)} style={styles.quantityButton}>
           <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>-</Text>
         </TouchableOpacity>
         <Text style={styles.quantityText}>{item.quantity}</Text>
-        <TouchableOpacity onPress={() => increaseQuantity(item)} style={styles.quantityButton}>
+        <TouchableOpacity onPress={() => increaseQuantity(packIndex, restaurantId, item)} style={styles.quantityButton}>
           <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>+</Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity onPress={() => removeItem(item)} style={styles.removeButton}>
+      <TouchableOpacity onPress={() => removeItem(packIndex, restaurantId, item)} style={styles.removeButton}>
         <Text style={styles.removeButtonText}>Remove</Text>
       </TouchableOpacity>
     </View>
@@ -127,14 +171,28 @@ export default function CartScreen({ route, navigation }) {
         
         {/* {restaurantDetails.logo && <Image source={{ uri: restaurantDetails.logo }} style={styles.logo} />} */}
         <View style={styles.restaurantInfo}>
-          {restaurants?.name && <Text style={styles.restaurantName}>{restaurants.name}</Text>}
-          {restaurants.details.location && <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>}
+          {/* {restaurants?.name && <Text style={styles.restaurantName}>{restaurants.name}</Text>} */}
+          {/* {restaurants.details.location && <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>} */}
         </View>
       </View>
       
-        <ScrollView style={styles.cartList}>
-        {Object.values(updatedCartItems).map((item) => renderCartItem({ item }))}
-        </ScrollView>
+      <ScrollView style={styles.cartList}>
+        {/* Multiple orders layout */}
+        {packs.map((pack, index) => (
+          <View key={index} style={styles.packContainer}>
+            <Text style={styles.packHeader}>Pack {index + 1}</Text>
+            <TouchableOpacity onPress={() => handleDeletePack(index)} style={styles.deletePackButton}>
+            <Text style={styles.deletePackButtonText}>Delete Pack</Text>
+          </TouchableOpacity>
+            {Object.entries(pack).map(([restaurantId, cartItems]) => (
+              <View key={restaurantId}>
+                <Text style={styles.restaurantNameHeader}>{restaurantId}</Text>
+                {Object.values(cartItems).map(item => renderCartItem({ packIndex: index, restaurantId, item }))}
+              </View>
+            ))}
+          </View>
+        ))}
+      </ScrollView>
       <View style={styles.billDetails}>
         <Text style={styles.billHeader}>Bill Details</Text>
         <View style={styles.billRow}>
@@ -446,5 +504,31 @@ const styles = StyleSheet.create({
    },
    newPackText: {
       color: "#bf0603"
-   }
+   },
+   restaurantNameHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  packContainer: {
+    marginBottom: 20,
+    padding: 15,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
+  },
+  packHeader: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  deletePackButton: {
+    alignSelf: 'flex-end',
+    padding: 10,
+    backgroundColor: '#bf0603',
+    borderRadius: 5,
+  },
+  deletePackButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
 });

@@ -12,6 +12,7 @@ const CartBanner = ({ itemCount, total, cartItems, restaurants}) => {
   
 
   const handleCheckout = () => {
+    const newPack = [cartItems];
     navigation.navigate('Cart', { cartItems, restaurants});
   };
   return (
@@ -39,6 +40,7 @@ export default function ResturantScreen({}) {
   const [isFavouriteButtonDisabled, setIsFavouriteButtonDisabled] = useState(false);
   const route = useRoute();
   const { restaurants } = route.params
+  const restaurantId = restaurants.id;
   
 
   const handleChatService = () => {
@@ -51,7 +53,7 @@ const toggleFavourites = async () => {
 
   try {
     const userId = auth.currentUser.uid;
-    const restaurantId = restaurants.id;
+    // const restaurantId = restaurants.id;
 
     const favRef = doc(db, "users", userId, "favourites", restaurantId);
 
@@ -79,7 +81,7 @@ useEffect(() => {
   const fetchFavouriteStatus = async () => {
     try {
       const userId = auth.currentUser.uid;
-      const restaurantId = restaurants.id;
+      // const restaurantId = restaurants.id;
       const favRef = doc(db, "users", userId, "favourites", restaurantId);
       const favDoc = await getDoc(favRef);
 
@@ -110,7 +112,7 @@ const handlebackPree = () => {
 
   if (route.params?.cartItems) {
     setCartItems(route.params.cartItems);
-    const newTotal = Object.values(route.params.cartItems).reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const newTotal = Object.values(route.params.cartItems[restaurantId] || {}).reduce((sum, item) => sum + item.price * item.quantity, 0);
     setTotal(newTotal);
   }
 }, [route.params?.cartItems]);
@@ -118,10 +120,13 @@ const handlebackPree = () => {
   const addItemToCart = (item) => {
     setCartItems((prevCartItems) => {
       const updatedCartItems = { ...prevCartItems };
-      if (updatedCartItems[item.name]) {
-        updatedCartItems[item.name].quantity += 1;
+      if (!updatedCartItems[restaurantId]) {
+        updatedCartItems[restaurantId] = {};
+      }
+      if (updatedCartItems[restaurantId][item.name]) {
+        updatedCartItems[restaurantId][item.name].quantity += 1;
       } else {
-        updatedCartItems[item.name] = { ...item, quantity: 1 };
+        updatedCartItems[restaurantId][item.name] = { ...item, quantity: 1 };
       }
       setTotal((prevTotal) => prevTotal + item.price)
       return updatedCartItems;
@@ -132,10 +137,11 @@ const handlebackPree = () => {
   const removeItemFromCart = (item) => {
     setCartItems((prevCartItems) => {
       const updatedCartItems = { ...prevCartItems };
-      if (updatedCartItems[item.name]) {
+      if (updatedCartItems[restaurantId]  && updatedCartItems[restaurantId][item.name]) {
+
         updatedCartItems[item.name].quantity -= 1;
-        if (updatedCartItems[item.name].quantity === 0) {
-          delete updatedCartItems[item.name];
+        if (updatedCartItems[restaurantId][item.name].quantity === 0) {
+          delete updatedCartItems[restaurantId][item.name];
         }
         setTotal((prevTotal) => (prevTotal - item.price >= 0 ? prevTotal - item.price : 0));
       }
@@ -144,11 +150,11 @@ const handlebackPree = () => {
   };
 
   const getItemCount = () => {
-    return Object.keys(cartItems).length;
+    return Object.keys(cartItems[restaurantId] || {}).length;
   };
 
   const renderItemButtons = (item) => {
-    const itemInCart = cartItems[item.name];
+    const itemInCart = cartItems[restaurantId]?.[item.name];
     if (itemInCart) {
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -178,10 +184,7 @@ const handlebackPree = () => {
       );
     }
   };
-  const updateCart = (updatedCartItems) => {
-    setCartItems(updatedCartItems);
-  };
-
+ 
   
 
   const pan = useRef(new Animated.ValueXY({ x: 310, y: 300})).current;
