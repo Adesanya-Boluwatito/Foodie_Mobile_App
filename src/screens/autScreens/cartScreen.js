@@ -50,7 +50,7 @@ export default function CartScreen({ route, navigation }) {
     console.log("Current cartItems:", cartItems);
     console.log("Current packs:", packs);
   }, [cartItems, packs]);
-  
+
     const handleDeletePack = (packIndex) => {
       setPacks(prevPacks => {
         const updatedPacks = prevPacks.filter((_, index) => index !== packIndex);
