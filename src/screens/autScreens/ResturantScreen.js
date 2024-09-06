@@ -91,7 +91,12 @@ useEffect(() => {
         setIsFavourite(false);
       }
     } catch (error) {
-      console.error("Error checking favorite status: ", error);
+      if (error.code === 'unavailable') {
+        console.error('Network error, retrying in 5 seconds...');
+        setTimeout(fetchData, 5000);
+      } else {
+        console.error('Error fetching document:', error);
+      }
     }
   };
 
@@ -137,14 +142,20 @@ const handlebackPree = () => {
   const removeItemFromCart = (item) => {
     setCartItems((prevCartItems) => {
       const updatedCartItems = { ...prevCartItems };
-      if (updatedCartItems[restaurantId]  && updatedCartItems[restaurantId][item.name]) {
-
-        updatedCartItems[item.name].quantity -= 1;
+  
+      if (updatedCartItems[restaurantId] && updatedCartItems[restaurantId][item.name]) {
+        // Reduce the quantity
+        updatedCartItems[restaurantId][item.name].quantity -= 1;
+  
+        // If quantity is 0, remove the item from the cart
         if (updatedCartItems[restaurantId][item.name].quantity === 0) {
           delete updatedCartItems[restaurantId][item.name];
         }
+  
+        // Recalculate the total
         setTotal((prevTotal) => (prevTotal - item.price >= 0 ? prevTotal - item.price : 0));
       }
+  
       return updatedCartItems;
     });
   };

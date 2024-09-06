@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { useAddress } from '../../components/AddressContext';
@@ -14,99 +14,61 @@ export default function CartScreen({ route, navigation }) {
   const {defaultAddress} = useAddress();
   const [packs, setPacks] = useState([])
   const [isEmpty, setIsEmpty] = useState(false);
-  const [currentRestaurantId, setCurrentRestaurantId] = useState(null);
-  const [collapsedPacks, setCollapsedPacks] = useState([]); 
-  const [packNames, setPackNames] = useState([]);
-  const [editingPackIndex, setEditingPackIndex] = useState(null);
+  console.log(restaurants)
 
 
   useEffect(() => {
-    const restaurantId = Object.keys(cartItems)[0];
-    if (restaurantId && !currentRestaurantId) {
-      setCurrentRestaurantId(restaurantId);
-    }
-
-    if (restaurantId && currentRestaurantId) {
-      if (restaurantId === currentRestaurantId) {
-        const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(cartItems));
-        if (!packExists && Object.keys(cartItems).length > 0) {
-          setPacks(prevPacks => [...prevPacks, cartItems]);
-          setCollapsedPacks(prev => [...prev, false]); // Default collapsed state
-          setPackNames(prevNames => [...prevNames, `Pack ${prevNames.length + 1}`]);
-        }
-      } else {
-        Alert.alert("Invalid Restaurant", "You can only add packs from the same restaurant.");
+    if (Object.keys(cartItems).length > 0) {
+      // Only add to packs if cartItems are not already included
+      const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(cartItems));
+      if (!packExists) {
+        setPacks(prevPacks => [...prevPacks, cartItems]);
       }
     }
-  }, [cartItems, currentRestaurantId]);
+  }, [cartItems]);
 
   const handleChangeAddress = () => {
       navigation.navigate('Manage Add')
   }
-
-  const toggleCollapse = (index) => {
-    setCollapsedPacks(prevState => {
-      const updatedState = [...prevState];
-      updatedState[index] = !updatedState[index];
-      return updatedState;
-    });
-  };
   const handleAddNewPack = () => {
     if (Object.keys(updatedCartItems).length > 0) {
-      const restaurantId = Object.keys(updatedCartItems)[0]; // Get restaurant ID from updatedCartItems
-  
-      // Ensure only packs from the same restaurant are added
-      if (restaurantId === currentRestaurantId) {
-        const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(updatedCartItems));
-        if (!packExists) {
-          const newPacks = [...packs, updatedCartItems];
-  
-          if (newPacks.length > 20) { // Keep only up to 3 packs
-            newPacks.shift(); // Remove the oldest pack
-          }
-  
-          setPacks(newPacks);
-          setCollapsedPacks(prev => [...prev, false]);
-          setPackNames(prev => [...prev, `Pack ${prev.length + 1}`]);
+      // Ensure only new packs are added
+      const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(updatedCartItems));
+      if (!packExists) {
+        const newPacks = [...packs, updatedCartItems];
+        if (newPacks.length > 3) {
+          newPacks.shift(); // Keep only the last 3 packs
         }
-      } else {
-        Alert.alert("Invalid Restaurant", "You can only add packs from the same restaurant.");
+        setPacks(newPacks);
       }
     }
   
-    // Reset cartItems and updatedCartItems after adding the new pack
+    // Reset the cart for new items
     setUpdatedCartItems({});
-    navigation.navigate('Explore');  // Assuming this redirects to the home screen or restaurant list
+    navigation.navigate('Explore');
   };
 
+  useEffect(() => {
+    console.log("Current cartItems:", cartItems);
+    console.log("Current packs:", packs);
+  }, [cartItems, packs]);
 
-  // useEffect(() => {
-  //   console.log("Current cartItems:", cartItems);
-  //   console.log("Current packs:", packs);
-  // }, [cartItems, packs]);
+    const handleDeletePack = (packIndex) => {
+      setPacks(prevPacks => {
+        const updatedPacks = prevPacks.filter((_, index) => index !== packIndex);
+  
+        // Remove items from updatedCartItems related to the deleted pack
+        const updatedItems = { ...updatedCartItems };
+        delete updatedItems[packIndex];
+  
+        // Re-map the keys if needed, e.g., after removing pack 1 from packs [0, 1, 2]
+        setUpdatedCartItems(updatedItems);
 
-  const handleDeletePack = (packIndex) => {
-    setPacks(prevPacks => {
-      const updatedPacks = prevPacks.filter((_, index) => index !== packIndex);
-      setCollapsedPacks(prevState => prevState.filter((_, index) => index !== packIndex));
-      setPackNames(prevNames => prevNames.filter((_, index) => index !== packIndex)); // Update names // Update collapsed state
-      return updatedPacks;
-    });
-  };
-
-  const handleDuplicatePack = (packIndex) => {
-    // Clone the selected pack
-    const duplicatedPack = { ...packs[packIndex] };
+        setIsEmpty(updatedPacks.length === 0);
   
-    // Add the cloned pack to the packs array
-    setPacks(prevPacks => [...prevPacks, duplicatedPack]);
-  
-    // Add a new name for the duplicated pack
-    setPackNames(prevNames => [...prevNames, `${packNames[packIndex]} (Copy)`]);
-  
-    // Add default collapsed state for the new pack
-    setCollapsedPacks(prev => [...prev, false]);
-  };
+        return updatedPacks;
+      });
+    };
 
   useEffect(() => {
     setUpdatedCartItems(cartItems);
@@ -124,10 +86,10 @@ export default function CartScreen({ route, navigation }) {
     let newTotal = 0;
   
     packs.forEach((pack, index) => {
-      // console.log(`Processing pack ${index + 1}`);
+      console.log(`Processing pack ${index + 1}`);
       Object.values(pack).forEach(restaurantCart => {
         Object.values(restaurantCart).forEach(item => {
-          // console.log(`Item: ${item.name}, Price: ${item.price}, Quantity: ${item.quantity}`);
+          console.log(`Item: ${item.name}, Price: ${item.price}, Quantity: ${item.quantity}`);
           newTotal += (item.price || 0) * (item.quantity || 0);
         });
       });
@@ -137,6 +99,27 @@ export default function CartScreen({ route, navigation }) {
   };
   
   
+  const calculateChargesAndFees = () => {
+    let totalCharges = new Decimal(0);
+    let totalFees = new Decimal(0);
+
+    packs.forEach(pack => {
+
+      const restaurantDetails = restaurants.details;
+            console.log("Restaurant Details:", restaurantDetails)
+            if (restaurantDetails) {
+              // Ensure that charges and fees are numbers and initialize Decimal properly
+              const restaurantCharges = new Decimal(restaurantDetails.restaurantCharges || 0);
+              const deliveryFee = new Decimal(restaurantDetails.deliveryFee || 0);
+
+              totalCharges = totalCharges.plus(restaurantCharges);
+              totalFees = totalFees.plus(deliveryFee);
+          }
+    });
+
+    return { totalCharges, totalFees };
+};
+  const { totalCharges, totalFees } = calculateChargesAndFees();
   
 
   const increaseQuantity = (packIndex,restaurantId, item) => {
@@ -201,20 +184,6 @@ export default function CartScreen({ route, navigation }) {
     });
   };
 
-
-
-  const handlePackNameChange = (index, newName) => {
-    setPackNames(prevNames => {
-      const updatedNames = [...prevNames];
-      updatedNames[index] = newName;
-      return updatedNames;
-    });
-  };
-
-  const handlePackNameSubmit = (index) => {
-    setEditingPackIndex(null); // Stop editing once the user submits
-  };
-
   if (Object.keys(updatedCartItems).length === 0 || packs.length===0) {
     return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
   }
@@ -253,53 +222,25 @@ export default function CartScreen({ route, navigation }) {
         
         {/* {restaurantDetails.logo && <Image source={{ uri: restaurantDetails.logo }} style={styles.logo} />} */}
         <View style={styles.restaurantInfo}>
-          {restaurants?.name && <Text style={styles.restaurantName}>{restaurants.name}</Text>}
-          {restaurants.details.location && <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>}
+          {/* {restaurants?.name && <Text style={styles.restaurantName}>{restaurants.name}</Text>} */}
+          {/* {restaurants.details.location && <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>} */}
         </View>
       </View>
       
       <ScrollView style={styles.cartList}>
-      {packs.map((pack, packIndex) => (
-          <View key={packIndex} style={styles.packContainer}>
-            <View style={styles.packHeaderContainer}>
-              {/* Toggle between Text and TextInput */}
-              {editingPackIndex === packIndex ? (
-                <TextInput
-                  style={styles.packNameInput}
-                  value={packNames[packIndex]}
-                  onChangeText={(text) => handlePackNameChange(packIndex, text)}
-                  onBlur={() => handlePackNameSubmit(packIndex)} // Submit on blur (losing focus)
-                  autoFocus={true} // Auto focus the input when clicked
-                />
-              ) : (
-                <TouchableOpacity onPress={() => setEditingPackIndex(packIndex)}>
-                  <Text style={styles.packHeader}>{packNames[packIndex] || `Pack ${packIndex + 1}`}</Text>
-                </TouchableOpacity>
-              )}
-              <AntDesign
-                name={collapsedPacks[packIndex] ? 'down' : 'up'}
-                size={20}
-                color="black"
-                onPress={() => toggleCollapse(packIndex)}
-              />
-            </View>
-            {!collapsedPacks[packIndex] && (
-              <View>
-                {Object.entries(pack).map(([restaurantId, cartItems]) => (
-                  <View key={restaurantId}>
-                    {/* <Text style={styles.restaurantNameHeader}>{restaurantId}</Text> */}
-                    {Object.values(cartItems).map(item => renderCartItem({ packIndex: packIndex, restaurantId, item }))}
-                  </View>
-                ))}
+        {/* Multiple orders layout */}
+        {packs.map((pack, index) => (
+          <View key={index} style={styles.packContainer}>
+            <Text style={styles.packHeader}>Pack {index + 1}</Text>
+            <TouchableOpacity onPress={() => handleDeletePack(index)} style={styles.deletePackButton}>
+            <Text style={styles.deletePackButtonText}>Delete Pack</Text>
+          </TouchableOpacity>
+            {Object.entries(pack).map(([restaurantId, cartItems]) => (
+              <View key={restaurantId}>
+                <Text style={styles.restaurantNameHeader}>{restaurantId}</Text>
+                {Object.values(cartItems).map(item => renderCartItem({ packIndex: index, restaurantId, item }))}
               </View>
-            )}
-
-            <TouchableOpacity onPress={() => handleDuplicatePack(packIndex)} style={styles.duplicatePackButton}>
-              <Text style={styles.duplicatePackButtonText}>Duplicate Pack</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeletePack(packIndex)} style={styles.deletePackButton}>
-              <Text style={styles.deletePackButtonText}>Delete Pack</Text>
-            </TouchableOpacity>
+            ))}
           </View>
         ))}
       </ScrollView>
@@ -311,11 +252,11 @@ export default function CartScreen({ route, navigation }) {
         </View>
         <View style={styles.billRow}>
           <Text style={styles.billLabel}>Restaurant Charges</Text>
-          <Text style={styles.billValue}>₦ {restaurants.details.restaurantCharges.toFixed(2)}</Text>
+          <Text style={styles.billValue}>₦ {totalCharges.toFixed(2)}</Text>
         </View>
         <View style={styles.billRow}>
           <Text style={styles.billLabel}>Delivery Fee</Text>
-          <Text style={styles.billValue}>₦ {restaurants.details.deliveryFee.toFixed(2)}</Text>
+          <Text style={styles.billValue}>₦ {totalFees.toFixed(2)}</Text>
         </View>
         <View style={styles.billRow}>
           <Text style={styles.billLabel}>Offer {restaurants.details.discount * 100}% OFF</Text>
@@ -641,20 +582,4 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
   },
-  packHeaderContainer:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-
-  },
-  duplicatePackButton: {
-    alignSelf:"flex-start",
-    padding: 10,
-    backgroundColor: '#bf0603',
-    borderRadius: 5,
-    top:36
-  },
-  duplicatePackButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  }
 });
