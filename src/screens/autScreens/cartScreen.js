@@ -287,7 +287,7 @@ export default function CartScreen({ route, navigation }) {
               <View>
                 {Object.entries(pack).map(([restaurantId, cartItems]) => (
                   <View key={restaurantId}>
-                    {/* <Text style={styles.restaurantNameHeader}>{restaurantId}</Text> */}
+                    {/* <Text style={styles.restaurantNameHeader}>{restaurantId}</Text>= */}
                     {Object.values(cartItems).map(item => renderCartItem({ packIndex: packIndex, restaurantId, item }))}
                   </View>
                 ))}
