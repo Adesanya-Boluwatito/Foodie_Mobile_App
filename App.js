@@ -23,14 +23,12 @@ import PaymentOptionsScreen from './src/screens/autScreens/paymentMethod';
 import ManageAddressScreen from './src/screens/autScreens/manageScreen';
 import ChatScreen from './src/screens/autScreens/ChatScreen';
 import FavouritesScreen from './src/screens/autScreens/FavouriteScreen';
-import { ToastProvider } from 'react-native-toast-notifications'
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesome5, Fontisto } from '@expo/vector-icons';
 import {CLIENT_ID} from '@env'
 import 'react-native-gesture-handler';
-// import { enableScreens } from 'react-native-screens';
 import * as Google from "expo-auth-session/providers/google";
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from "expo-web-browser";

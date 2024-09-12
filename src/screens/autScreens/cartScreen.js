@@ -1,10 +1,19 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import { Paystack, paystackProps } from 'react-native-paystack-webview';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { useAddress } from '../../components/AddressContext';
 import EmptyCartScreen from './emptyCartScreen';
 import Decimal from 'decimal.js';
+import { auth, db } from '../../../firebaseconfi';
+// Helper for generating unique order IDs (You can also use Firebase auto-ID)
+// import { v4 as uuidv4 } from 'uuid'; 
+import { firebase } from '@react-native-firebase/auth';
+import {addDoc, collection, serverTimestamp, getDocs, query, where, setDoc, doc} from "firebase/firestore"
+
+
+
 
 
 export default function CartScreen({ route, navigation }) {
@@ -18,7 +27,9 @@ export default function CartScreen({ route, navigation }) {
   const [collapsedPacks, setCollapsedPacks] = useState([]); 
   const [packNames, setPackNames] = useState([]);
   const [editingPackIndex, setEditingPackIndex] = useState(null);
-
+  const paystackWebViewRef = useRef(null);
+  const userId = auth.currentUser.uid
+  const restaurantId = restaurants.id
 
   useEffect(() => {
     const restaurantId = Object.keys(cartItems)[0];
@@ -78,6 +89,24 @@ export default function CartScreen({ route, navigation }) {
     setUpdatedCartItems({});
     navigation.navigate('Explore');  // Assuming this redirects to the home screen or restaurant list
   };
+
+
+  const generateUniqueId = async () => {
+    let uniqueId;
+    let exists = true;
+  
+    while (exists) {
+      // Generate a random 6-digit number
+      uniqueId = Math.floor(100000 + Math.random() * 900000).toString();
+  
+      // Check if the ID already exists in the 'orders' collection
+      const orderSnapshot = await getDocs(query(collection(db, 'orders'), where('orderId', '==', uniqueId)));
+      exists = !orderSnapshot.empty; // If the snapshot is not empty, the ID exists
+    }
+  
+    return uniqueId;
+  };
+  
 
 
   // useEffect(() => {
@@ -191,17 +220,137 @@ export default function CartScreen({ route, navigation }) {
     return Object.values(updatedCartItems).reduce((sum, item) => sum + item.quantity, 0);
   };
   
-  const handleMakePayment = () => {
-    const totalItems = calculateTotalItems();
-    const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
-  
-    navigation.navigate('Payment Option', {
-      totalItems,
-      totalPrice: totalPrice.toFixed(2),
-    });
+// Save Orders To FIrebase
+// const saveOrderToFirebase = async () => {
+//   try {
+//     // Generate a unique order ID
+//     const orderId = uuidv4()
+
+//     // Structure order data
+//     const orderData = {
+//       orderId,
+//       userId,
+//       restaurantId,
+//       packs,
+//       totalAmount: totalPrice,
+//       address: defaultAddress,
+//       timestamp: serverTimestamp(),
+//       status: 'pending',
+//     };
+
+//     console.log(orderData)
+
+//     //  Save order to the centralized orders collection
+//     await addDoc(collection(db, 'orders'), {orderData});
+//     console.log("Orders added succesfully")
+
+//     // Create a reference in the users's orders\
+//     db.collection('users').doc(userId).collection('orders').doc(orderId).set({
+//       timestamp: serverTimestamp(),
+//     })
+
+//     //  Create a reference in the user's orders
+//     db.collection('users').doc(userId).collection('orders').doc(orderId).set({
+//       timestamp:serverTimestamp(),
+//     })
+
+//     // Create a reference in the restaurant's orders
+//     db.collection('restaurants').doc(restaurantId).collection('orders').doc(orderId).set({
+//       timestamp: serverTimestamp(),
+//     })
+
+//     navigation.navigate('MyOrdersScreen', { orderId });
+//     Alert.alert('Order Success', 'Your order has been placed successfully!');
+//   } catch (error) {
+//     console.error('Error saving order to Firebase:', error);
+//     Alert.alert('Error', 'There was an issue saving your order. Please try again.');
+//   }
+// }
+ 
+
+const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
+const handleMakePayment = () => {
+  const totalItems = calculateTotalItems();
+  const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
+
+  // Configure Paystack
+  const paymentConfig = {
+    amount: totalPrice * 100, // Convert to kobo
+    billingEmail: 'paystackwebview@something.com', // Replace with user email or default
+    onCancel: (e) => {
+      console.log('Transaction cancelled:', e);
+    },
+    onSuccess: async (res) => {
+      // console.log('Transaction successful:', res);
+
+      // Save order details to Firebase on payment success
+      try {
+        console.log('Calling saveOrderToFirebase...');
+        await saveOrderToFirebase();
+        console.log('Order saved successfully after payment');
+      } catch (error) {
+        console.error('Error saving order after payment:', error);
+        Alert.alert('Error', 'There was an issue saving your order. Please try again.');
+      }
+    },
   };
 
+  if (paystackWebViewRef.current) {
+    console.log('Starting Paystack transaction...');
+    paystackWebViewRef.current.startTransaction(paymentConfig);
+  } else {
+    console.error('Paystack WebView reference is null.');
+  }
+};
 
+
+const saveOrderToFirebase = async () => {
+  try {
+    // Generate a unique order ID
+    console.log('Starting to save order to Firebase...');
+    const orderId = await generateUniqueId();
+
+    console.log(orderId)
+
+    // Structure order data
+    const orderData = {
+      orderId,
+      userId,
+      restaurantId,
+      restaurantName: restaurants.name,
+      packs,
+      totalAmount: totalPrice,
+      address: defaultAddress,
+      timestamp: serverTimestamp(),
+      status: 'pending',
+    };
+
+    console.log(orderData)
+
+    //  Save order to the centralized orders collection
+    const orderRef = await setDoc(doc(db, 'orders', orderId), orderData);
+    console.log("Orders added succesfully. Order ID:", orderId)
+
+
+    //  Create a reference in the user's orders
+    await setDoc(doc(collection(db, 'users', userId, 'orders'), orderId), {
+      timestamp: serverTimestamp(),
+    });
+    console.log('Order reference added to user\'s orders.');
+
+    // Create a reference in the restaurant's orders
+    await setDoc(doc(collection(db, 'restaurants', restaurantId, 'orders'), orderId), {
+      timestamp: serverTimestamp(),
+    });
+    console.log('Order reference added to restaurant\'s orders.');
+
+    navigation.navigate('MyOrdersScreen', { orderId });
+    Alert.alert('Order Success', 'Your order has been placed successfully!');
+  } catch (error) {
+    console.error('Error saving order to Firebase:', error);
+    Alert.alert('Error', 'There was an issue saving your order. Please try again.');
+  }
+}
 
   const handlePackNameChange = (index, newName) => {
     setPackNames(prevNames => {
@@ -361,6 +510,20 @@ export default function CartScreen({ route, navigation }) {
       <TouchableOpacity style={styles.paymentButton} onPress={handleMakePayment}>
         <Text style={styles.paymentButtonText}>MAKE PAYMENT</Text>
       </TouchableOpacity>
+
+      <Paystack
+        paystackKey="pk_test_58253816127400d5a706afa7347a6be34107a93d"
+        billingEmail="adesanyaboluwatito225@gmail.com"
+        amount={totalPrice} // Amount should be in kobo or minor currency units
+        onCancel={(e) => {
+          console.log('Transaction cancelled:', e);
+        }}
+        onSuccess={(res) => {
+          saveOrderToFirebase()
+          console.log('Transaction successful:', res);
+        }}
+        ref={paystackWebViewRef}
+      />
       
     </View>
   );
