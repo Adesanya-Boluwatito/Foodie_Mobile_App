@@ -90,6 +90,16 @@ export default function CartScreen({ route, navigation }) {
     navigation.navigate('Explore');
   };
 
+  const clearCart = () => {
+    setPacks([]);               // Clear packs
+    setUpdatedCartItems({});     // Clear cart items
+    setCollapsedPacks([]);       // Reset collapsed packs
+    setPackNames([]);            // Reset pack names
+  
+    // If you're using AsyncStorage to persist the cart, clear it as well
+    // AsyncStorage.removeItem('cartItems');  // Optional: Clear local storage cart
+  };
+  
 
   const generateUniqueId = async () => {
     let uniqueId;
@@ -265,6 +275,7 @@ const handleMakePayment = () => {
       try {
         console.log('Calling saveOrderToFirebase...');
         await saveOrderToFirebase();
+        clearCart();
         console.log('Order saved successfully after payment');
       } catch (error) {
         console.error('Error saving order after payment:', error);
@@ -345,7 +356,7 @@ const saveOrderToFirebase = async () => {
     setEditingPackIndex(null); // Stop editing once the user submits
   };
 
-  if (packs.length === 0) {
+  if (packs.length === 0 ) {
     return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
   }
 
