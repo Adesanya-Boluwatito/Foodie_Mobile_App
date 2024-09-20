@@ -1,11 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Icon } from 'react-native-elements';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../../../firebaseconfi';
 import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+import { ScrollView } from 'react-native-gesture-handler';
 
 const MyOrdersScreen = () => {
   const [orders, setOrders] = useState([]);
+  const navigation = useNavigation();  
+  
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -35,12 +40,13 @@ const MyOrdersScreen = () => {
             const orderData = orderDoc.data();
             ordersList.push({ id: orderId, ...orderData });
           } else {
-            console.log(`Order with ID ${orderId} not found in centralized 'orders' collection.`);
+            // console.log(`Order with ID ${orderId} not found in centralized 'orders' collection.`);
           }
         }
 
+        ordersList.sort((a, b) => b.timestamp - a.timestamp);
         // Step 4: Set the fetched orders into state
-        console.log('Fetched Orders:', ordersList);
+        // console.log('Fetched Orders:', ordersList);
         setOrders(ordersList);
 
       } catch (error) {
@@ -51,12 +57,38 @@ const MyOrdersScreen = () => {
     fetchOrders();
   }, []);
 
+
+
+  
+  const handleReorder = (orderId) => {
+    // Find the order by its ID from the existing orders array
+    const order = orders.find(order => order.id === orderId);
+  
+    if (order && order.packs) {
+      // Pass the packs directly to CartScreen
+      navigation.navigate('Cart', { packs: order.packs, restaurants: order.restaurant });
+      console.log('Formatted Pack from reorderscreen:', JSON.stringify({packs: order.packs}, null, 2));
+
+    } else {
+      Alert.alert("Error", "No packs found in this order.");
+    }
+  
+    // Navigate to Cart screen with the formattedCartItems and restaurant information
+    // navigation.navigate('Cart', { packs: formattedPacks, restaurants: order.restaurant });
+    // console.log('Formatted Pack from reorderscreen:', JSON.stringify(packs, null, 2));
+  };
+
+  
+  
+  
+  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         {/* Header content */}
       </View>
-
+    <ScrollView>
       {orders.length === 0 ? (
         <Text style={styles.noOrdersText}>You have no orders yet.</Text>
       ) : (
@@ -68,13 +100,16 @@ const MyOrdersScreen = () => {
             </View>
             <Text style={styles.orderDate}>{new Date(order.timestamp.toDate()).toLocaleString()}</Text>
             <Text style={styles.orderId}>Order ID: {order.id}</Text>
+            <TouchableOpacity style={styles.reorderButton} onPress={() => handleReorder(order.id)}>
+            <Text style={styles.reorderButtonText}>REORDER</Text>
+            </TouchableOpacity>
           </View>
         ))
       )}
+    </ScrollView>
+      
 
-      <TouchableOpacity style={styles.reorderButton}>
-        <Text style={styles.reorderButtonText}>REORDER</Text>
-      </TouchableOpacity>
+      
     </View>
   );
 };
@@ -136,18 +171,18 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   reorderButton: {
-    backgroundColor: '#fff',
-    borderColor: '#ff4d4d',
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    alignSelf:"flex-end",
+    padding: 10,
+    backgroundColor: '#bf0603',
     borderRadius: 5,
-    alignItems: 'center',
+    top:1
   },
   reorderButtonText: {
-    color: '#ff4d4d',
+    color: '#ffff',
     fontSize: 16,
     fontWeight: 'bold',
+    // width:1,
+    
   },
 });
 

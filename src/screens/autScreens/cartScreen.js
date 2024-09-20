@@ -1,5 +1,5 @@
-import React, {useState, useEffect, useRef} from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
+import React, {useState, useEffect, useRef, useMemo} from 'react';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert,  ActivityIndicator  } from 'react-native';
 import { Paystack, paystackProps } from 'react-native-paystack-webview';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import AntDesign from '@expo/vector-icons/AntDesign'
@@ -17,39 +17,49 @@ import {addDoc, collection, serverTimestamp, getDocs, query, where, setDoc, doc}
 
 
 export default function CartScreen({ route, navigation }) {
-  const { cartItems = {}, restaurants = {} } = route.params || {};
-  const [updatedCartItems, setUpdatedCartItems] = useState(cartItems);
+  const { cartItems = {}, restaurants = {}, packs: packsFromRoute = [] } = route.params || {};
+  const [updatedCartItems, setUpdatedCartItems] = useState({});
+  const [isLoading,  setIsLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const {defaultAddress} = useAddress();
-  const [packs, setPacks] = useState([])
-  const [isEmpty, setIsEmpty] = useState(false);
-  const [currentRestaurantId, setCurrentRestaurantId] = useState(null);
+  const [packs, setPacks] = useState(packsFromRoute)
+  const [isEmpty, setIsEmpty] = useState(packsFromRoute.length === 0);
+  const [currentRestaurantId, setCurrentRestaurantId] = useState(restaurants?.id || null);
   const [collapsedPacks, setCollapsedPacks] = useState([]); 
   const [packNames, setPackNames] = useState([]);
   const [editingPackIndex, setEditingPackIndex] = useState(null);
   const paystackWebViewRef = useRef(null);
   const userId = auth.currentUser.uid
   const restaurantId = restaurants.id
+  
+
+  useEffect(() => {
+    // Set the initial packs and pack names
+    if (packsFromRoute.length > 0) {
+      setPacks(packsFromRoute); // Initialize packs from navigation
+      setCollapsedPacks(packsFromRoute.map(() => false)); // Initialize collapsed state
+      setPackNames(packsFromRoute.map((_, index) => `Pack ${index + 1}`)); // Initialize pack names
+    }
+  }, [packsFromRoute]);
 
   useEffect(() => {
     const restaurantId = Object.keys(cartItems)[0];
-    if (restaurantId && !currentRestaurantId) {
-      setCurrentRestaurantId(restaurantId);
+      
+    if (!restaurantId || Object.keys(cartItems).length === 0) {
+      return; // If cartItems is empty, return early to avoid unnecessary updates
     }
-
-    if (restaurantId && currentRestaurantId) {
-      if (restaurantId === currentRestaurantId) {
-        const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(cartItems));
-        if (!packExists && Object.keys(cartItems).length > 0) {
-          setPacks(prevPacks => [...prevPacks, cartItems]);
-          setCollapsedPacks(prev => [...prev, false]); // Default collapsed state
-          setPackNames(prevNames => [...prevNames, `Pack ${prevNames.length + 1}`]);
-        }
-      } else {
-        Alert.alert("Invalid Restaurant", "You can only add packs from the same restaurant.");
-      }
+  
+    if (!packs.some(pack => pack === cartItems)) {
+      // Avoid deep comparison with JSON.stringify(), just check if the pack exists
+      setPacks(prevPacks => [...prevPacks, cartItems]);
+      setCollapsedPacks(prev => [...prev, false]);
+      setPackNames(prevNames => [...prevNames, `Pack ${prevNames.length + 1}`]);
     }
-  }, [cartItems, currentRestaurantId]);
+  }, [cartItems]);  // Removed unnecessary dependencies
+  ; // Removed `packs` to avoid redundant re-renders
+  ;
+  // console.log(cartItems)
+  // console.log("Food Pack:",packs)
 
   const handleChangeAddress = () => {
       navigation.navigate('Manage Add')
@@ -64,30 +74,20 @@ export default function CartScreen({ route, navigation }) {
   };
   const handleAddNewPack = () => {
     if (Object.keys(updatedCartItems).length > 0) {
-      const restaurantId = Object.keys(updatedCartItems)[0]; // Get restaurant ID from updatedCartItems
-  
-      // Ensure only packs from the same restaurant are added
+      const restaurantId = Object.keys(updatedCartItems)[0];
       if (restaurantId === currentRestaurantId) {
         const packExists = packs.some(pack => JSON.stringify(pack) === JSON.stringify(updatedCartItems));
         if (!packExists) {
-          const newPacks = [...packs, updatedCartItems];
-  
-          if (newPacks.length > 20) { // Keep only up to 3 packs
-            newPacks.shift(); // Remove the oldest pack
-          }
-  
-          setPacks(newPacks);
+          setPacks(prevPacks => [...prevPacks, updatedCartItems]);
           setCollapsedPacks(prev => [...prev, false]);
           setPackNames(prev => [...prev, `Pack ${prev.length + 1}`]);
         }
       } else {
-        Alert.alert("Invalid Restaurant", "You can only add packs from the same restaurant.");
+        Alert.alert("Invalid Restaurants", "You can only add packs from the same restaurant.");
       }
     }
-  
-    // Reset cartItems and updatedCartItems after adding the new pack
     setUpdatedCartItems({});
-    navigation.navigate('Explore');  // Assuming this redirects to the home screen or restaurant list
+    navigation.navigate('Explore');
   };
 
 
@@ -118,7 +118,14 @@ export default function CartScreen({ route, navigation }) {
     setPacks(prevPacks => {
       const updatedPacks = prevPacks.filter((_, index) => index !== packIndex);
       setCollapsedPacks(prevState => prevState.filter((_, index) => index !== packIndex));
-      setPackNames(prevNames => prevNames.filter((_, index) => index !== packIndex)); // Update names // Update collapsed state
+      setPackNames(prevNames => prevNames.filter((_, index) => index !== packIndex));
+      
+      if (updatedPacks.length === 0) {
+        setCurrentRestaurantId(null); // Reset currentRestaurantId to null
+        setUpdatedCartItems({}); // Clear cartItems to reflect an empty cart
+        route.params.cartItems = {}; // Clear the cartItems from route params if they come from there
+        // console.log("Cart is now empty:", updatedPacks, updatedCartItems);
+      }// Update names // Update collapsed state
       return updatedPacks;
     });
   };
@@ -137,34 +144,39 @@ export default function CartScreen({ route, navigation }) {
     setCollapsedPacks(prev => [...prev, false]);
   };
 
+  // useEffect(() => {
+  //   setUpdatedCartItems(cartItems);
+  //   calculateTotal(); // Update cart items when route.params changes
+  // }, [cartItems]);
+
+
   useEffect(() => {
+
+    if (JSON.stringify(updatedCartItems) !== JSON.stringify(cartItems)) {
     setUpdatedCartItems(cartItems);
-    calculateTotal(); // Update cart items when route.params changes
-  }, [cartItems]);
-
-
-  useEffect(() => {
-    calculateTotal();
-  }, [updatedCartItems]);
+  }
+    calculateTotal;
+  }, [cartItems, packs]);
 
   
 
-  const calculateTotal = () => {
+  const calculateTotal = useMemo(() => {
     let newTotal = 0;
-  
-    packs.forEach((pack, index) => {
-      // console.log(`Processing pack ${index + 1}`);
+    packs.forEach(pack => {
       Object.values(pack).forEach(restaurantCart => {
         Object.values(restaurantCart).forEach(item => {
-          // console.log(`Item: ${item.name}, Price: ${item.price}, Quantity: ${item.quantity}`);
           newTotal += (item.price || 0) * (item.quantity || 0);
         });
       });
     });
+    return newTotal;
+  }, [packs]);
   
-    setTotal(newTotal);
-  };
   
+  
+  useEffect(() => {
+    setTotal(calculateTotal);
+  }, [calculateTotal]);
   
   
 
@@ -220,68 +232,34 @@ export default function CartScreen({ route, navigation }) {
     return Object.values(updatedCartItems).reduce((sum, item) => sum + item.quantity, 0);
   };
   
-// Save Orders To FIrebase
-// const saveOrderToFirebase = async () => {
-//   try {
-//     // Generate a unique order ID
-//     const orderId = uuidv4()
 
-//     // Structure order data
-//     const orderData = {
-//       orderId,
-//       userId,
-//       restaurantId,
-//       packs,
-//       totalAmount: totalPrice,
-//       address: defaultAddress,
-//       timestamp: serverTimestamp(),
-//       status: 'pending',
-//     };
-
-//     console.log(orderData)
-
-//     //  Save order to the centralized orders collection
-//     await addDoc(collection(db, 'orders'), {orderData});
-//     console.log("Orders added succesfully")
-
-//     // Create a reference in the users's orders\
-//     db.collection('users').doc(userId).collection('orders').doc(orderId).set({
-//       timestamp: serverTimestamp(),
-//     })
-
-//     //  Create a reference in the user's orders
-//     db.collection('users').doc(userId).collection('orders').doc(orderId).set({
-//       timestamp:serverTimestamp(),
-//     })
-
-//     // Create a reference in the restaurant's orders
-//     db.collection('restaurants').doc(restaurantId).collection('orders').doc(orderId).set({
-//       timestamp: serverTimestamp(),
-//     })
-
-//     navigation.navigate('MyOrdersScreen', { orderId });
-//     Alert.alert('Order Success', 'Your order has been placed successfully!');
-//   } catch (error) {
-//     console.error('Error saving order to Firebase:', error);
-//     Alert.alert('Error', 'There was an issue saving your order. Please try again.');
-//   }
-// }
  
 
-const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
+
+  const totalPrice = () => {
+    const subtotal = calculateTotal;
+    return subtotal + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - subtotal * restaurants.details.discount;
+  };
 const handleMakePayment = () => {
   const totalItems = calculateTotalItems();
-  const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
+  // const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
 
+
+  // setLoading(true)
   // Configure Paystack
   const paymentConfig = {
-    amount: totalPrice * 100, // Convert to kobo
+    amount: totalPrice() * 100, // Convert to kobo
     billingEmail: 'paystackwebview@something.com', // Replace with user email or default
     onCancel: (e) => {
       console.log('Transaction cancelled:', e);
+      // setLoading(false)
+
     },
     onSuccess: async (res) => {
       // console.log('Transaction successful:', res);
+
+      // setLoading(true)
+
 
       // Save order details to Firebase on payment success
       try {
@@ -291,6 +269,8 @@ const handleMakePayment = () => {
       } catch (error) {
         console.error('Error saving order after payment:', error);
         Alert.alert('Error', 'There was an issue saving your order. Please try again.');
+      } finally {
+        // setLoading(false)
       }
     },
   };
@@ -300,6 +280,8 @@ const handleMakePayment = () => {
     paystackWebViewRef.current.startTransaction(paymentConfig);
   } else {
     console.error('Paystack WebView reference is null.');
+    // setLoading(false)
+
   }
 };
 
@@ -310,8 +292,6 @@ const saveOrderToFirebase = async () => {
     console.log('Starting to save order to Firebase...');
     const orderId = await generateUniqueId();
 
-    console.log(orderId)
-
     // Structure order data
     const orderData = {
       orderId,
@@ -319,13 +299,14 @@ const saveOrderToFirebase = async () => {
       restaurantId,
       restaurantName: restaurants.name,
       packs,
-      totalAmount: totalPrice,
+      restaurant: restaurants,
+      totalAmount: totalPrice(),
       address: defaultAddress,
       timestamp: serverTimestamp(),
       status: 'pending',
     };
 
-    console.log(orderData)
+    
 
     //  Save order to the centralized orders collection
     const orderRef = await setDoc(doc(db, 'orders', orderId), orderData);
@@ -364,14 +345,20 @@ const saveOrderToFirebase = async () => {
     setEditingPackIndex(null); // Stop editing once the user submits
   };
 
-  if (Object.keys(updatedCartItems).length === 0 || packs.length===0) {
+  if (packs.length === 0) {
     return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
   }
+
   
+  
+  console.log('Formatted Pack from resturant screen Items:', JSON.stringify(packs, null, 2))
+// console.log('Formatted Cart Items:', JSON.stringify(cartItems, null, 2))
 
-
-  const renderCartItem = ({ packIndex, restaurantId, item }) => (
-    <View style={styles.cartItem} key={item.name}>
+  const renderCartItem = ({ packIndex, restaurantId, item }) => {
+    // console.log('Item object:', item);
+  // console.log('Item ID:', item.id);
+    return (
+      <View style={styles.cartItem} key={`${packIndex}-${restaurantId}`}>
       <View style={styles.itemDetailsContainer}>
         <Text style={styles.itemName}>{item.name}</Text>
       </View>
@@ -389,13 +376,23 @@ const saveOrderToFirebase = async () => {
         <Text style={styles.removeButtonText}>Remove</Text>
       </TouchableOpacity>
     </View>
-  );
+    )
+    
+}
+
 
 
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+    {isLoading ? (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#bf0603" />
+        <Text>Saving your order, please wait...</Text>
+      </View>
+    ) : (
+      <>
+       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton}>
           <AntDesign name="left" size={20} color="#8b8c89" onPress={() => navigation.goBack()} />
         </TouchableOpacity>
@@ -433,15 +430,19 @@ const saveOrderToFirebase = async () => {
               />
             </View>
             {!collapsedPacks[packIndex] && (
-              <View>
-                {Object.entries(pack).map(([restaurantId, cartItems]) => (
-                  <View key={restaurantId}>
-                    {/* <Text style={styles.restaurantNameHeader}>{restaurantId}</Text>= */}
-                    {Object.values(cartItems).map(item => renderCartItem({ packIndex: packIndex, restaurantId, item }))}
-                  </View>
-                ))}
-              </View>
-            )}
+        <View>
+          {Object.entries(pack).map(([restaurantId, cartItems]) => (
+            <View key={restaurantId}>
+              {/* Render each item with unique key */}
+              {Object.values(cartItems).map((item, index) => (
+                <View key={`${packIndex}-${item.id}-${index}`}>
+                  {renderCartItem({ packIndex, restaurantId, item })}
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      )}
 
             <TouchableOpacity onPress={() => handleDuplicatePack(packIndex)} style={styles.duplicatePackButton}>
               <Text style={styles.duplicatePackButtonText}>Duplicate Pack</Text>
@@ -514,16 +515,22 @@ const saveOrderToFirebase = async () => {
       <Paystack
         paystackKey="pk_test_58253816127400d5a706afa7347a6be34107a93d"
         billingEmail="adesanyaboluwatito225@gmail.com"
-        amount={totalPrice} // Amount should be in kobo or minor currency units
+        amount={totalPrice()} // Amount should be in kobo or minor currency units
         onCancel={(e) => {
           console.log('Transaction cancelled:', e);
         }}
-        onSuccess={(res) => {
-          saveOrderToFirebase()
+        onSuccess={async (res) => {
+          setIsLoading(true)
+          await saveOrderToFirebase()
           console.log('Transaction successful:', res);
+          setIsLoading(false)
         }}
         ref={paystackWebViewRef}
       />
+
+      </>
+      )}
+     
       
     </View>
   );
@@ -534,6 +541,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingTop:50,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
