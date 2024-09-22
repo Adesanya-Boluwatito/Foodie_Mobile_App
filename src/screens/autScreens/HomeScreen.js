@@ -2,6 +2,7 @@ import React, { useState,useEffect } from 'react';
 import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView, Alert} from 'react-native';
 import restaurantsData from "../../components/data/restaurants_feed.json"
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import {Icon } from 'react-native-elements';
 import * as Location from 'expo-location';
 import { useToast } from "react-native-toast-notifications"
 
@@ -50,59 +51,36 @@ export default function HomeScreen({navigation}) {
     const [errorMsg, setErrorMsg] = useState(null);
     const [address, setAddress] = useState(null);
     const [sortedRestaurants, setSortedRestaurants] = useState([]);
+    const [sortById, setSortById] = useState([])
     const toast = useToast();
     
 
 
     useEffect(() => {
-        const sorted = [...restaurantsData.restaurants]
-          .sort((a, b) => b.details.rating - a.details.rating)
-          .slice(0, 5);
-        setSortedRestaurants(sorted);
-      }, []);
+        const fetchSortedRestaurants = async () => {
+            const sorted = [...restaurantsData.restaurants]
+                .sort((a, b) => b.details.rating - a.details.rating)
+                .slice(0, 5);
+            setSortedRestaurants(sorted);
+        };
+
+        const  fetchSortById = async () => {
+            const sorted = [...restaurantsData.restaurants]
+            .sort((a, b) => a.id - b.id)
+            .slice(0, 6);
+            setSortById(sorted);
+            }
+
+        fetchSortById()
+        fetchSortedRestaurants();
+    }, []);
     // const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating - a.details.rating).slice(0,5);
 
-    const handleFoodSearch = () => {
-        // Add your logic for handling food search here
+    const handleFoodSearch = (category) => {
+        navigation.navigate('CategoryRestaurantsScreen', { category });
         console.log('Food Found');
     }
     const handleLocationSearch = async () => {
-    //     const { status } = await Location.requestForegroundPermissionsAsync();
-    //     navigation.navigate("Map")
-    // if (status !== 'granted') {
-    //   setErrorMsg('Permission to access location was denied');
-    //   Alert.alert('Permission denied', 'You need to enable location permissions to use this feature.');
-    //   return;
-    // }
-
-    // try {
-    //   // Get the current location
-    //   const location = await Location.getCurrentPositionAsync({});
-    //   setLocation(location);
-
-    //   if (location) {
-    //     // Reverse geocode the coordinates to get a human-readable address
-    //     const [reverseGeocodeResult] = await Location.reverseGeocodeAsync({
-    //       latitude: location.coords.latitude,
-    //       longitude: location.coords.longitude,
-    //     });
-
-    //     // Format the address (landmark or key location)
-    //     if (reverseGeocodeResult) {
-    //       const formattedAddress = `${reverseGeocodeResult.name || ''} ${reverseGeocodeResult.street || ''}, ${reverseGeocodeResult.city || ''}, ${reverseGeocodeResult.region || ''}`;
-    //       setAddress(formattedAddress);
-    //       toast.show("Location Found", {
-    //         type: "success",
-    //         placement: "top",
-    //         duration: 4000,
-    //         offsetTop: 30,
-    //         animationType:'zoom-in'
-    //       })
-    //     }
-    //   }
-    // } catch (error) {
-    //   Alert.alert('Error', 'Failed to get location information. Please try again.');
-    // }
         navigation.navigate("Map")
         console.log('Location Found')
     };
@@ -110,10 +88,6 @@ export default function HomeScreen({navigation}) {
     const handleRestaurantPress = (restaurants) => {
     navigation.navigate('ResturantScreen', { restaurants });
   }
-    
-    // const limitedRestaurants = restaurants.slice(0, 5);
-
-      
     
 
     return( 
@@ -134,21 +108,18 @@ export default function HomeScreen({navigation}) {
           </Text>
         )} */}
 
-                <View style={[styles.TextInput1, styles.shadowProp]}>
-                    <TextInput
-                     style={styles.input}
-                     value={search}
-                     placeholder='Search for meals or area'
-                     onChangeText={setSearch}
-                    />
-                    <TouchableOpacity onPress={handleFoodSearch}>
-                    <Ionicons name="search-outline" size={24} color="black" style={styles.searchIcon} />
+                <View>
+                    
+                    <TouchableOpacity onPress={() => navigation.navigate('AllRestaurants')}>
+                    <Ionicons name="search" size={32} color="black" style={styles.searchIcon} />
                     </TouchableOpacity>
 
                 </View>
 
             </View>
+            
         <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
+                                {/* Top Categories */}
             <View style={styles.topCategoryContainer}>
                 <Text style={styles.topCatText}> Top Categories</Text> 
             </View>
@@ -157,7 +128,7 @@ export default function HomeScreen({navigation}) {
             
             <ScrollView  horizontal={true} showsHorizontalScrollIndicator={false}>
             {images.map((item) => (
-                <TouchableOpacity key={item.id} onPress={handleFoodSearch}>
+                <TouchableOpacity key={item.id} onPress={() => handleFoodSearch(item.name)}>
                 <View  style={styles.imageContainer}>
                     <Image source={{ uri: item.url }} style={styles.image} />
                     <Text style={styles.imageName}>{item.name}</Text>
@@ -167,7 +138,7 @@ export default function HomeScreen({navigation}) {
             </ScrollView>
             
             </View>
-
+                            {/* Popular Restaurants    */}
             <View style={{flexDirection:"row"}}>
                 <Text style={[styles.topCatText, styles.topCategoryContainer]} > Popular Resturants</Text>
                 <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
@@ -193,23 +164,33 @@ export default function HomeScreen({navigation}) {
             </ScrollView>
             </View>
 
-
+                {/* Restaurants to Explore */}
             <View>
-                <Text style={[styles.topCatText, styles.topCategoryContainer]} > Nearby Deal</Text>
+                <Text style={[styles.topCatText, styles.topCategoryContainer]} > Restaurant To Explore</Text>
             </View>
 
             <View style={styles.scrollViewContent}>
-            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {sortedRestaurants.map((restaurants, index) => (
-                    <TouchableOpacity key={restaurants.id} onPress={() => navigation.navigate('Restaurant')}>
-                    <View style={styles.restaurantContainer}>
+            <ScrollView vertical={true} showsVerticalScrollIndicator={false} style={styles.shadowProp}>
+                {sortById.map((restaurants, index) => (
+                    <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
+                    <View style={styles.restaurantContainers}>
                         <Image source={{ uri: restaurants.details.logo }} style={styles.resturantImage} />
                         <View style={styles.restaurantNameContainer}>
                         <Text style={styles.name}>{restaurants.name}</Text>
                         </View>
-                        {/* <Text style={styles.price}>{restaurant.price}</Text> */}
-                        <Text style={styles.location}>{restaurants.details.location}</Text>
+                        <View  style={styles.ratingContainer}>
+
+                            <Icon name="star" type="font-awesome" color="#FFD700" style={styles.ratingIcon}/>
+                            <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
+                            <Text style={styles.explorelocation}>| {restaurants.details.location}</Text>
+                        </View>
+                        
+
+                        <Text style={styles.descriptions}>{restaurants.details.description}</Text>
+                    
                     </View>
+                    
+                    
                     </TouchableOpacity>
                 ))}
             </ScrollView>
@@ -319,8 +300,8 @@ const styles = StyleSheet.create({
   },
   searchIcon: {
     position: 'absolute',
-    right: -10,
-    top: -24,
+    right: 9,
+    top: 15,
     zIndex: 1,
 },
 topCategoryContainer: {
@@ -333,7 +314,7 @@ topCatText:{
 scrollViewContent: {
     flexDirection: 'row', // Horizontal scroll
     flexWrap: 'wrap', // Wrap items to next line if needed
-    padding: 10, // Add padding between images
+    // padding: 10, // Add padding between images
     alignItems: 'center', // Center items horizontally
     paddingVertical: 17, // Add vertical padding
     
@@ -366,7 +347,7 @@ location: {
     fontSize: 17,
     color: "#555555",
     position: "absolute",
-    padding:100,
+    padding:85,
     paddingLeft:170,
     paddingRight:12,
     fontWeight: "bold",
@@ -407,6 +388,51 @@ viewallText: {
     fontWeight: '600',
     fontSize: 15,
     textAlign:"center"
+},
+// Explored Restaurant
+restaurantContainers: {
+    // marginRight: 10,
+    padding: 10,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 20,
+    width: 350,
+    height:170,
+    marginBottom:15
+    
+},
+descriptions: {
+    fontSize: 12,
+    color: "#8b8c89",
+    position: "absolute",
+    zIndex:1,
+    top:15,
+    padding:100,
+    paddingLeft:180,
+    paddingRight:9,
+    fontWeight: "bold",
+},
+ratingText: {
+    fontSize: 16,
+    color: "#555555", // Adjust color as needed
+    fontWeight: "bold",
+},
+ratingContainer: {
+    position: 'absolute',
+    flexDirection: 'row',
+    top: 85, // Adjust this value to place the container as needed
+    left: 170,
+    zIndex: 10,
+
+},
+explorelocation: {
+    fontSize: 17,
+    color: "#555555",
+    marginLeft: 10, // Add spacing from the rating text
+    fontWeight: "bold",
+},
+ratingIcon: {
+    zIndex: 11, // Ensure the icon appears above other elements
+    marginRight: 5, // Add spacing between the star icon and the rating text
 },
 
       

@@ -2,18 +2,21 @@ import React, { useState, useEffect,useRef } from 'react';
 import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import ChatModal from '../../components/chatModal';
 import AntDesign from '@expo/vector-icons/AntDesign'
 import { auth, db } from '../../../firebaseconfi';
 import { doc,  getDoc, deleteDoc, setDoc } from "firebase/firestore"
 
 
-const CartBanner = ({ itemCount, total, cartItems, restaurants}) => {
+const CartBanner = ({ itemCount, total, cartItems, restaurants, message}) => {
   const navigation = useNavigation();  // Use the hook here
   
 
   const handleCheckout = () => {
     const newPack = [cartItems];
-    navigation.navigate('Cart', { cartItems, restaurants});
+    console.log("Current message:", message);
+    navigation.navigate('Cart', { cartItems, restaurants, message});
+
   };
   return (
     <View style={styles.banner}>
@@ -36,6 +39,8 @@ export default function ResturantScreen({}) {
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
+  const [message, setMessage] = useState('');
+  const [isModalVisible, setModalVisible] = useState(false)
   const [isFavourite, setIsFavourite] = useState(false)
   const [isFavouriteButtonDisabled, setIsFavouriteButtonDisabled] = useState(false);
   const route = useRoute();
@@ -43,9 +48,14 @@ export default function ResturantScreen({}) {
   const restaurantId = restaurants.id;
   
 
-  const handleChatService = () => {
-    navigation.navigate('Chat', {  userId: UserId });
-}
+//   const handleChatService = (msg) => {
+//     setMessage(msg);
+// }
+
+const handleMessageSubmit = (msg) => {
+  setMessage(msg); 
+ console.log("Message submitted:", msg);// Store the message in state
+};
 
 const toggleFavourites = async () => {
   setIsFavourite(prevState => !prevState); // Immediate toggle
@@ -225,6 +235,7 @@ const handlebackPree = () => {
       }
     })
   ).current;
+  // console.log(message)
 
   const fallbackImageUri = 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png';
 
@@ -254,7 +265,7 @@ const handlebackPree = () => {
             <AntDesign name={isFavourite ? "heart": "hearto" } size={24} color="#bf0603" />
             </TouchableOpacity> 
           </View>
-          <Text style={styles.deliveryTime}>45 Minutes (Delivery time)</Text>
+          <Text style={styles.deliveryTime}>{restaurants.details.deliveryTime}</Text>
           <Text style={styles.offer}>OFFER - 10% OFF ON ALL BEVERAGES</Text>
         </View>
           
@@ -279,18 +290,25 @@ const handlebackPree = () => {
         </View>
         ))} 
       </ScrollView>
+
+      <ChatModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSubmit={handleMessageSubmit}
+        message={message} // Pass the current message
+      />
       
       <Animated.View
 
         {...panResponder.panHandlers}
         style={[pan.getLayout(), styles.floaterStyle]}
-      ><TouchableOpacity  onPress={handleChatService}>
+      ><TouchableOpacity  onPress={ () => setModalVisible(true)}>
         <AntDesign name="message1" size={24} color="white" />
         </TouchableOpacity>
       </Animated.View>
       
       {getItemCount() > 0 && (
-      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurants={restaurants}/>)}
+      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurants={restaurants} message={message}/>)}
     </View>
   );
 };

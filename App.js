@@ -22,6 +22,7 @@ import SignUpScreen from './src/screens/autScreens/SignUpScreen';
 import PaymentOptionsScreen from './src/screens/autScreens/paymentMethod';
 import ManageAddressScreen from './src/screens/autScreens/manageScreen';
 import ChatScreen from './src/screens/autScreens/ChatScreen';
+import CategoryRestaurantsScreen from './src/screens/autScreens/categoryRestaurantsScreen';
 import FavouritesScreen from './src/screens/autScreens/FavouriteScreen';
 import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
@@ -167,6 +168,9 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="GroupOrder" component={GroupOrderScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="CategoryRestaurantsScreen" component={CategoryRestaurantsScreen} />
+
+
       
     </Stack.Navigator>
   );

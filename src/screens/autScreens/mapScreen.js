@@ -9,9 +9,44 @@ Mapbox.setAccessToken("pk.eyJ1IjoiYm9sdXdhdGl0byIsImEiOiJjbTA2cmVwaG4wd3JrMmtzZ2
 
 const MapScreen = () => {
   const [location, setLocation] = useState(null);
+  const [readableLocation, setReadableLocation] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
+
+  const getReadableLocation = useCallback(async (latitude, longitude) => {
+    try {
+      const response = await axios.get(
+        `https://api.mapbox.com/geocoding/v5/mapbox.places/${longitude},${latitude}.json`,
+        {
+          params: {
+            access_token: "pk.eyJ1IjoiYm9sdXdhdGl0byIsImEiOiJjbTA2cmVwaG4wd3JrMmtzZ2ZrZHp1Y3NyIn0.0U7q1yCc51dpEtk_xGcE0A",
+            types: "place, locality, neighborhood, address",  // Finer details
+          },
+        }
+      );
+  
+      if (response.data && response.data.features.length > 0) {
+        // Try to find the most specific feature, such as locality or neighborhood
+        const detailedFeature = response.data.features.find(
+          (feature) => feature.place_type.includes('neighborhood') || feature.place_type.includes('locality')
+        );
+  
+        // Fallback to the first feature if no detailed feature is found
+        if (detailedFeature) {
+          setReadableLocation(detailedFeature.place_name);
+        } else {
+          setReadableLocation(response.data.features[0].place_name);
+        }
+      } else {
+        setReadableLocation("Location not found");
+      }
+    } catch (error) {
+      console.error("Reverse Geocoding error:", error);
+      setReadableLocation("Failed to fetch location name.");
+    }
+  }, []);
+  
 
   useEffect(() => {
     (async () => {
@@ -25,8 +60,10 @@ const MapScreen = () => {
       // Get the user's current location
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
+
+      getReadableLocation(currentLocation.coords.latitude, currentLocation.coords.longitude);
     })();
-  }, []);
+  }, [getReadableLocation]);
 
   const handleSearch = useCallback(async (query) => {
     if (query.length > 2) { // Start searching after 3 characters
@@ -53,6 +90,8 @@ const MapScreen = () => {
     setLocation({ longitude: coordinates[0], latitude: coordinates[1] });
     setSearchQuery(suggestion.place_name);
     setSuggestions([]);
+
+    getReadableLocation(coordinates[1], coordinates[0]);
   };
 
   if (errorMsg) {
@@ -90,7 +129,7 @@ const MapScreen = () => {
 
       <View style={styles.currentLocationContainer}>
         <Text style={styles.currentLocationText}>Current Location:</Text>
-        <Text style={styles.currentLocation}>{`${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}`}</Text>
+        <Text style={styles.currentLocation}>{readableLocation}</Text>
       </View>
 
       <View style={styles.searchContainer}>

@@ -17,7 +17,7 @@ import {addDoc, collection, serverTimestamp, getDocs, query, where, setDoc, doc}
 
 
 export default function CartScreen({ route, navigation }) {
-  const { cartItems = {}, restaurants = {}, packs: packsFromRoute = [] } = route.params || {};
+  const { cartItems = {}, restaurants = {}, packs: packsFromRoute = [], message = '' } = route.params || {};
   const [updatedCartItems, setUpdatedCartItems] = useState({});
   const [isLoading,  setIsLoading] = useState(false);
   const [total, setTotal] = useState(0);
@@ -31,6 +31,10 @@ export default function CartScreen({ route, navigation }) {
   const paystackWebViewRef = useRef(null);
   const userId = auth.currentUser.uid
   const restaurantId = restaurants.id
+  
+  useEffect(() => {
+  console.log('Received message:', message);
+}, [message]);
   
 
   useEffect(() => {
@@ -308,6 +312,7 @@ const saveOrderToFirebase = async () => {
       orderId,
       userId,
       restaurantId,
+      message,
       restaurantName: restaurants.name,
       packs,
       restaurant: restaurants,
