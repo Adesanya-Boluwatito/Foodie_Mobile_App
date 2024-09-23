@@ -4,12 +4,14 @@ import { getDocs, collection } from "firebase/firestore";
 import { auth, db } from '../../../firebaseconfi';
 import { ScrollView } from "react-native-gesture-handler";
 import { useNavigation } from '@react-navigation/native';
+const emptyFavoritesImage = require('../../../assets/ima/heart (1).png');
 
 const FavouritesScreen = () => {
   const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
+  
 
   const fetchFavourites = useCallback(async () => {
     setLoading(true);
@@ -81,7 +83,12 @@ const FavouritesScreen = () => {
         data={favourites}
         keyExtractor={(item) => item.id}
         renderItem={renderFavouriteItem}
-        ListEmptyComponent={<Text>No favorites added yet.</Text>}
+        ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Image source={emptyFavoritesImage} style={styles.emptyImage} />
+              <Text style={styles.emptyText}>No favorites added yet.</Text>
+            </View>
+          }
         contentContainerStyle={favourites.length === 0 ? styles.emptyContainer : {}}
         initialNumToRender={10}
         maxToRenderPerBatch={10}

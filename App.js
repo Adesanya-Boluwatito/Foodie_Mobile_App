@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, SafeAreaView, ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, SafeAreaView, ActivityIndicator, Animated, Easing } from 'react-native';
 import { colors } from './src/global/style';
 import SignIn from './src/screens/autScreens/SignIn';
 import HomeScreen from './src/screens/autScreens/HomeScreen';

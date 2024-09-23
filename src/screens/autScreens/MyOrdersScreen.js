@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator,Image } from 'react-native';
 import { Icon } from 'react-native-elements';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { auth, db } from '../../../firebaseconfi';
 import { collection, doc, getDoc, getDocs, Timestamp} from 'firebase/firestore';
 import { ScrollView } from 'react-native-gesture-handler';
+import NoOrdersImage from '../../../assets/ima/shopping-list.png'; // Adjust the path as needed
+
 
 const MyOrdersScreen = () => {
   const [orders, setOrders] = useState([]);
@@ -120,7 +122,10 @@ const MyOrdersScreen = () => {
       ) : (
         <ScrollView>
           {orders.length === 0 ? (
+            <View style={styles.emptyContainer}>
+            <Image source={NoOrdersImage} style={styles.noOrdersImage} resizeMode="contain" />
             <Text style={styles.noOrdersText}>You have no orders yet.</Text>
+          </View>
           ) : (
             orders.map((order) => (
               <View key={order.id} style={styles.orderContainer}>
@@ -197,6 +202,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 200,
+  },
+  noOrdersImage: {
+    width: 200,  // Adjust width as needed
+    height: 200, // Adjust height as needed
+    marginBottom: 16,
   },
 });
 

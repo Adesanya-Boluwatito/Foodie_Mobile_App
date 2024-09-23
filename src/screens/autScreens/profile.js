@@ -68,12 +68,18 @@ export default function User() {
 
 
   const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      await AsyncStorage.clear();
-      navigation.navigate('Sign In'); // Navigate to the SignIn screen after logout
-    } catch (error) {
-      console.error('Error logging out: ', error);
+    const user = auth.currentUser; // Get the current user
+  
+    if (user) {
+      try {
+        await auth.signOut();
+        await AsyncStorage.clear();
+        navigation.navigate('Sign In'); // Navigate to the SignIn screen after logout
+      } catch (error) {
+        console.error('Error logging out: ', error);
+      }
+    } else {
+      console.warn('No user is currently signed in.');
     }
   };
 
