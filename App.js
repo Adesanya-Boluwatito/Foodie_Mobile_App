@@ -155,7 +155,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       </Stack.Screen>
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'My Order' }} />
+      <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'Order History' }} />
       <Stack.Screen name="SignUpScreen" component={SignUpScreen} options={{ headerShown: false }} />
       <Stack.Screen name='MyTabs' component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name='Manage Add' component={ManageAddressScreen} options={{ headerShown: true, title: 'Manage Addresses' }} />
@@ -165,7 +165,7 @@ function MyScreens({ initialRoute, promptAsync, user }) {
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Support Chat' }} />
       <Stack.Screen name="OfferScreen" component={OffersScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="AllRestaurants" component={AllRestaurants} options={{ headerShown: false }}/>
-      <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ title: 'Favourites'}}/>
       <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="GroupOrder" component={GroupOrderScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="CategoryRestaurantsScreen" component={CategoryRestaurantsScreen} />
@@ -288,7 +288,7 @@ export default function App() {
   if (loading) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#FF4D4D" />
+        <ActivityIndicator size="large" color="#bf0603" />
       </View>
     );
   }

@@ -4,17 +4,9 @@ import TabSelector from '../../components/TabSelector';
 import restaurantsData from "../../components/data/restaurants_feed.json"
 
 
-const offersData = [
-  { id: '1', name: "McDonald's", rating: 4.1, time: '40-50 mins', price: '€30.0 for two', discount: '10% OFF', image: 'path_to_image' },
-  { id: '2', name: "Lucky's", rating: 4.2, time: '40-50 mins', price: '€30.0 for two', discount: '10% OFF', image: 'path_to_image' },
-];
 
-const freeDeliveryData = [
-  { id: '1', name: "Monginis Cake", category: 'Desserts', rating: 4.1, time: '40-50 mins', price: '€14.20', image: 'path_to_image' },
-  { id: '2', name: "Biriyani", category: 'Rice meals', rating: 4.1, time: '40-50 mins', price: '€14.20', image: 'path_to_image' },
-];
 
-export default function OffersScreen() {
+export default function OffersScreen({navigation}) {
 
 const [sortedRestauarnts, setSortedRestaurants] = useState([])
 const [filteredRestaurants, setFilteredResturant] = useState([])
@@ -44,13 +36,17 @@ useEffect(() => {
   }
 }, []);
 
+const handleRestaurantPress = (restaurants) => {
+  navigation.navigate('ResturantScreen', { restaurants });  // Navigate to RestaurantScreen
+};
+
   
 
 
 
 
   const renderOfferItem = ({ item }) => (
-    <TouchableOpacity style={styles.offerCard}>
+    <TouchableOpacity style={styles.offerCard} onPress={() => handleRestaurantPress(item)}>
       <Image source={{ uri: item.details.logo }} style={styles.offerImage} />
       <View style={styles.offerTextContainer}>
         <Text style={styles.offerTitle}>{item.name}</Text>
@@ -62,7 +58,7 @@ useEffect(() => {
   );
 
   const renderFreeDeliveryItem = ({ item }) => (
-    <TouchableOpacity style={styles.freeDeliveryCard}>
+    <TouchableOpacity style={styles.freeDeliveryCard} onPress={() => handleRestaurantPress(item)}>
       <Image source={{ uri: item.details.logo }} style={styles.freeDeliveryImage} />
       <View style={styles.freeDeliveryTextContainer}>
         <Text style={styles.freeDeliveryTitle}>{item.name}</Text>
@@ -99,6 +95,7 @@ useEffect(() => {
         renderItem={renderOfferItem}
         keyExtractor={(item) => item.id}
         showsHorizontalScrollIndicator={false}
+        
       />
       {/* </ScrollView> */}
 

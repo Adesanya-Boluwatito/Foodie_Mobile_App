@@ -43,20 +43,27 @@ const images = [
 
 
 
-export default function HomeScreen({navigation}) {
+export default function HomeScreen({route, navigation}) {
     
-
-    const [search, setSearch] = useState('');
-    const [location, setLocation] = useState(null);
-    const [errorMsg, setErrorMsg] = useState(null);
-    const [address, setAddress] = useState(null);
+    
+    const [address, setAddress] = useState('Set Location')
     const [sortedRestaurants, setSortedRestaurants] = useState([]);
     const [sortById, setSortById] = useState([])
     const toast = useToast();
+    // const { readableLocation } = route.params || { readableLocation: 'Unknown' };
     
 
+    // console.log("Location recieved after navigation:",readableLocation)
 
+    
     useEffect(() => {
+        if (route.params?.readableLocation) {
+            // Log the updated location
+            console.log("Location updated after navigation:", route.params.readableLocation);
+            setAddress(route.params.readableLocation);
+        }
+    
+
         const fetchSortedRestaurants = async () => {
             const sorted = [...restaurantsData.restaurants]
                 .sort((a, b) => b.details.rating - a.details.rating)
@@ -73,7 +80,7 @@ export default function HomeScreen({navigation}) {
 
         fetchSortById()
         fetchSortedRestaurants();
-    }, []);
+    }, [route.params?.readableLocation]);
     // const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating - a.details.rating).slice(0,5);
 
     const handleFoodSearch = (category) => {
@@ -107,6 +114,9 @@ export default function HomeScreen({navigation}) {
             {address}
           </Text>
         )} */}
+        <View style={styles.address}>
+            <Text style = {styles.addressText}>🎯 {address}</Text>
+        </View>
 
                 <View>
                     
@@ -241,68 +251,68 @@ export default function HomeScreen({navigation}) {
 
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        
-        // justifyContent: 'center', // You can change this to 'flex-end' to move the button to the bottom
-        // alignItems: 'center',
-        backgroundColor: "#fffbf8",
-        padding: 20, // Optional padding for the container
-        paddingTop:70,
-        // minHeight: 1000, // Adjust this value as needed (e.g., minHeight: 700)
-        // height:"100vh",
-        paddingBottom: 0,
-      }, 
-      locationContainer: {
-        backgroundColor: "white",
-        borderColor:"black",
-        borderRadius:7,
-        width: 40,
-        height:45,
-        alignItems:'center',
-        // marginTop:25,
+container: {
+    flex: 1,
+    
+    // justifyContent: 'center', // You can change this to 'flex-end' to move the button to the bottom
+    // alignItems: 'center',
+    backgroundColor: "#fffbf8",
+    padding: 20, // Optional padding for the container
+    paddingTop:70,
+    // minHeight: 1000, // Adjust this value as needed (e.g., minHeight: 700)
+    // height:"100vh",
+    paddingBottom: 0,
+    }, 
+locationContainer: {
+    backgroundColor: "white",
+    borderColor:"black",
+    borderRadius:7,
+    width: 40,
+    height:45,
+    alignItems:'center',
+    // marginTop:25,
 
-        // paddingTop:,
-      },
-      emoji: {
-        paddingTop: 10,
-      },
-      shadowProp: {
-        shadowColor: '#171717',
-        shadowOffset: {width: -2, height: 4},
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-        elevation:10
+    // paddingTop:,
     },
-    TextInput1: {
-        backgroundColor:"white",
-        paddingRight: 27 ,
-        paddingLeft:10,
-        
-        paddingVertical: 10,
-        marginHorizontal: 20,
-        borderRadius:7,
-        // marginBottom:30,
-        // marginTop: 60,
-        // marginStart: 10,
-        width:280,
-        // height:50,
-      },
-      searchBarContainer:{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%'
+    emoji: {
+    paddingTop: 10,
     },
-    input: {
-    fontSize: 20,
-    marginLeft: 10,
-    width: "90%",
-  },
-  searchIcon: {
-    position: 'absolute',
-    right: 9,
-    top: 15,
-    zIndex: 1,
+shadowProp: {
+    shadowColor: '#171717',
+    shadowOffset: {width: -2, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation:10
+},
+TextInput1: {
+    backgroundColor:"white",
+    paddingRight: 27 ,
+    paddingLeft:10,
+    
+    paddingVertical: 10,
+    marginHorizontal: 20,
+    borderRadius:7,
+    // marginBottom:30,
+    // marginTop: 60,
+    // marginStart: 10,
+    width:280,
+    // height:50,
+    },
+    searchBarContainer:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%'
+},
+input: {
+fontSize: 20,
+marginLeft: 10,
+width: "90%",
+},
+searchIcon: {
+position: 'absolute',
+right: 9,
+top: 10,
+zIndex: 1,
 },
 topCategoryContainer: {
     paddingTop: 25,
@@ -434,6 +444,16 @@ ratingIcon: {
     zIndex: 11, // Ensure the icon appears above other elements
     marginRight: 5, // Add spacing between the star icon and the rating text
 },
+address: {
+    alignContent:"center",
+    justifyContent:"center",
+    marginRight:24
+  },
+  addressText: {
+    fontSize: 20,
+    fontWeight:'bold',
+
+  }
 
       
 })

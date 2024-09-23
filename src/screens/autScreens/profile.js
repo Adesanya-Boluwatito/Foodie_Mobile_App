@@ -9,7 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const options = [
   { label: 'My Orders', icon: 'list-circle', screen: 'MyOrdersScreen' },
   { label: 'Manage Addresses', icon: 'home', screen:'Manage Add' },
-  { label: 'Payments', icon: 'card', screen:'Payment Option' },
+  // { label: 'Payments', icon: 'card', screen:'Payment Option' },
   { label: 'Favourites', icon: 'heart', screen:"FavouriteScreen" },
   { label: 'Help', icon: 'help-circle-sharp' },
   { label: 'Logout', icon: 'log-out' },
@@ -87,9 +87,9 @@ export default function User() {
           />
           <Text style={styles.name}>{userData ? userData.displayName : 'Loading...'}</Text>
           <Text style={styles.contact}>{userData ? userData.email : 'Loading...'}</Text>
-          <TouchableOpacity>
+          {/* <TouchableOpacity>
             <Text style={styles.edit}>EDIT</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
 
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 50,
   },
   profileImage: {
     width: 100,

@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from "react-native";
 import { getDocs, collection } from "firebase/firestore";
 import { auth, db } from '../../../firebaseconfi';
+import { ScrollView } from "react-native-gesture-handler";
+import { useNavigation } from '@react-navigation/native';
 
 const FavouritesScreen = () => {
   const [favourites, setFavourites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigation = useNavigation();
 
   const fetchFavourites = useCallback(async () => {
     setLoading(true);
@@ -33,15 +36,23 @@ const FavouritesScreen = () => {
     fetchFavourites();
   }, [fetchFavourites]);
 
+
+  const handleRestaurantPress = (restaurants) => {
+    navigation.navigate('ResturantScreen', { restaurants });
+  };
+
   const renderFavouriteItem = ({ item }) => (
-    <View style={styles.favouriteItem}>
-      <Image source={{ uri: item.details.logo }} style={styles.image} resizeMode="cover" />
-      <View style={styles.info}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.location}>{item.details.location}</Text>
-        <Text style={styles.rating}>Rating: {item.details.rating}</Text>
+    <TouchableOpacity onPress={() => handleRestaurantPress(item)}>
+      <View style={styles.favouriteItem}>
+        <Image source={{ uri: item.details.logo }} style={styles.image} resizeMode="cover" />
+        <View style={styles.info}>
+          <Text style={styles.name}>{item.name}</Text>
+          <Text style={styles.location}>{item.details.location}</Text>
+          <Text style={styles.rating}>Rating: {item.details.rating}</Text>
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
+    
   );
 
   if (loading) {
@@ -61,20 +72,39 @@ const FavouritesScreen = () => {
   }
 
   return (
-    <FlatList
-      data={favourites}
-      keyExtractor={(item) => item.id}
-      renderItem={renderFavouriteItem}
-      ListEmptyComponent={<Text>No favorites added yet.</Text>}
-      contentContainerStyle={favourites.length === 0 ? styles.emptyContainer : {}}
-      initialNumToRender={10}
-      maxToRenderPerBatch={10}
-      windowSize={10}
-    />
+    
+    <View style={styles.container}>
+      {/* <View style={styles.header}>
+        <Text style={styles.title}>Your Favourites</Text>
+      </View> */}
+      <FlatList
+        data={favourites}
+        keyExtractor={(item) => item.id}
+        renderItem={renderFavouriteItem}
+        ListEmptyComponent={<Text>No favorites added yet.</Text>}
+        contentContainerStyle={favourites.length === 0 ? styles.emptyContainer : {}}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={10}
+      />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1, 
+    backgroundColor: '#fffbf8', 
+    paddingHorizontal: 16, 
+    paddingTop:20,
+  },
+  header: {
+    // paddingHorizontal: 16,
+    // paddingTop: 40,
+    backgroundColor: '#fffbf8',
+    // borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
   favouriteItem: {
     flexDirection: "row",
     padding: 10,
@@ -82,6 +112,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "#f9f9f9",
     elevation: 2,
+    // paddingTop: 15z/,
   },
   image: {
     width: 80,

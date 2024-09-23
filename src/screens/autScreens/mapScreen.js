@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View, TextInput, Text, FlatList, TouchableOpacity, ActivityIndicator } from "react-native";
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Mapbox from "@rnmapbox/maps";
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -13,6 +14,13 @@ const MapScreen = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
+  const navigation = useNavigation();
+
+  const handlSetLocations = () => {
+    console.log("Location before navigation:", readableLocation)
+    navigation.navigate('Explore', {readableLocation })
+    console.log("Location after navigation:",readableLocation)
+  }
 
   const getReadableLocation = useCallback(async (latitude, longitude) => {
     try {
@@ -21,7 +29,7 @@ const MapScreen = () => {
         {
           params: {
             access_token: "pk.eyJ1IjoiYm9sdXdhdGl0byIsImEiOiJjbTA2cmVwaG4wd3JrMmtzZ2ZrZHp1Y3NyIn0.0U7q1yCc51dpEtk_xGcE0A",
-            types: "place, locality, neighborhood, address",  // Finer details
+            types: "place" // Finer details
           },
         }
       );
@@ -37,6 +45,7 @@ const MapScreen = () => {
           setReadableLocation(detailedFeature.place_name);
         } else {
           setReadableLocation(response.data.features[0].place_name);
+          console.log(readableLocation)
         }
       } else {
         setReadableLocation("Location not found");
@@ -60,6 +69,7 @@ const MapScreen = () => {
       // Get the user's current location
       let currentLocation = await Location.getCurrentPositionAsync({});
       setLocation(currentLocation.coords);
+      // console.log(currentLocation)
 
       getReadableLocation(currentLocation.coords.latitude, currentLocation.coords.longitude);
     })();
@@ -155,6 +165,13 @@ const MapScreen = () => {
           />
         )}
       </View>
+      <TouchableOpacity
+        style={styles.navigateButton}
+        onPress={() => handlSetLocations()}
+        
+      >
+        <Text style={styles.buttonText}>📌Set Location</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -218,4 +235,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  navigateButton: {
+    position: 'absolute',
+    bottom: 20,
+    // left: 10,
+    // right: 10,
+    width:150,
+    backgroundColor: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent:"center",
+    alignSelf:'center',
+    elevation: 5
+  },
+  buttonText: {
+    color: '#000000',
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  
 });
