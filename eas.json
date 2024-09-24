@@ -10,7 +10,11 @@
     "preview": {
       "distribution": "internal"
     },
-    "production": {}
+    "production": {
+      "env": {
+        "MAPBOX_DOWNLOAD_TOKEN": "${MAPBOX_DOWNLOADS_TOKEN}"
+      }
+    }
   },
   "submit": {
     "production": {}

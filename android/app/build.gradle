@@ -186,6 +186,8 @@ dependencies {
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
     def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
+    // Fetching the 'hermesEnabled' property from gradle.properties
+    def hermesEnabled = project.hasProperty("hermesEnabled") ? project.hermesEnabled.toBoolean() : false
 
     if (isGifEnabled) {
         // For animated gif support

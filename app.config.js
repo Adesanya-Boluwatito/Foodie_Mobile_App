@@ -22,7 +22,7 @@ export default {
       [
         "@rnmapbox/maps",
         {
-          RNMapboxMapsDownloadToken: process.env.RN_MAPBOX_TOKEN,
+          RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
         },
       ],
     ],
@@ -31,7 +31,9 @@ export default {
       resizeMode: "contain",
       backgroundColor: "#FCFBF4",
     },
-    assetBundlePatterns: ["**/*"],
+    assetBundlePatterns: ["**/*",
+      "src/components/data/*.json"
+    ],
     ios: {
       supportsTablet: true,
     },

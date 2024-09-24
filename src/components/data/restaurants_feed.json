@@ -1,0 +1,509 @@
+{
+    "restaurants": [
+      {
+        "id": "1",
+        "name": "The Grill House",
+        "details": {
+          "rating": 4.5,
+          "location": "123 Main Street",
+          "logo": "https://c8.alamy.com/comp/KD1XXR/logo-of-grill-house-restaurant-KD1XXR.jpg",
+          "coverImage": "https://i.pinimg.com/736x/ed/90/ad/ed90ad12ab7001fd7f7c253642140ba4.jpg",
+          "restaurantCharges": 3.00,
+          "deliveryFee": 1.50,
+          "freeDelivery": false,
+          "offerData": "Deal: €30 for two!",
+          "discount": 0.5,
+          "description": "Savor smoky BBQ ribs and juicy grilled chicken burgers at The Grill House, where flavor meets fire!",
+          "menu": [
+            {
+              "id": "1-1",
+              "name": "Grilled Chicken Burger",
+              "description": "Juicy grilled chicken with lettuce and tomato.",
+              "price": 8.99,
+              "image": "https://i.pinimg.com/564x/f5/84/22/f584223b4cb07cda004c66f3874d3dbc.jpg"
+            },
+            {
+              "id": "1-2",
+              "name": "BBQ Ribs",
+              "description": "Slow-cooked ribs with a tangy BBQ sauce.",
+              "price": 12.99,
+              "image": "https://i.pinimg.com/564x/a9/73/89/a97389250bcf8bb5c9a9104eee86f9e3.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "2",
+        "name": "Pasta Palace",
+        "details": {
+          "rating": 4.2,
+          "location": "456 Elm Avenue",
+          "logo": "https://images.unsplash.com/photo-1528605248644-14dd04022da1",
+          "restaurantCharges": 2.50,
+          "deliveryFee": 2.00,
+          "discount": 0.15,
+          "freeDelivery": true,
+          "offerData": "Deal: €25 for two!",
+          "description": "Dive into a world of creamy, cheesy, and delicious pasta at Pasta Palace, your ultimate pasta paradise!",
+          "menu": [
+            {
+              "id": "2-1",
+              "name": "Spaghetti Carbonara",
+              "description": "Creamy pasta with pancetta and parmesan.",
+              "price": 10.50,
+              "image": "https://images.unsplash.com/photo-1601312740924-5cba3e2513fc"
+            },
+            {
+              "id": "2-2",
+              "name": "Fettuccine Alfredo",
+              "description": "Rich and creamy Alfredo sauce over fettuccine.",
+              "price": 11.00,
+              "image": "https://images.unsplash.com/photo-1572441712043-1e09c1d479b4"
+            }
+          ]
+        }
+      },
+      {
+        "id": "3",
+        "name": "Sushi Express",
+        "details": {
+          "rating": 4.8,
+          "location": "789 Oak Lane",
+          "logo": "https://i.pinimg.com/564x/3d/87/b1/3d87b1cd020b8562a20952a9cec7b652.jpg",
+          "coverImage": "https://i.pinimg.com/564x/8e/45/c1/8e45c11d5128fb37bca834bb7b7ee90f.jpg",
+          "restaurantCharges": 4.00,
+          "deliveryFee": 2.50,
+          "deliveryTime": "35-45 minutes",
+          "discount": 0.2,
+          "freeDelivery": false,
+          "offerData": "Deal: €35 for two!",
+          "description": "Fresh, fast, and flavorful! Sushi Express delivers the finest rolls to your door—California Roll or Spicy Tuna?",
+          "menu": [
+            {
+              "id": "3-1",
+              "name": "California Roll",
+              "description": "Classic sushi roll with crab, avocado, and cucumber.",
+              "price": 7.50,
+              "image": "https://i.pinimg.com/564x/fd/82/23/fd8223f98706939f1105c7388ddf7c17.jpg"
+            },
+            {
+              "id": "3-2",
+              "name": "Spicy Tuna Roll",
+              "description": "Tuna with a spicy kick, wrapped in seaweed and rice.",
+              "price": 8.50,
+              "image": "https://i.pinimg.com/564x/41/81/ca/4181ca2a33357433f7e3d465d5ead6ac.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "4",
+        "name": "Burger Bistro",
+        "details": {
+          "rating": 4.3,
+          "location": "234 King Street",
+          "logo": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90",
+          "restaurantCharges": 3.50,
+          "deliveryFee": 2.00,
+          "discount": 0.05,
+          "freeDelivery": false,
+          "offerData": "Deal: €20 for two!",
+          "description": "Classic beef or veggie delight, Burger Bistro serves up bold flavors with every bite!",
+          "menu": [
+            {
+              "id": "4-1",
+              "name": "Classic Beef Burger",
+              "description": "Grilled beef patty with cheese, lettuce, and tomato.",
+              "price": 9.99,
+              "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd"
+            },
+            {
+              "id": "4-2",
+              "name": "Veggie Delight",
+              "description": "A flavorful veggie burger with avocado and hummus.",
+              "price": 8.50,
+              "image": "https://images.unsplash.com/photo-1550547660-d9450f859349"
+            }
+          ]
+        }
+      },
+      {
+        "id": "5",
+        "name": "Pizza Plaza",
+        "details": {
+          "rating": 4.6,
+          "location": "678 Pine Street",
+          "logo": "https://i.pinimg.com/564x/a1/c4/04/a1c404bea49c0143058bc4dd9da79d33.jpg",
+          "coverImage": "https://i.pinimg.com/564x/e1/15/36/e11536f4e6a7536b285180b2813ed601.jpg",
+          "restaurantCharges": 3.00,
+          "deliveryFee": 1.00,
+          "discount": 0.12,
+          "freeDelivery": true,
+          "offerData": "Deal: €30 for two!",
+          "description": "Your pizza cravings satisfied with classic pepperoni or fresh Margherita—Pizza Plaza has it all!",
+          "menu": [
+            {
+              "id": "5-1",
+              "name": "Pepperoni Pizza",
+              "description": "Classic pepperoni pizza with mozzarella cheese.",
+              "price": 11.50,
+              "image": "https://i.pinimg.com/564x/97/2e/13/972e13b00890e3d441be9aae612fa2ec.jpg"
+            },
+            {
+              "id": "5-2",
+              "name": "Margherita Pizza",
+              "description": "Fresh tomatoes, basil, and mozzarella cheese.",
+              "price": 10.00,
+              "image": "https://i.pinimg.com/736x/a0/22/34/a02234da91c98548c4647ef8471438a9.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "6",
+        "name": "Taco Town",
+        "details": {
+          "rating": 4.4,
+          "location": "910 Market Street",
+          "logo": "https://i.pinimg.com/564x/2d/80/17/2d8017a88c51c4f0e1161c5399d769ef.jpg",
+          "coverImage": "https://i.pinimg.com/474x/7a/83/46/7a8346fc8e303051491b305d709db52b.jpg" ,
+          "restaurantCharges": 2.50,
+          "deliveryFee": 1.50,
+          "discount": 0.08,
+          "freeDelivery": false,
+          "offerData": "€25.0 for two",
+          "menu": [
+            {
+              "id": "6-1",
+              "name": "Chicken Tacos",
+              "description": "Spicy grilled chicken with salsa and guacamole.",
+              "price": 7.00,
+              "image": "https://i.pinimg.com/236x/cf/13/99/cf139978f25a856b6d1b986bda9422ee.jpg"
+            },
+            {
+              "id": "6-2",
+              "name": "Beef Tacos",
+              "description": "Seasoned beef with lettuce, cheese, and salsa.",
+              "price": 7.50,
+              "image": "https://i.pinimg.com/236x/c3/70/65/c370657f97679c90f021a60a2f3f5d22.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "7",
+        "name": "Curry Corner",
+        "details": {
+          "rating": 4.7,
+          "location": "789 Spice Road",
+          "logo": "https://i.pinimg.com/564x/a6/8d/0c/a68d0cacd433cfc11bf8d611e88e6ae6.jpg",
+          "coverImage": "https://i.pinimg.com/564x/eb/fc/18/ebfc184a7674454dff9023b60a6e576e.jpg" ,
+          "restaurantCharges": 3.00,
+          "deliveryFee": 2.00,
+          "discount": 0.10,
+          "freeDelivery": false,
+          "offerData": "€30.0 for two",
+          "menu": [
+            {
+              "id": "7-1",
+              "name": "Chicken Tikka Masala",
+              "description": "Tender chicken in a creamy tomato sauce.",
+              "price": 12.00,
+              "image": "https://i.pinimg.com/564x/9f/0b/45/9f0b458ab4a394545d729285cf83db4d.jpg"
+            },
+            {
+              "id": "7-2",
+              "name": "Vegetable Biryani",
+              "description": "Flavorful rice with mixed vegetables and spices.",
+              "price": 9.00,
+              "image": "https://i.pinimg.com/564x/d3/ef/30/d3ef306fa8e29781e4f117a86e8be0d5.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "8",
+        "name": "Salad Stop",
+        "details": {
+          "rating": 4.5,
+          "location": "456 Green Lane",
+          "logo": "https://i.pinimg.com/564x/8f/ed/aa/8fedaa8890b59a8575246e2637a37a7b.jpg",
+          "coverImage": "https://i.pinimg.com/564x/e4/31/cd/e431cd839c97da7aa6a4359a710d8dd5.jpg",
+          "restaurantCharges": 2.50,
+          "deliveryFee": 1.50,
+          "discount": 0.12,
+          "freeDelivery": false,
+          "offerData": "€15.0 for two",
+          "menu": [
+            {
+              "id": "8-1",
+              "name": "Caesar Salad",
+              "description": "Crisp romaine lettuce with Caesar dressing.",
+              "price": 7.50,
+              "image": "https://i.pinimg.com/236x/28/e6/7c/28e67ca4091128760bf872145354029b.jpg"
+            },
+            {
+              "id": "8-2",
+              "name": "Greek Salad",
+              "description": "Fresh tomatoes, cucumbers, olives, and feta cheese.",
+              "price": 8.00,
+              "image": "https://i.pinimg.com/236x/66/d9/5b/66d95b0ab33c55f2717dde85585540fc.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "9",
+        "name": "BBQ Barn",
+        "details": {
+          "rating": 4.3,
+          "location": "987 Fire Road",
+          "logo": "https://i.pinimg.com/236x/30/7b/a4/307ba42a624ae60bffbc6782d4b9a795.jpg",
+          "coverImage": "https://i.pinimg.com/474x/01/03/86/01038666ec7759759cf55eb82bc95687.jpg",
+          "restaurantCharges": 4.00,
+          "deliveryFee": 2.50,
+          "discount": 0.05,
+          "freeDelivery": true,
+          "offerData": "€40.0 for two",
+          "menu": [
+            {
+              "id": "9-1",
+              "name": "Pulled Pork Sandwich",
+              "description": "Tender pulled pork with tangy BBQ sauce.",
+              "price": 9.50,
+              "image": "https://i.pinimg.com/564x/c9/91/9c/c9919cf0e2bca9aa638b3cc9f3fec723.jpg"
+            },
+            {
+              "id": "9-2",
+              "name": "Smoked Brisket",
+              "description": "Slow-cooked brisket with a smoky flavor.",
+              "price": 13.00,
+              "image": "https://i.pinimg.com/474x/c5/69/80/c56980367e1d9d1c9501f10b1ce078f7.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "10",
+        "name": "Waffle Works",
+        "details": {
+          "rating": 4.6,
+          "location": "654 Sweet Street",
+          "logo": "https://i.pinimg.com/564x/ec/a6/5b/eca65b291fdbcf5788f98734cf171f3b.jpg",
+          "coverImage": "https://i.pinimg.com/564x/bb/25/ca/bb25caffc540540ed3b8aebfce5edde9.jpg",
+          "restaurantCharges": 3.00,
+          "deliveryFee": 1.50,
+          "discount": 0.18,
+          "freeDelivery": false,
+          "offerData": "€28.0 for two",
+          "menu": [
+            {
+              "id": "10-1",
+              "name": "Classic Waffles",
+              "description": "Golden waffles served with syrup and butter.",
+              "price": 8.00,
+              "image": "https://i.pinimg.com/564x/d6/92/bb/d692bb2b92cec2fa866b8e1f6023ec7a.jpg"
+            },
+            {
+              "id": "10-2",
+              "name": "Strawberry Waffles",
+              "description": "Waffles topped with fresh strawberries and cream.",
+              "price": 9.00,
+              "image": "https://i.pinimg.com/564x/ba/52/d8/ba52d88e379ce652f9c31da195689bd6.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "11",
+        "name": "Mediterranean Delight",
+        "details": {
+          "rating": 4.7,
+          "location": "321 Olive Avenue",
+          "logo": "https://i.pinimg.com/564x/de/d4/aa/ded4aaa951cb4859802ee5b45c3a024e.jpg",
+          "coverImage": "https://i.pinimg.com/564x/27/dc/29/27dc292266019ec1c5daffde1f237a4c.jpg" ,
+          "restaurantCharges": 3.50,
+          "deliveryFee": 2.00,
+          "discount": 0.15,
+          "freeDelivery": false,
+          "offerData": "€18.0 for two",
+          "menu": [
+            {
+              "id": "11-1",
+              "name": "Chicken Shawarma",
+              "description": "Spiced chicken wrapped in pita with garlic sauce.",
+              "price": 10.00,
+              "image": "https://i.pinimg.com/564x/50/3b/99/503b9952fffc44143981d6b6a1b953cd.jpg"
+            },
+            {
+              "id": "11-2",
+              "name": "Falafel Plate",
+              "description": "Crispy falafel served with hummus and salad.",
+              "price": 9.50,
+              "image": "https://i.pinimg.com/564x/df/a3/61/dfa361daf477097099204ed76f3aa99c.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "12",
+        "name": "Noodle House",
+        "details": {
+          "rating": 4.5,
+          "location": "159 Rice Road",
+          "logo": "https://i.pinimg.com/236x/57/4b/de/574bdeb3f7e6d04a39e68111b87a7b3a.jpg",
+          "coverImage": "https://i.pinimg.com/564x/f8/25/41/f825412998bacf42cd836945bbab9a60.jpg" ,
+          "restaurantCharges": 2.50,
+          "deliveryFee": 1.50,
+          "discount": 0.10,
+          "freeDelivery": false,
+          "offerData": "€22.0 for two",
+          "menu": [
+            {
+              "id": "12-1",
+              "name": "Pad Thai",
+              "description": "Stir-fried noodles with shrimp, peanuts, and lime.",
+              "price": 11.50,
+              "image": "https://i.pinimg.com/236x/ef/44/16/ef44168ff2f04606c40bb8f82e398566.jpg"
+            },
+            {
+              "id": "12-2",
+              "name": "Ramen Bowl",
+              "description": "Hearty ramen with pork, egg, and vegetables.",
+              "price": 12.00,
+              "image": "https://i.pinimg.com/236x/50/59/ce/5059ce70b7cbd1e4ff3aec5992e87b55.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "13",
+        "name": "Smoothie Shack",
+        "details": {
+          "rating": 4.4,
+          "location": "456 Healthy Way",
+          "logo": "https://i.pinimg.com/236x/2e/c8/bc/2ec8bcdea83e0ae4ed5ddbb8bad246cd.jpg",
+          "coverImage": "https://i.pinimg.com/236x/a0/0f/9c/a00f9c86c5fa8a540136aba07b5d78a2.jpg" ,
+          "restaurantCharges": 2.00,
+          "deliveryFee": 1.00,
+          "discount": 0.12,
+          "freeDelivery": false,
+          "offerData": "€18.0 for two",
+          "menu": [
+            {
+              "id": "13-1",
+              "name": "Berry Blast Smoothie",
+              "description": "A blend of strawberries, blueberries, and raspberries.",
+              "price": 6.50,
+              "image": "https://i.pinimg.com/564x/e9/5f/6f/e95f6fae67e1b67c72a34a703273bff4.jpg"
+            },
+            {
+              "id": "13-2",
+              "name": "Green Detox Smoothie",
+              "description": "A healthy mix of spinach, kale, and pineapple.",
+              "price": 7.00,
+              "image": "https://i.pinimg.com/236x/c8/01/f9/c801f989a8acbabb8d94cc7181a278af.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "14",
+        "name": "Dessert Temple",
+        "details": {
+          "rating": 4.7,
+          "location": "789 Sweet Tooth Lane",
+          "logo": "https://i.pinimg.com/564x/90/cd/10/90cd1094e421f91bc080b09abcaaac26.jpg",
+          "coverImage": "https://i.pinimg.com/564x/9d/25/93/9d2593780fe22eba7acf1ea6e9e57110.jpg" ,
+          "restaurantCharges": 3.00,
+          "deliveryFee": 1.50,
+          "discount": 0.10,
+          "freeDelivery": true,
+          "offerData": "€35.0 for two",
+          "menu": [
+            {
+              "id": "14-1",
+              "name": "Chocolate Lava Cake",
+              "description": "Rich chocolate cake with a gooey center.",
+              "price": 8.00,
+              "image": "https://i.pinimg.com/564x/61/bc/d7/61bcd7ca00f1ba927f12692545d74a71.jpg"
+            },
+            {
+              "id": "14-2",
+              "name": "Tiramisu",
+              "description": "Classic Italian dessert with coffee and mascarpone.",
+              "price": 7.50,
+              "image": "https://i.pinimg.com/564x/37/1e/e7/371ee7bec88d3f6daa4e32846450963c.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "15",
+        "name": "JACK'S Grill N Chill",
+        "details": {
+          "rating": 4.5,
+          "location": "321 BBQ Street",
+          "logo": "https://i.pinimg.com/564x/04/a5/ea/04a5ea78ff3a57d28bbaa79f8650d09b.jpg",
+          "coverImage": "https://i.pinimg.com/236x/fb/45/c4/fb45c455a1d7f6fadf65da7e975a9aae.jpg" ,
+          "restaurantCharges": 3.50,
+          "deliveryFee": 2.00,
+          "discount": 0.10,
+          "freeDelivery": false,
+          "offerData": "€40.0 for two",
+
+          "menu": [
+            {
+              "id": "15-1",
+              "name": "Grilled Steak",
+              "description": "Juicy grilled steak with a side of mashed potatoes.",
+              "price": 14.00,
+              "image": "https://i.pinimg.com/236x/ad/88/aa/ad88aa0472018d614906eb5fd45d76db.jpg"
+            },
+            {
+              "id": "15-2",
+              "name": "BBQ Chicken Wings",
+              "description": "Crispy wings coated in BBQ sauce.",
+              "price": 9.50,
+              "image": "https://i.pinimg.com/236x/e0/b8/bc/e0b8bc25a8345f5f08d05c3233b055e1.jpg"
+            }
+          ]
+        }
+      },
+      {
+        "id": "16",
+        "name": "Abule Jollof",
+        "details": {
+          "rating": 4.5,
+          "location": "Ipaja Main Street",
+          "logo": "https://thumbs.dreamstime.com/z/jollof-rice-logo-party-pictures-recipe-ingredients-benachin-riz-au-gras-ceebu-j%C3%ABn-zaam-248847199.jpg?ct=jpeg",
+          "coverImage": "https://i.pinimg.com/736x/0b/c9/e6/0bc9e6dabc631c296a6d48669a891ff3.jpg",
+          "restaurantCharges": 7.50,
+          "deliveryFee": 15.00,
+          "discount": 0.10,
+          "freeDelivery": false,
+          "offerData":"€22.0 for two",
+          "menu":[
+            {
+              "id" :"16-1",
+              "name": "Jollof Rice",
+              "description": "Spicy jollof rice with chicken.",
+              "price": 8.00,
+              "image": "https://i.pinimg.com/564x/fe/87/14/fe8714a7c00eeec042228ffddad0b2cc.jpg"
+
+            },
+            {
+              "id": "16-2",
+              "name": "Fried Rice",
+              "description": "Fried rice with chicken and vegetables.",
+              "price": 9.00,
+              "image": "https://i.pinimg.com/564x/72/ad/79/72ad79dd22944e086e469c4d73e7c3d5.jpg"
+            }
+          ]
+
+
+      }
+    }
+    ]
+  }
+  

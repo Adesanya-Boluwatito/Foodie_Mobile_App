@@ -1,0 +1,84 @@
+[
+    {
+      "id": "1",
+      "name": "McDonald's",
+      "image": "https://via.placeholder.com/150",
+      "discount": "10% OFF",
+      "rating": 4.1,
+      "deliveryTime": "40-50 mins",
+      "price": "€30.0 for two"
+    },
+    {
+      "id": "2",
+      "name": "KFC",
+      "image": "https://via.placeholder.com/150",
+      "discount": "15% OFF",
+      "rating": 4.5,
+      "deliveryTime": "30-40 mins",
+      "price": "€25.0 for two"
+    },
+    {
+      "id": "3",
+      "name": "Burger King",
+      "image": "https://via.placeholder.com/150",
+      "discount": "20% OFF",
+      "rating": 4.3,
+      "deliveryTime": "45-55 mins",
+      "price": "€28.0 for two"
+    },
+    {
+      "id": "4",
+      "name": "Subway",
+      "image": "https://via.placeholder.com/150",
+      "discount": "12% OFF",
+      "rating": 4.2,
+      "deliveryTime": "35-45 mins",
+      "price": "€22.0 for two"
+    },
+    {
+      "id": "5",
+      "name": "Pizza Hut",
+      "image": "https://via.placeholder.com/150",
+      "discount": "25% OFF",
+      "rating": 4.6,
+      "deliveryTime": "50-60 mins",
+      "price": "€35.0 for two"
+    },
+    {
+      "id": "6",
+      "name": "Domino's Pizza",
+      "image": "https://via.placeholder.com/150",
+      "discount": "18% OFF",
+      "rating": 4.4,
+      "deliveryTime": "40-50 mins",
+      "price": "€32.0 for two"
+    },
+    {
+      "id": "7",
+      "name": "Taco Bell",
+      "image": "https://via.placeholder.com/150",
+      "discount": "22% OFF",
+      "rating": 4.3,
+      "deliveryTime": "30-40 mins",
+      "price": "€27.0 for two"
+    },
+    {
+      "id": "8",
+      "name": "Starbucks",
+      "image": "https://via.placeholder.com/150",
+      "discount": "10% OFF",
+      "rating": 4.7,
+      "deliveryTime": "20-30 mins",
+      "price": "€15.0 for two"
+    },
+    {
+      "id": "9",
+      "name": "Chipotle",
+      "image": "https://via.placeholder.com/150",
+      "discount": "15% OFF",
+      "rating": 4.5,
+      "deliveryTime": "35-45 mins",
+      "price": "€25.0 for two"
+    }
+  ]
+  
