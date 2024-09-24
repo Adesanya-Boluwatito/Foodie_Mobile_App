@@ -14,6 +14,12 @@
       "env": {
         "MAPBOX_DOWNLOAD_TOKEN": "${MAPBOX_DOWNLOADS_TOKEN}"
       }
+    },
+    "apk": {
+      "buildType": "apk"
+    },
+    "aab": {
+      "buildType": "aab"
     }
   },
   "submit": {
