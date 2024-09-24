@@ -5,18 +5,15 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "buildType":"apk"
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "buildType": "apk"
+      "distribution": "internal"
     },
     "production": {
       "env": {
         "MAPBOX_DOWNLOAD_TOKEN": "${MAPBOX_DOWNLOADS_TOKEN}"
-      },
-      "buildType":"apk"
+      }
     }
   },
   "submit": {
