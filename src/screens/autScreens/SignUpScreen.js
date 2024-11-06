@@ -6,11 +6,13 @@ import { ALERT_TYPE, Dialog, AlertNotificationRoot, Toast } from 'react-native-a
 import { setDoc, collection, doc } from "firebase/firestore"
 import { auth , db} from '../../../firebaseconfi.js';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { globalStyles } from '../../global/styles/theme.js';
 
 
 // Check the import statement for colors and parameters
 import { colors, parameters } from '../../global/style';
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics.js';
 
 export default function SignIn() {
     const [email, setEmail] = useState('');
@@ -85,7 +87,7 @@ export default function SignIn() {
     <AlertNotificationRoot>
     <KeyboardAwareScrollView contentContainerStyle={styles.container} resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
         
-      <Text style={styles.Headertext}>Sign Up</Text>
+      <Text style={globalStyles.textBold}>Sign Up</Text>
           <View >
             <TextInput
                 style = {styles.TextInput2}
@@ -99,7 +101,7 @@ export default function SignIn() {
         <View> 
           <View >
             <TextInput
-                style = {styles.TextInput1}
+                style = {styles.TextInput2}
                 placeholder='Email'
                 value={email}
                 onChangeText={setEmail}
@@ -180,7 +182,7 @@ const styles = StyleSheet.create({
       // height:"100vh",
     }, 
   Headertext: {
-    fontSize: 24,
+    fontSize: moderateScale(24),
     fontWeight: 'bold',
     color: colors.text, 
     paddingBottom:29
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
   
   
   subtext: {
-    fontSize: 22,
+    fontSize: moderateScale(22),
     fontWeight: 'bold',
     color: "#ced4da", 
     // marginLeft: 20,
@@ -210,34 +212,36 @@ const styles = StyleSheet.create({
   TextInput1: {
     borderWidth:1,
     borderColor: "#000000",
-    paddingHorizontal: 10,
+    paddingHorizontal: horizontalScale(10),
+    fontSize: moderateScale(15),
     // marginHorizontal: 20,
     borderRadius:7,
-    marginBottom:30,
+    marginBottom:verticalScale(30),
     marginTop: 30,
-    marginStart: 10,
-    width:330,
-    height:50,
+    // marginStart: '2%',
+    width:horizontalScale(330),
+    height:verticalScale(50),
   },
   TextInput2: {
     borderWidth:1,
-    borderRadius:7,
-    paddingHorizontal: 10,
-    marginLeft:10,
-    marginHorizontal:20,
-    width:330,
-    height:50,
+    borderRadius:12,
+    marginVertical: verticalScale(15),
+    paddingHorizontal: horizontalScale(10),
+    // marginHorizontal:20,
+    width:horizontalScale(330),
+    height:verticalScale(50),
     borderColor: "#000000",
-    flexDirection:'row',
-    marginRight:10
+    // flexDirection:'row',
+    fontSize: moderateScale(15)
+    // marginRight:10
     // justifyContent: "space-between",
     // alignContent:'center',
     // alignItems: 'center'
   },
   eyeIcon: {
     position: 'absolute',
-    right: 19,
-    top: 5,
+    right: horizontalScale(15),
+    top: verticalScale(25),
     zIndex: 1,
   },
   eyeIconBackground: {

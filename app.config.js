@@ -2,7 +2,7 @@ require('dotenv').config();
 
 export default {
   expo: {
-    name: "client",
+    name: "Foodie",
     slug: "client",
     version: "1.0.0",
     orientation: "portrait",
@@ -44,6 +44,7 @@ export default {
       },
       softwareKeyboardLayoutMode: "pan",
       package: "foodie.food12",
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON
     },
     web: {
       favicon: "./assets/favicon.png",
@@ -51,6 +52,14 @@ export default {
     extra: {
       eas: {
         projectId: "3d69b5cc-738d-4178-8e8c-60f0ec80b3d6",
+        firebaseApiKey: process.env.FIREBASE_API_KEY,
+        firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
+        firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+        firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+        firebaseAppId: process.env.FIREBASE_APP_ID,
+        googleservicesJson: process.env.GOOGLE_SERVICES_JSON
+
       },
     },
   },

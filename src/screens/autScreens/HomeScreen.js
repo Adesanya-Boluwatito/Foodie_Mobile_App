@@ -5,6 +5,7 @@ import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import {Icon } from 'react-native-elements';
 import * as Location from 'expo-location';
 import { useToast } from "react-native-toast-notifications"
+import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 
 
 
@@ -267,15 +268,15 @@ locationContainer: {
     backgroundColor: "white",
     borderColor:"black",
     borderRadius:7,
-    width: 40,
-    height:45,
+    width: horizontalScale(40),
+    height:verticalScale(45),
     alignItems:'center',
     // marginTop:25,
 
     // paddingTop:,
     },
     emoji: {
-    paddingTop: 10,
+    paddingTop: moderateScale(10),
     },
 shadowProp: {
     shadowColor: '#171717',
@@ -295,7 +296,7 @@ TextInput1: {
     // marginBottom:30,
     // marginTop: 60,
     // marginStart: 10,
-    width:280,
+    width:horizontalScale(280),
     // height:50,
     },
     searchBarContainer:{
@@ -334,13 +335,13 @@ imageContainer: {
     marginHorizontal: 5,// Add margin around each image
 },
 image: {
-    width: 100, // Set image width
-    height: 100, // Set image height
+    width: horizontalScale(100), // Set image width
+    height: verticalScale(100), // Set image height
     borderRadius: 20, // Add border radius for rounded corners
 },
 imageName: {
     marginTop: 5,
-    fontSize: 16,
+    fontSize: moderateScale(16),
     textAlign:"center",
     fontWeight: "500",
 },
@@ -357,18 +358,18 @@ location: {
     fontSize: 17,
     color: "#555555",
     position: "absolute",
-    padding:85,
-    paddingLeft:170,
-    paddingRight:12,
+    padding:verticalScale(85),
+    paddingLeft:horizontalScale(170),
+    paddingRight:horizontalScale(12),
     fontWeight: "bold",
 },
 restaurantContainer: {
     marginRight: 10,
-    padding: 10,
+    padding: verticalScale(10),
     backgroundColor: "#f0f0f0",
     borderRadius: 20,
-    width: 300,
-    height:170,
+    width: horizontalScale(300),
+    height:verticalScale(170),
     
 },
 restaurantNameContainer: {
@@ -378,14 +379,14 @@ restaurantNameContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     paddingHorizontal: 10,
     borderTopRightRadius: 10,
-    borderBottomLeftRadius: 10,
+    borderBottomLeftRadius: horizontalScale(10),
 },
 restaurantDetails: {
-    padding: 10,
+    padding: horizontalScale(10),
 },
 resturantImage: {
-    width: 150, // Set image width
-    height: 150, // Set image height
+    width: horizontalScale(150), // Set image width
+    height: verticalScale(150), // Set image height
     borderRadius: 20, // Add border radius for rounded corners
 },
 viewallContainer: {
@@ -405,8 +406,8 @@ restaurantContainers: {
     padding: 10,
     backgroundColor: "#f0f0f0",
     borderRadius: 20,
-    width: 350,
-    height:170,
+    width: horizontalScale(350),
+    height:verticalScale(170),
     marginBottom:15
     
 },

@@ -28,17 +28,12 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesome5, Fontisto } from '@expo/vector-icons';
-import {CLIENT_ID} from '@env'
 import 'react-native-gesture-handler';
-import * as Google from "expo-auth-session/providers/google";
-import { makeRedirectUri } from 'expo-auth-session';
-import * as WebBrowser from "expo-web-browser";
-import { GoogleAuthProvider, onAuthStateChanged, signInWithCredential } from "firebase/auth";
-import { auth } from "./firebaseconfi";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
-WebBrowser.maybeCompleteAuthSession();
+
+
+
 // enableScreens(true);
 
 const Stack = createStackNavigator();
@@ -139,20 +134,15 @@ function MyTabs() {
   );
 }
 
-function MyScreens({ initialRoute, promptAsync, user }) {
-  const navigation = useNavigation();
+function MyScreens() {
+  
 
-  useEffect(() => {
-    if (user) {
-      navigation.navigate('HomeScreen');
-    }
-  }, [user]);
+  
 
   return (
-    <Stack.Navigator initialRouteName={initialRoute}>
-      <Stack.Screen name="Sign In" options={{ headerShown: false }}>
-        {props => <SignIn {...props} promptAsync={promptAsync} />}
-      </Stack.Screen>
+    <Stack.Navigator initialRouteName= 'Sign In'>
+      <Stack.Screen name="Sign In" component={SignIn} options={{ headerShown: false }}/>
+      
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'Order History' }} />
@@ -176,23 +166,13 @@ function MyScreens({ initialRoute, promptAsync, user }) {
   );
 }
 
-const redirectUris = makeRedirectUri({ useProxy: false });
+
 
 export default function App() {
-  const [initialRoute, setInitialRoute] = useState('Sign In'); 
-  const [userInfo, setUserInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [request, response, promptAsync, error] = Google.useAuthRequest({
-    androidClientId: CLIENT_ID,
-    scopes: ['openid', 'profile', 'email'],
-    redirectUri: makeRedirectUri({ useProxy: false }),
+  
 
-  });
-
-  if (error) {
-    console.error(error.message);
-    // Handle the error case
-  }
+  
 
 
   useEffect(() => {
@@ -206,84 +186,7 @@ export default function App() {
 
 
 
-  const checkLocalUser = async () => {
-    try {
-      const userJSON = await AsyncStorage.getItem('@user');
-      const userData = userJSON ? JSON.parse(userJSON) : null;
-      if (userData && userData.uid) {
-        setUserInfo(userData);
-        setInitialRoute('HomeScreen');
-      } else {
-        setUserInfo(null);
-        setInitialRoute('Sign In');
-      }
-    } catch (error) {
-      console.error(error.message);
-      if (error.code === 'ERR_STORAGE_FULL') {
-        console.error('Storage is full. Please free up some space.');
-      } else {
-        console.error('Error reading from storage:', error.message);
-      }
-      setUserInfo(null);
-      setInitialRoute('Sign In');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (response) {
-      const { authentication } = response;
-      const credential = GoogleAuthProvider.credential(authentication.idToken, authentication.accessToken);
-      signInWithCredential(auth, credential)
-        .then((result) => {
-          const user = result.user;
-          setUserInfo(user);
-          setInitialRoute('HomeScreen');
-        })
-        .catch((error) => {
-          console.error(error.message);
-        });
-    }
-  }, [response]);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          await AsyncStorage.setItem('@user', JSON.stringify(user));
-        } catch (error) {
-          console.error(error.message);
-          // Handle storage error case
-          if (error.code === 'ERR_STORAGE_FULL') {
-            console.error('Storage is full. Please free up some space.');
-          } else {
-            console.error('Error writing to storage:', error.message);
-          }
-        }
-        setUserInfo(user);
-        setInitialRoute('HomeScreen');
-      } else {
-        try {
-          await AsyncStorage.removeItem('@user');
-        } catch (error) {
-          console.error(error.message);
-          // Handle storage error case
-          if (error.code === 'ERR_STORAGE_FULL') {
-            console.error('Storage is full. Please free up some space.');
-          } else {
-            console.error('Error removing from storage:', error.message);
-          }
-        }
-        setUserInfo(null);
-        setInitialRoute('Sign In');
-      }
-    });
-  
-    checkLocalUser();
-  
-    return () => unsub();
-  }, []);
+ 
 
   if (loading) {
     return (
@@ -310,7 +213,7 @@ export default function App() {
                   ) : (
                     // Show MyScreens component when loading is false
                     <SafeAreaView style={{ flex: 1 }}>
-                    <MyScreens initialRoute={initialRoute} promptAsync={promptAsync} user={userInfo} />
+                    <MyScreens />
                     </SafeAreaView>
                   )}
 

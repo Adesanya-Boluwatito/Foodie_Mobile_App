@@ -105,6 +105,10 @@ def jscFlavor = 'org.webkit:android-jsc:+'
 
 android {
 // @generated begin @rnmapbox/maps-libcpp - expo prebuild (DO NOT MODIFY) sync-e24830a5a3e854b398227dfe9630aabfaa1cadd1
+compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
 packagingOptions {
         pickFirst 'lib/x86/libc++_shared.so'
         pickFirst 'lib/x86_64/libc++_shared.so'
@@ -116,10 +120,15 @@ packagingOptions {
 
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
+    kotlinOptions {
+    jvmTarget = "17"
+    freeCompilerArgs += ["-Xopt-in=kotlin.RequiresOptIn"]
+    allWarningsAsErrors = false // Set to false to ignore warnings
+}
 
     namespace 'com.anonymous.client'
     defaultConfig {
-        applicationId 'com.anonymous.client'
+        applicationId 'foodie.food12'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -176,10 +185,12 @@ packagingOptions {
 
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
+    implementation "androidx.credentials:credentials:1.5.0-beta01"
     implementation("com.facebook.react:react-android")
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation 'com.facebook.android:facebook-android-sdk:latest.release'
+    implementation "androidx.credentials:credentials-play-services-auth:1.5.0-beta01"
+    // implementation 'com.facebook.android:facebook-android-sdk:latest.release'
     
     // implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"
 

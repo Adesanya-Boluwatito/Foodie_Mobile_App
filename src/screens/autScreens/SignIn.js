@@ -1,17 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from '@react-navigation/native';
-import { signInWithEmailAndPassword } from "firebase/auth"
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential } from "firebase/auth"
 import { ALERT_TYPE, AlertNotificationRoot, Toast } from 'react-native-alert-notification';
-import { auth } from '../../../firebaseconfi.js';
+import {auth}  from '../../../firebaseconfi.js';
+import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
+import {CLIENT_ID} from '@env'
 // Check the import statement for colors and parameters
 import { colors } from '../../global/style';
+import { globalStyles } from '../../global/styles/theme.js';
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { horizontalScale, moderateScale,  verticalScale } from '../../theme/Metrics.js';
 
 
-export default function SignIn({promptAsync}) {
+
+export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -22,10 +27,52 @@ export default function SignIn({promptAsync}) {
     setShowPassword(!showPassword);
   };
 
+  useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: CLIENT_ID,
+      // offlineAccess: true,  // Replace with your actual client ID
+    });
+  }, []);
+
   const handleForgotPassword = () => {
     // Add your logic for handling forgot password here
     console.log('Forgot password link pressed');
   };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      // Start Google sign-in process
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const userInfo = await GoogleSignin.signIn();
+
+      const tokens = await GoogleSignin.getTokens();
+      const { idToken, accessToken } = tokens;
+      console.log("Google ID Token:", tokens);
+
+      
+  
+      if (!idToken) {
+        throw new Error("Google Sign-In ID token is missing");
+      }
+  
+      // Create Google credential and sign in with Firebase
+      const googleCredential = GoogleAuthProvider.credential(idToken, accessToken);
+      const userCredential = await signInWithCredential(auth, googleCredential);
+  
+      // Store user information
+      await AsyncStorage.setItem('@user', JSON.stringify(userCredential.user));
+      navigation.replace('HomeScreen');
+     
+      }catch (error) {
+      console.error("Google Sign-In Error:", error); // Log the full error object
+      console.log("Detailed Error Info:", JSON.stringify(error, Object.getOwnPropertyNames(error))); // Log all properties in error
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+
 
   const handleLogin = async () => {
     setLoading(true);
@@ -53,7 +100,7 @@ export default function SignIn({promptAsync}) {
   return (
     <AlertNotificationRoot>
       <KeyboardAwareScrollView contentContainerStyle={styles.container} resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
-        <Text style={styles.Headertext}>Sign In</Text>
+        <Text style={globalStyles.textBold}>Sign In</Text>
 
         <View>
           <View>
@@ -80,7 +127,7 @@ export default function SignIn({promptAsync}) {
             </TouchableOpacity>
           </View>
 
-          <View style={{ marginLeft: 247, marginTop: 10, marginBottom: 20 }} font="">
+          <View style={{ marginLeft: horizontalScale(247), marginTop: 10, marginBottom: 20 }} font="">
             <TouchableOpacity onPress={handleForgotPassword}>
               <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
             </TouchableOpacity>
@@ -106,23 +153,24 @@ export default function SignIn({promptAsync}) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.googleButton}>
-            <TouchableOpacity onPress={() => promptAsync()} style={{ marginLeft: -35 }}>
-              <Text style={styles.googleText}>
-                Google
-              </Text>
-              <Ionicons name="logo-google" size={24} color="black" position="absolute" zIndex={1} left={-25} style={{ marginLeft: 40 }} />
-            </TouchableOpacity>
+          <View >
+          <GoogleSigninButton
+            style={{ width: 192, height: 48 }}
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Light}
+            onPress={handleGoogleLogin}
+          />
           </View>
         </View>
 
-        <View style={styles.optionText}>
-          <Text style={styles.subtext}>
-            Not yet a member,
-            <TouchableOpacity onPress={someAction}>
-              <Text style={styles.signUpText}>Sign Up</Text>
-            </TouchableOpacity>
+        <View style={[styles.optionText]}>
+          <Text style={globalStyles.textRegular}>
+             Not yet a member,
           </Text>
+            <TouchableOpacity onPress={someAction}> 
+              <Text style={[globalStyles.textRegular, styles.subtext]} > SignUp </Text>
+            </TouchableOpacity>
+          
         </View>
       </KeyboardAwareScrollView>
     </AlertNotificationRoot>
@@ -149,37 +197,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   subtext: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: "#ced4da",
+    fontSize: moderateScale(18),
+    // fontWeight: 'bold',
+    color: "#f02d3a",
   },
   TextInput1: {
     borderWidth: 1,
     borderColor: "#000000",
-    paddingHorizontal: 10,
+    paddingHorizontal: horizontalScale(10),
     borderRadius: 7,
     marginBottom: 30,
-    marginTop: 60,
+    marginTop: verticalScale(60),
     marginStart: 10,
-    width: 330,
-    height: 50,
+    width: horizontalScale(330),
+    height: verticalScale(50),
   },
   TextInput2: {
     borderWidth: 1,
     borderRadius: 7,
-    paddingHorizontal: 10,
+    paddingHorizontal: horizontalScale(10),
     marginLeft: 10,
     marginHorizontal: 20,
-    width: 330,
-    height: 50,
+    width: horizontalScale(330),
+    height: verticalScale(50),
     borderColor: "#000000",
     flexDirection: 'row',
     marginRight: 10,
   },
   eyeIcon: {
     position: 'absolute',
-    right: 19,
-    top: 5,
+    right: horizontalScale(19),
+    top: verticalScale(5),
     zIndex: 1,
   },
   eyeIconBackground: {
@@ -192,7 +240,7 @@ const styles = StyleSheet.create({
   },
   signIn: {
     backgroundColor: "#f02d3a",
-    paddingVertical: 20,
+    paddingVertical: verticalScale(15),
     paddingHorizontal: 1,
     borderRadius: 10,
   },
@@ -254,6 +302,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center"
   },
   signUpText: {
     fontSize: 22,
