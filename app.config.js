@@ -11,7 +11,7 @@ export default {
     },
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
-    scheme: "com.anonymous.client",
+    scheme: "foodie.food12",
     plugins: [
       [
         "expo-location",
@@ -43,7 +43,7 @@ export default {
         backgroundColor: "#ffffff",
       },
       softwareKeyboardLayoutMode: "pan",
-      package: "com.anonymous.client",
+      package: "foodie.food12",
     },
     web: {
       favicon: "./assets/favicon.png",
