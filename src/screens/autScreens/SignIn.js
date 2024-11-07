@@ -94,12 +94,12 @@ export default function SignIn() {
 
   const someAction = () => {
     console.log("Sign Up");
-    navigation.navigate('SignUpScreen');
+    navigation.navigate('SignUp');
   };
 
   return (
     <AlertNotificationRoot>
-      <KeyboardAwareScrollView contentContainerStyle={styles.container} resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
+      <KeyboardAwareScrollView contentContainerStyle={globalStyles.container} resetScrollToCoords={{ x: 0, y: 0 }} scrollEnabled={false}>
         <Text style={globalStyles.textBold}>Sign In</Text>
 
         <View>
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: "#FCFBF4",
     padding: 20, // Optional padding for the container
-    paddingTop: 20,
+    paddingTop: verticalScale(20),
     minHeight: 900, // Adjust this value as needed (e.g., minHeight: 700)
   },
   Headertext: {

@@ -1,14 +1,16 @@
 // styles/theme.js
 import { horizontalScale, moderateScale,  verticalScale } from '../../theme/Metrics.js';
 export const fonts = {
-    regular: 'Roboto-Regular', // Match the font file name without the `.ttf` extension
-    bold: 'Montserrat-ExtraBold',
+    regular: 'RFDewi-Regular', // Match the font file name without the `.ttf` extension
+    bold: 'RFDewi-Bold',
   };
   
   export const globalStyles = {
     container: {
       flex: 1,
-      padding: 16,
+      padding: 20,
+      
+      
     },
     textRegular: {
       fontFamily: fonts.regular,
@@ -17,7 +19,7 @@ export const fonts = {
     },
     textBold: {
       fontFamily: fonts.bold,
-      fontSize: moderateScale(24),
+      fontSize: moderateScale(25),
       fontWeight: "700"
     },
   };
