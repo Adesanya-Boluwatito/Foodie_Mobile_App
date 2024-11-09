@@ -9,11 +9,12 @@ import { globalStyles, fonts } from "../../../global/styles/theme";
 import { horizontalScale, verticalScale, moderateScale } from "../../../theme/Metrics";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "../../../../firebaseconfi";
+import axios from 'axios'
 
 
 
 
-export default function SignUp() {
+export default function SignUp({route}) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -30,6 +31,13 @@ export default function SignUp() {
     const toggleConfirmPasswordVisibility =() => {
         setshowConfirmPassword(!showConfirmPassword)
     }
+
+    const requestOTP = () => {
+        axios.post('http://192.168.82.176:3000/otp/send-otp', { email })
+        .then(response => console.log(response.data.message))
+        .catch(error => console.error(error));
+    }
+
 
     const  handleSignUp = async () => {
         if (!name || !email || !password || !phoneNumber) {
@@ -48,7 +56,9 @@ export default function SignUp() {
             const user = userCredential.user;
             const userId = user.uid
 
-            navigation.navigate('OTP')
+            navigation.navigate('OTP', { email })
+            console.log(email)
+            requestOTP()
 
             // Add user details to Firestore
             const docRef = doc(db,  "users", userId);

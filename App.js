@@ -142,7 +142,7 @@ function MyScreens() {
   
 
   return (
-    <Stack.Navigator initialRouteName= 'OTP'>
+    <Stack.Navigator initialRouteName= 'Sign In'>
       <Stack.Screen name="Sign In" component={SignIn} options={{ headerShown: false }}/>
       
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />

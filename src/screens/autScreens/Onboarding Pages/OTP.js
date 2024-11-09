@@ -1,13 +1,30 @@
 import React, {useState, useRef} from 'react'
-import {View, Text, StyleSheet, TextInput, TouchableOpacity} from 'react-native'
+import {View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator} from 'react-native'
 import { globalStyles, fonts } from '../../../global/styles/theme'
 import { horizontalScale, verticalScale, moderateScale } from '../../../theme/Metrics'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { ALERT_TYPE, AlertNotificationRoot, Toast } from "react-native-alert-notification";
+import axios from 'axios'
 
-export default function OTP() {
+export default function OTP({route}) {
     const [loading, setLoading] = useState(false)
+    const { email = '' } = route.params
     const [otp, setOtp] = useState(['', '', '', ''])
     const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+
+    const verifyOTP = (otpString) => {
+        setLoading(true)
+        axios.post('http://192.168.82.176:3000/otp/verify-otp', { email, otp: otpString })
+        .then(response => {
+            console.log(response.data.message);
+            setLoading(false);
+        })
+        
+        .catch(error => {
+            console.error(error);
+            setLoading(false);
+        })
+    }
 
     const handleChange = (index, value) => {
         // Immediate return if value is empty or not numeric
@@ -61,7 +78,11 @@ export default function OTP() {
         const otpString = otp.join('');
         if (otpString.length === 4) {
             console.log("Entered OTP: ", otpString);
-            // Add your verification logic here
+            console.log("Email: ", email);
+            verifyOTP(otpString);
+        } else {
+            // Handle case where OTP is not fully entered (optional)
+            console.log('Please enter the full OTP');
         }
     };
 
@@ -106,7 +127,7 @@ export default function OTP() {
             </View>
 
             <View style={styles.verifyButtonContainer}>
-                <TouchableOpacity  style={styles.verifybutton} >
+                <TouchableOpacity  style={styles.verifybutton} onPress={handleSubmit} >
                            {loading ? <ActivityIndicator size="small" color="#fff"/> : <Text style={styles.VerifyText}>Verify</Text>} 
                 </TouchableOpacity>  
             </View>
