@@ -3,6 +3,7 @@ import { horizontalScale, moderateScale,  verticalScale } from '../../theme/Metr
 export const fonts = {
     regular: 'RFDewi-Regular', // Match the font file name without the `.ttf` extension
     bold: 'RFDewi-Bold',
+    number: 'RFDewiExtended-Regular'
   };
   
   export const globalStyles = {

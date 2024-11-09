@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator}
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { ALERT_TYPE, AlertNotificationRoot, Toast } from "react-native-alert-notification";
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import {setDoc, collection, doc} from "firebase/firestore"
 import { globalStyles, fonts } from "../../../global/styles/theme";
 import { horizontalScale, verticalScale, moderateScale } from "../../../theme/Metrics";
 import { createUserWithEmailAndPassword } from "firebase/auth";
@@ -31,7 +32,7 @@ export default function SignUp() {
     }
 
     const  handleSignUp = async () => {
-        if (!name || email || password) {
+        if (!name || !email || !password || !phoneNumber) {
             Toast.show({
                 type: ALERT_TYPE.WARNING,
                 title: 'Error',
@@ -47,6 +48,8 @@ export default function SignUp() {
             const user = userCredential.user;
             const userId = user.uid
 
+            navigation.navigate('OTP')
+
             // Add user details to Firestore
             const docRef = doc(db,  "users", userId);
             await setDoc(docRef, {
@@ -61,9 +64,7 @@ export default function SignUp() {
                 textBody: "Account created Successfully!",
                 button: 'Close',
             })
-
-            navigation.navigate('HomeScreen');
-        } catch {error} {
+        } catch (error) {
             console.error('Error adding document:', error);
             Toast.show({
                 type: ALERT_TYPE.DANGER,
@@ -174,7 +175,7 @@ export default function SignUp() {
                 <View style={styles.footer}>
                     
                         <TouchableOpacity  style={styles.SignUpbutton} onPress={handleSignUp}>
-                            <Text style={styles.SignUpText}>Create Account</Text>
+                           {loading ? <ActivityIndicator size="small" color="#fff"/> : <Text style={styles.SignUpText}>Create Account</Text>} 
                         </TouchableOpacity>      
                 </View>
 
@@ -191,10 +192,9 @@ export default function SignUp() {
 }
 
 const styles  = StyleSheet.create({
-    header: {   
+    header: {  
+    flex:1, 
     flexDirection: "column",
-    width: horizontalScale(200),   // Responsive width
-    height: verticalScale(70),     // Responsive height
     marginTop: verticalScale(70),
     marginBottom: verticalScale(29),  // Using margin for positioning instead of top
     alignItems:"center",
@@ -202,8 +202,9 @@ const styles  = StyleSheet.create({
     alignContent:'center'
     },
     signUpText: {
+        // borderWidth: 1,
         color: "grey",
-        paddingTop:verticalScale(30),
+        paddingTop:verticalScale(20),
     },
 
     formContainer: {

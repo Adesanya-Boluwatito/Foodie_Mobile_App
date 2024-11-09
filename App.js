@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, SafeAreaView, ActivityIndicator, Animated, Easi
 import { colors } from './src/global/style';
 import SignIn from './src/screens/autScreens/SignIn';
 import SignUp from './src/screens/autScreens/Onboarding Pages/SignUp';
+import OTP from './src/screens/autScreens/Onboarding Pages/OTP';
 import HomeScreen from './src/screens/autScreens/HomeScreen';
 import AllRestaurants from './src/screens/autScreens/AllRestaurants';
 import Profile from './src/screens/autScreens/profile';
@@ -141,13 +142,14 @@ function MyScreens() {
   
 
   return (
-    <Stack.Navigator initialRouteName= 'Sign In'>
+    <Stack.Navigator initialRouteName= 'OTP'>
       <Stack.Screen name="Sign In" component={SignIn} options={{ headerShown: false }}/>
       
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'Order History' }} />
       <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
+      <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}}/>
       <Stack.Screen name='MyTabs' component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name='Manage Add' component={ManageAddressScreen} options={{ headerShown: true, title: 'Manage Addresses' }} />
       <Stack.Screen name='Payment Option' component={PaymentOptionsScreen} options={{ headerShown: true, title: 'Payment' }} />
