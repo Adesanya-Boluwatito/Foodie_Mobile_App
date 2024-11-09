@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     resendOtpContainer: {
         flexDirection:"row",
         alignSelf:"center",
-        marginTop: verticalScale(25),
+        marginTop: verticalScale(30),
     },
 
     resendOtpText: {
