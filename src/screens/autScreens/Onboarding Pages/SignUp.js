@@ -20,10 +20,15 @@ export default function SignUp({route}) {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('')
+    const [borderColor, setBorderColor] = useState('#ccc');
+    const [isConfirming, setIsConfirming] = useState(false);
     const [loading, setLoading] = useState(false);
     const navigation = useNavigation();
     const [showPassword, setShowPassword] = useState(false)
     const[showConfirmPassword, setshowConfirmPassword] = useState(false)
+
+    const isPasswordValid = password.length >= 6 && confirmPassword.length>=6;
+    const isFormValid = name && email && phoneNumber && password && confirmPassword && isPasswordValid;
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword)
@@ -31,6 +36,31 @@ export default function SignUp({route}) {
     const toggleConfirmPasswordVisibility =() => {
         setshowConfirmPassword(!showConfirmPassword)
     }
+
+    const handlePasswordInputChange = (text, field) => {
+        // Update the respective state based on the field parameter
+        if (field === 'password') {
+            setPassword(text);
+        } else {
+            setConfirmPassword(text);
+        }
+
+        // Determine border color based on input values
+        const pwd = field === 'password' ? text : password;
+        const confirmPwd = field === 'confirmPassword' ? text : confirmPassword;
+        setBorderColor(confirmPwd ? (pwd === confirmPwd ? 'green' : 'red') : '#ccc');
+    };
+
+
+    const getBorderStyle = () => {
+        if (!isConfirming) {
+            return { borderColor: '#ccc', borderWidth: 1 };
+        }
+        if (password && confirmPassword && password === confirmPassword) {
+            return { borderColor: '#9ef01a', borderWidth: 2 };
+        }
+        return { borderColor: 'red', borderWidth: 2 };
+    };
 
     const requestOTP = () => {
         axios.post('http://192.168.82.176:3000/otp/send-otp', { email })
@@ -48,6 +78,16 @@ export default function SignUp({route}) {
                 button: "Close"
             })
         }
+
+        // Password length validation
+        // if (password.length < 6) {
+        //     return Toast.show({
+        //         type: ALERT_TYPE.WARNING,
+        //         title: 'Error',
+        //         textBody: 'Password must be at least 6 characters',
+        //         button: "Close"
+        //     });
+        // }
 
         setLoading(true)
         try {
@@ -75,17 +115,38 @@ export default function SignUp({route}) {
                 button: 'Close',
             })
         } catch (error) {
-            console.error('Error adding document:', error);
+            console.error('Error adding document:', error); // Log error details for debugging purposes
+        
+            // let errorMessage = 'Something went wrong. Please try again later.';
+        
+            // Check if the error is related to a specific issue
+            if (error.code === 'auth/email-already-in-use') {
+                errorMessage = 'The email address is already in use. Please try with a different email.';
+            } else if (error.code === 'auth/invalid-email') {
+                errorMessage = 'The email address is invalid. Please enter a valid email.';
+            } else if (error.code === 'auth/weak-password') {
+                errorMessage = 'Password is too weak. Please choose a stronger password.';
+            } else if (error.message.includes('network')) {
+                errorMessage = 'Network error. Please check your internet connection.';
+            } else if (error.message.includes('empty')) {
+                errorMessage = 'Please fill in all the required fields.';
+            }
+        
             Toast.show({
                 type: ALERT_TYPE.DANGER,
                 title: 'Error',
-                textBody: error.message,
+                textBody: errorMessage,
                 button: 'Close',
-            })
+            });
         }
+        
 
         setLoading(false)
     };
+
+
+    // Function to check if all fields are filled
+    
 
 
 
@@ -144,10 +205,10 @@ export default function SignUp({route}) {
                         <Text style={styles.formFont}>Password</Text>
                         <View style={styles.inputWrapper}>
                             <TextInput
-                            placeholder="Password"
-                            style={styles.passwordField}
+                            placeholder="Minimum 6 characters"
+                            style={[styles.passwordField, getBorderStyle()]}
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(text) => handlePasswordInputChange(text, 'password')}
                             secureTextEntry={!showPassword}
                         />
                         <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
@@ -162,10 +223,10 @@ export default function SignUp({route}) {
                         <Text style={styles.formFont}>Confirm Password</Text>
                         <View style={styles.inputWrapper}>
                             <TextInput
-                                placeholder="Confirm Password"
-                                style={styles.passwordField}
+                                placeholder="Minimum 6 characters"
+                                style={[styles.passwordField, getBorderStyle()]}
                                 value={confirmPassword}
-                                onChangeText={setConfirmPassword}
+                                onChangeText={(text) => handlePasswordInputChange(text, setIsConfirming(true))}
                                 secureTextEntry={!showConfirmPassword}
                             />
 
@@ -184,14 +245,14 @@ export default function SignUp({route}) {
 
                 <View style={styles.footer}>
                     
-                        <TouchableOpacity  style={styles.SignUpbutton} onPress={handleSignUp}>
+                        <TouchableOpacity  style={[styles.SignUpbutton, { opacity: isFormValid ? 1 : 0.5}]} onPress={handleSignUp} disabled={!isFormValid}>
                            {loading ? <ActivityIndicator size="small" color="#fff"/> : <Text style={styles.SignUpText}>Create Account</Text>} 
                         </TouchableOpacity>      
                 </View>
 
                 <View style={styles.signInOption}>
                         <Text style={globalStyles.textRegular}>Already got an account?</Text>
-                        <TouchableOpacity style={styles.SignInButton} onPress={() => navigation.navigate('Sign In')}>
+                        <TouchableOpacity style={styles.SignInButton} onPress={() => navigation.navigate('Login')}>
                             <Text style={styles.SignInText}> Sign In</Text>
                         </TouchableOpacity>
                 </View>

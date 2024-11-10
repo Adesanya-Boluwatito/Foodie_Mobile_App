@@ -5,13 +5,12 @@ import { verticalScale, horizontalScale, moderateScale } from "../../../theme/Me
 
 
 
-export default function OnBoardingScreen_1 () {
+export default function OnBoardingScreen_2 () {
 
 
 
     return (
         <View style={globalStyles.container}>
-
             <View style={styles.skipContainer}>
                 <TouchableOpacity>
                     <Text style={styles.Skiptext}>Skip</Text>
@@ -19,7 +18,7 @@ export default function OnBoardingScreen_1 () {
                 
             </View>
             <View style={styles.imageContainer}>
-                <Image source={require('../../../../assets/ima/Image1.png')} style={styles.image} />
+                <Image source={require('../../../../assets/ima/Image3.png')} style={styles.image} />
             </View>
 
             <View style={styles.textdesignContainer}>
@@ -27,9 +26,9 @@ export default function OnBoardingScreen_1 () {
             </View>
 
             <View style={styles.progressContainer}>
+                <View style={styles.progressDotOutlined} />
+                <View style={styles.progressDotOutlined} />
                 <View style={styles.progressDotFilled} />
-                <View style={styles.progressDotOutlined} />
-                <View style={styles.progressDotOutlined} />
             </View>
 
             <View style={styles.buttonContainer}>
@@ -61,7 +60,7 @@ const styles = StyleSheet.create({
         marginTop: verticalScale(200)
     },
     image: {
-        borderWidth:1,
+        // borderWidth:1,
         width: horizontalScale(342),
         height: verticalScale(300)
     },
@@ -94,12 +93,6 @@ const styles = StyleSheet.create({
         width: moderateScale(12),
         height: moderateScale(12),
         borderRadius: moderateScale(16),
-        borderWidth: 1,
-        borderColor: '#000', // Adjust color as needed
-    },
-    progressDotSquare: {
-        width: moderateScale(8),
-        height: moderateScale(8),
         borderWidth: 1,
         borderColor: '#000', // Adjust color as needed
     },

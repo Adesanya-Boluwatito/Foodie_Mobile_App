@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react'
+import React, {useState, useRef, useEffect} from 'react'
 import {View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator} from 'react-native'
 import { globalStyles, fonts } from '../../../global/styles/theme'
 import { horizontalScale, verticalScale, moderateScale } from '../../../theme/Metrics'
@@ -10,7 +10,23 @@ export default function OTP({route}) {
     const [loading, setLoading] = useState(false)
     const { email = '' } = route.params
     const [otp, setOtp] = useState(['', '', '', ''])
+    const [countdown, setCountdown] = useState(300); // 300 seconds for 5 minutes
+    const [showResend, setShowResend] = useState(false);
     const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+
+
+    useEffect(() => {
+        // Start countdown timer
+        if (countdown > 0) {
+            const timerId = setInterval(() => {
+                setCountdown((prevCount) => prevCount - 1);
+            }, 1000);
+
+            return () => clearInterval(timerId);
+        } else {
+            setShowResend(true); // Show Resend OTP when countdown reaches zero
+        }
+    }, [countdown]);
 
     const verifyOTP = (otpString) => {
         setLoading(true)
@@ -25,6 +41,14 @@ export default function OTP({route}) {
             setLoading(false);
         })
     }
+
+    const formatTime = (seconds) => {
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    };
+
+    
 
     const handleChange = (index, value) => {
         // Immediate return if value is empty or not numeric
@@ -74,6 +98,17 @@ export default function OTP({route}) {
         }
     };
 
+    const resendOtp = () => {
+        axios.post('http://192.168.82.176:3000/otp/send-otp', { email })
+        .then(response => console.log(response.data.message))
+        .catch(error => console.error(error));
+
+        // Reset the countdown timer and hide Resend button
+        setCountdown(300);
+        setShowResend(false);
+
+    }
+
     const handleSubmit = () => {
         const otpString = otp.join('');
         if (otpString.length === 4) {
@@ -121,9 +156,13 @@ export default function OTP({route}) {
                 
             <View style={styles.resendOtpContainer}>
                 <Text style={globalStyles.textRegular}>Didn't recieve Otp?</Text>
-                <TouchableOpacity style={styles.ResendButton} >
-                    <Text style={styles.resendOtpText}> Resend OTP</Text>
-                </TouchableOpacity>
+                {showResend ? (
+                    <TouchableOpacity style={styles.ResendButton} onPress={resendOtp}>
+                        <Text style={styles.resendOtpText}>Resend OTP</Text>
+                    </TouchableOpacity>
+                ) : (
+                    <Text style={styles.timerText}>{formatTime(countdown)}</Text>
+                )}
             </View>
 
             <View style={styles.verifyButtonContainer}>
@@ -178,12 +217,22 @@ const styles = StyleSheet.create({
         flexDirection:"row",
         alignSelf:"center",
         marginTop: verticalScale(30),
+        textAlign: "center",
     },
 
     resendOtpText: {
         font: fonts.bold,
         fontSize:moderateScale(16),
-        fontWeight:"700"
+        fontWeight:"700",
+        paddingHorizontal: horizontalScale(3)
+        
+    },
+    timerText: {
+        font: fonts.bold,
+        fontSize:moderateScale(16),
+        fontWeight: 'bold',
+        color: 'grey',
+        paddingHorizontal: horizontalScale(3)
     },
 
     verifyButtonContainer: {

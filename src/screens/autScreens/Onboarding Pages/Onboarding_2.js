@@ -5,7 +5,7 @@ import { verticalScale, horizontalScale, moderateScale } from "../../../theme/Me
 
 
 
-export default function OnBoardingScreen_1 () {
+export default function OnBoardingScreen_2 () {
 
 
 
@@ -19,7 +19,7 @@ export default function OnBoardingScreen_1 () {
                 
             </View>
             <View style={styles.imageContainer}>
-                <Image source={require('../../../../assets/ima/Image1.png')} style={styles.image} />
+                <Image source={require('../../../../assets/ima/Image2.png')} style={styles.image} />
             </View>
 
             <View style={styles.textdesignContainer}>
@@ -27,8 +27,8 @@ export default function OnBoardingScreen_1 () {
             </View>
 
             <View style={styles.progressContainer}>
-                <View style={styles.progressDotFilled} />
                 <View style={styles.progressDotOutlined} />
+                <View style={styles.progressDotFilled} />
                 <View style={styles.progressDotOutlined} />
             </View>
 
@@ -94,12 +94,6 @@ const styles = StyleSheet.create({
         width: moderateScale(12),
         height: moderateScale(12),
         borderRadius: moderateScale(16),
-        borderWidth: 1,
-        borderColor: '#000', // Adjust color as needed
-    },
-    progressDotSquare: {
-        width: moderateScale(8),
-        height: moderateScale(8),
         borderWidth: 1,
         borderColor: '#000', // Adjust color as needed
     },

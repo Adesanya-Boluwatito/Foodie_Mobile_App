@@ -2,8 +2,10 @@ import React, { useEffect, useState } from "react";
 import { Text, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from "react-native"; 
 import { Ionicons } from "@expo/vector-icons"; 
 import { useNavigation } from '@react-navigation/native';
+import { signOut } from 'firebase/auth';
 import { auth, db } from '../../../firebaseconfi.js';
 import { doc,  getDoc } from "firebase/firestore"
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const options = [
@@ -68,20 +70,44 @@ export default function User() {
 
 
   const handleLogout = async () => {
-    const user = auth.currentUser; // Get the current user
-  
-    if (user) {
-      try {
-        await auth.signOut();
-        await AsyncStorage.clear();
-        navigation.navigate('Sign In'); // Navigate to the SignIn screen after logout
-      } catch (error) {
-        console.error('Error logging out: ', error);
+    try {
+      // First check authentication method being used
+      const user = auth.currentUser;
+      const isEmailPassword = user?.providerData[0]?.providerId === 'password';
+      
+      if (!isEmailPassword) {
+        // Only try Google sign out if not using email/password
+        try {
+          // First revoke access
+          await GoogleSignin.revokeAccess();
+          // Then sign out from Google
+          await GoogleSignin.signOut();
+        } catch (error) {
+          console.log("Google sign out error (non-critical):", error);
+        }
       }
-    } else {
-      console.warn('No user is currently signed in.');
+
+      await AsyncStorage.multiRemove([
+        '@user',
+        '@userToken',
+        '@googleCredential',
+        // Add any other auth-related keys you might be storing
+      ]);
+      
+      // Firebase sign out
+      await signOut(auth);
+      
+      
+      // Navigate to login screen
+      navigation.replace('Login');
+      
+    } catch (error) {
+      console.error('Logout Error:', error);
+      alert('Failed to logout. Please try again.');
     }
   };
+  
+  
 
   return ( 
     <View style={styles.container}>

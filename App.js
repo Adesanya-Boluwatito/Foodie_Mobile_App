@@ -5,6 +5,7 @@ import { colors } from './src/global/style';
 import SignIn from './src/screens/autScreens/SignIn';
 import SignUp from './src/screens/autScreens/Onboarding Pages/SignUp';
 import OTP from './src/screens/autScreens/Onboarding Pages/OTP';
+import Login from './src/screens/autScreens/Onboarding Pages/LogIn';
 import HomeScreen from './src/screens/autScreens/HomeScreen';
 import AllRestaurants from './src/screens/autScreens/AllRestaurants';
 import Profile from './src/screens/autScreens/profile';
@@ -13,6 +14,9 @@ import CartScreen from './src/screens/autScreens/cartScreen';
 import ResturantScreen from './src/screens/autScreens/ResturantScreen';
 import OffersScreen from './src/screens/autScreens/offerScreen';
 import MapScreen from  './src/screens/autScreens/mapScreen';
+import OnBoardingScreen_1 from './src/screens/autScreens/Onboarding Pages/Onboarding_1';
+import OnBoardingScreen_2 from './src/screens/autScreens/Onboarding Pages/Onboarding_2';
+import OnBoardingScreen_3 from './src/screens/autScreens/Onboarding Pages/Onboarding_3';
 import { AddressProvider } from './src/components/AddressContext';
 import { PaymentProvider } from './src/components/paymentContext';
 import {CartProvider} from './src/components/GroupOrderContext'
@@ -31,6 +35,8 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesome5, Fontisto } from '@expo/vector-icons';
 import 'react-native-gesture-handler';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import {CLIENT_ID} from '@env'
 
 
 
@@ -142,14 +148,18 @@ function MyScreens() {
   
 
   return (
-    <Stack.Navigator initialRouteName= 'Sign In'>
+    <Stack.Navigator initialRouteName= 'Onboarding1'>
       <Stack.Screen name="Sign In" component={SignIn} options={{ headerShown: false }}/>
       
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'Order History' }} />
       <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
+      <Stack.Screen name="Onboarding1" component={OnBoardingScreen_1} options={{ headerShown: false }} />
+      <Stack.Screen name="Onboarding2" component={OnBoardingScreen_2} options={{ headerShown: false }} />
+      <Stack.Screen name="Onboarding3" component={OnBoardingScreen_3} options={{ headerShown: false }} />
       <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}}/>
+      <Stack.Screen name="Login" component={Login} options={{ headerShown: false}}/>
       <Stack.Screen name='MyTabs' component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name='Manage Add' component={ManageAddressScreen} options={{ headerShown: true, title: 'Manage Addresses' }} />
       <Stack.Screen name='Payment Option' component={PaymentOptionsScreen} options={{ headerShown: true, title: 'Payment' }} />
@@ -179,6 +189,10 @@ export default function App() {
 
 
   useEffect(() => {
+    GoogleSignin.configure({
+      webClientId: CLIENT_ID,
+      offlineAccess: false,
+    });
     // Simulate loading delay with a timer (e.g., 2000 milliseconds or 2 seconds)
     const timer = setTimeout(() => {
       setLoading(false); // Set loading to false after the timer expires

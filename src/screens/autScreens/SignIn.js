@@ -27,12 +27,7 @@ export default function SignIn() {
     setShowPassword(!showPassword);
   };
 
-  useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: CLIENT_ID,
-      // offlineAccess: true,  // Replace with your actual client ID
-    });
-  }, []);
+  
 
   const handleForgotPassword = () => {
     // Add your logic for handling forgot password here
