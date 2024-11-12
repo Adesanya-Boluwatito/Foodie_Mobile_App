@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Modal } from 'react-native'
+import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, BackHandler } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useIsFocused } from '@react-navigation/native'
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, sendPasswordResetEmail } from "firebase/auth"
 import {auth}  from '../../../../firebaseconfi.js';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
@@ -18,8 +18,24 @@ export default function LoginScreen() {
     const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const navigation = useNavigation();
+    const isFocused = useIsFocused(); // Check if this screen is focused
     const [isResetModalVisible, setIsResetModalVisible] = useState(false)
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (isFocused) {
+            const handleBackPress = () => {
+                BackHandler.exitApp(); // Closes the app when back is pressed
+                return true; // Prevents default back navigation behavior
+            };
+
+            const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+            return () => {
+                backHandler.remove();
+            };
+        }
+    }, [isFocused]);
 
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword)

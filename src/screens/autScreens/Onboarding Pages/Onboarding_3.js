@@ -1,63 +1,125 @@
-import React from "react";
-import{View, Text, StyleSheet, Image,TouchableOpacity} from 'react-native';
+import React, {useEffect} from "react";
+import{View, Text, StyleSheet, Image,TouchableOpacity, Animated, Dimensions} from 'react-native';
 import { globalStyles, fonts } from "../../../global/styles/theme";
 import { verticalScale, horizontalScale, moderateScale } from "../../../theme/Metrics";
+import { useNavigation } from '@react-navigation/native';
+import { useAnimation } from '../../../components/AnimationContext';
+import DisableBackAction from "../../../components/DisableBackActionContext";
 
 
 
-export default function OnBoardingScreen_2 () {
+export default function OnBoardingScreen_3 () {
 
+    const navigation = useNavigation()
+    const { slideAnim, fadeAnim, scaleAnim, animateTransition, resetAnimation } = useAnimation();
 
+    useEffect(() => {
+        const unsubscribe = navigation.addListener('focus', resetAnimation);
+        return unsubscribe;
+    }, [navigation]);
+
+    
+
+    const handleNextPage = () => {
+        animateTransition('next', () => {
+            navigation.navigate('Login');
+        });
+    };
 
     return (
-        <View style={globalStyles.container}>
-            <View style={styles.skipContainer}>
-                <TouchableOpacity>
-                    <Text style={styles.Skiptext}>Skip</Text>
-                </TouchableOpacity>
-                
-            </View>
-            <View style={styles.imageContainer}>
+        <Animated.View 
+            style={[
+                globalStyles.container,
+                {
+                    transform: [
+                        { translateX: slideAnim },
+                        { scale: scaleAnim }
+                    ],
+                    opacity: fadeAnim
+                }
+            ]}
+        >
+            
+            <Animated.View style={[
+                    styles.imageContainer,
+                    {
+                        transform: [{
+                            scale: fadeAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0.8, 1]
+                            })
+                        }]
+                    }
+                ]}
+            >
                 <Image source={require('../../../../assets/ima/Image3.png')} style={styles.image} />
-            </View>
+            </Animated.View>
 
-            <View style={styles.textdesignContainer}>
+            <Animated.View 
+                style={[
+                    styles.textdesignContainer,
+                    {
+                        transform: [{
+                            translateY: fadeAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [20, 0]
+                            })
+                        }]
+                    }
+                ]}
+            >
                 <Text style={styles.textdesign}>Neque porro quisquam est qui dolorem ipsum quia dolor sit amet</Text>
-            </View>
+            </Animated.View>
 
             <View style={styles.progressContainer}>
                 <View style={styles.progressDotOutlined} />
                 <View style={styles.progressDotOutlined} />
-                <View style={styles.progressDotFilled} />
+                <Animated.View 
+                        style={[
+                            styles.progressDotFilled,
+                            {
+                                transform: [{
+                                    scale: fadeAnim.interpolate({
+                                        inputRange: [0, 1],
+                                        outputRange: [0.5, 1]
+                                    })
+                                }]
+                            }
+                        ]} 
+                    />
             </View>
 
-            <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button}>
-                    <Text style={styles.buttonText}>Next</Text>
+            <Animated.View 
+                style={[
+                    styles.buttonContainer,
+                    {
+                        transform: [{
+                            translateY: fadeAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [50, 0]
+                            })
+                        }]
+                    }
+                ]}
+            >
+                <TouchableOpacity style={styles.button} onPress={handleNextPage}>
+                    <Text style={styles.buttonText}>Get Started</Text>
                 </TouchableOpacity>
-            </View>
-                
-        </View>
+            </Animated.View>
+            <DisableBackAction/>
+        </Animated.View>
     )
 }
 
 const styles = StyleSheet.create({
-    skipContainer:{
-        flex:1,
-        flexDirection: "row-reverse",
-        // borderWidth:1,
-    },
-    Skiptext:{
-        fontFamily: fonts.bold,
-        fontSize: moderateScale(18),
-        fontWeight: "700",
-        marginTop: verticalScale(30),
-    },
+    
     imageContainer: {
+        flex:1,
         alignSelf:"center",
         alignContent:"center",
         // borderWidth:1,
         marginTop: verticalScale(200)
+        
     },
     image: {
         // borderWidth:1,
@@ -103,7 +165,7 @@ const styles = StyleSheet.create({
     },
     button:{
         backgroundColor:"black",
-        // marginVertical: verticalScale(10),
+        marginVertical: verticalScale(10),
         padding: moderateScale(14),
         borderRadius: moderateScale(15)
     }, 

@@ -344,7 +344,7 @@ const styles  = StyleSheet.create({
         alignItems:"center",
         paddingHorizontal: horizontalScale(117),
         marginVertical: verticalScale(10),
-        borderRadius: 15
+        borderRadius: moderateScale(15)
     },
     SignUpText:{
         color:"white",

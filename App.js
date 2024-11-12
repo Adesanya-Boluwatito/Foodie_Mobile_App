@@ -17,6 +17,7 @@ import MapScreen from  './src/screens/autScreens/mapScreen';
 import OnBoardingScreen_1 from './src/screens/autScreens/Onboarding Pages/Onboarding_1';
 import OnBoardingScreen_2 from './src/screens/autScreens/Onboarding Pages/Onboarding_2';
 import OnBoardingScreen_3 from './src/screens/autScreens/Onboarding Pages/Onboarding_3';
+import LocationAccess_1 from './src/screens/autScreens/LocationAccess/LocationAccess1';
 import { AddressProvider } from './src/components/AddressContext';
 import { PaymentProvider } from './src/components/paymentContext';
 import {CartProvider} from './src/components/GroupOrderContext'
@@ -37,6 +38,7 @@ import { FontAwesome5, Fontisto } from '@expo/vector-icons';
 import 'react-native-gesture-handler';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {CLIENT_ID} from '@env'
+import {AnimationProvider} from './src/components/AnimationContext';
 
 
 
@@ -148,16 +150,17 @@ function MyScreens() {
   
 
   return (
-    <Stack.Navigator initialRouteName= 'Onboarding1'>
+    <Stack.Navigator initialRouteName= 'LocationAccess1'>
       <Stack.Screen name="Sign In" component={SignIn} options={{ headerShown: false }}/>
       
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'Order History' }} />
       <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
-      <Stack.Screen name="Onboarding1" component={OnBoardingScreen_1} options={{ headerShown: false }} />
-      <Stack.Screen name="Onboarding2" component={OnBoardingScreen_2} options={{ headerShown: false }} />
-      <Stack.Screen name="Onboarding3" component={OnBoardingScreen_3} options={{ headerShown: false }} />
+      <Stack.Screen name="Onboarding1" component={OnBoardingScreen_1} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false }} />
+      <Stack.Screen name="Onboarding2" component={OnBoardingScreen_2} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
+      <Stack.Screen name="Onboarding3" component={OnBoardingScreen_3} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
+      <Stack.Screen name="LocationAccess1" component={LocationAccess_1} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
       <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}}/>
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false}}/>
       <Stack.Screen name='MyTabs' component={MyTabs} options={{ headerShown: false }} />
@@ -216,11 +219,12 @@ export default function App() {
   return (
 
     
-
+      
       <CartProvider>
         <PaymentProvider>
            <AddressProvider>
               <NavigationContainer >
+                <AnimationProvider>
                   <StatusBar barStyle="light-content" backgroundColor={colors.statusbar} />
                   {loading ? (
                     // Show loading indicator while loading is true
@@ -233,11 +237,12 @@ export default function App() {
                     <MyScreens />
                     </SafeAreaView>
                   )}
-
+                </AnimationProvider>
               </NavigationContainer>
             </AddressProvider>
         </PaymentProvider>
       </CartProvider>
+      
         
      
       
