@@ -118,13 +118,14 @@ const styles = StyleSheet.create({
         alignSelf:"center",
         alignContent:"center",
         // borderWidth:1,
-        marginTop: verticalScale(200)
+        paddingTop: verticalScale(200)
         
     },
     image: {
         // borderWidth:1,
         width: horizontalScale(342),
-        height: verticalScale(300)
+        height: verticalScale(300),
+        resize:"contain"
     },
     textdesignContainer: {
         // borderWidth: 1,

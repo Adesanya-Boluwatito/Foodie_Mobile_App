@@ -150,7 +150,7 @@ function MyScreens() {
   
 
   return (
-    <Stack.Navigator initialRouteName= 'LocationAccess1'>
+    <Stack.Navigator initialRouteName= 'Onboarding1'>
       <Stack.Screen name="Sign In" component={SignIn} options={{ headerShown: false }}/>
       
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />

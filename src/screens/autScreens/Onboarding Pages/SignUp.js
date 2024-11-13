@@ -164,7 +164,9 @@ export default function SignUp({route}) {
 
     return (
         <AlertNotificationRoot>
-            <KeyboardAwareScrollView style={globalStyles.container}>
+            <KeyboardAwareScrollView  contentContainerStyle={{ flexGrow: 1 }}>
+                <View style={globalStyles.container}>
+
                 <View style={styles.header}>
                     <Text style={globalStyles.textBold}>Sign Up</Text>
                     <Text style={[globalStyles.textRegular, styles.signUpText]}> Fill in your details to get started</Text>
@@ -256,6 +258,7 @@ export default function SignUp({route}) {
                             <Text style={styles.SignInText}> Sign In</Text>
                         </TouchableOpacity>
                 </View>
+                </View>
                 
             </KeyboardAwareScrollView>
         </AlertNotificationRoot>
@@ -280,7 +283,8 @@ const styles  = StyleSheet.create({
 
     formContainer: {
         // borderWidth: 1,
-        height: verticalScale(500)
+        flex:2,
+        // height: verticalScale(500)
     },
     formFont: {
         fontFamily: fonts.bold,
@@ -342,6 +346,7 @@ const styles  = StyleSheet.create({
         flex: 1,
         justifyContent:"center",
         alignItems:"center",
+        alignContent: "center",
         paddingHorizontal: horizontalScale(117),
         marginVertical: verticalScale(10),
         borderRadius: moderateScale(15)

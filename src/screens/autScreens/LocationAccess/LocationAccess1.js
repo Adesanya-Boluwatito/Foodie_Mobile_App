@@ -47,11 +47,13 @@ const styles = StyleSheet.create ({
         alignSelf:"center",
         alignContent:"center",
         // borderWidth:1,
-        marginTop: verticalScale(150)
+        paddingTop: verticalScale(80)
     },
     image: {
-        width: horizontalScale(342),
-        height: verticalScale(300)
+        width: horizontalScale(350),
+        height: verticalScale(280),
+        resizeMode: 'contain', 
+        borderWidth:1,
     },
 
     GrantAccessContainer:{
