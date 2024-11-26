@@ -190,6 +190,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "androidx.credentials:credentials-play-services-auth:1.5.0-beta01"
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
     // implementation 'com.facebook.android:facebook-android-sdk:latest.release'
     
     // implementation "com.android.support:appcompat-v7:${rootProject.ext.supportLibVersion}"

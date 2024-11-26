@@ -63,7 +63,7 @@ export default function SignUp({route}) {
     };
 
     const requestOTP = () => {
-        axios.post('http://192.168.82.176:3000/otp/send-otp', { email })
+        axios.post('http://10.100.180.38:3000/otp/send-otp', { email })
         .then(response => console.log(response.data.message))
         .catch(error => console.error(error));
     }

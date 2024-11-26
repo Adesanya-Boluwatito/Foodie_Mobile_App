@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
         fontWeight: "700"
     },
     googleButton: {
-        borderRadius: moderateScale(35),
+        borderRadius: moderateScale(45),
         // padding: moderateScale(14),
         fontFamily: fonts.bold,
         fontWeight:"700",

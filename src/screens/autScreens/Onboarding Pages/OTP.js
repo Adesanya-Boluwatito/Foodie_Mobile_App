@@ -30,7 +30,7 @@ export default function OTP({route}) {
 
     const verifyOTP = (otpString) => {
         setLoading(true)
-        axios.post('http://192.168.82.176:3000/otp/verify-otp', { email, otp: otpString })
+        axios.post('http://10.100.180.38:3000/otp/verify-otp', { email, otp: otpString })
         .then(response => {
             console.log(response.data.message);
             setLoading(false);

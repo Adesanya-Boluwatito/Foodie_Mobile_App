@@ -4,6 +4,7 @@ import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { auth, db } from '../../../firebaseconfi';
 import {doc, onSnapshot, collection, deleteDoc, getDocs, updateDoc, writeBatch  } from 'firebase/firestore';
 import { useAddress } from '../../components/AddressContext';
+import { verticalScale } from '../../theme/Metrics';
 
 const ManageAddressScreen = ({ navigation }) => {
   const [addresses, setAddresses] = useState([]);
@@ -11,6 +12,7 @@ const ManageAddressScreen = ({ navigation }) => {
   const { defaultAddress, setDefaultAddress: setDefaultAddressInContext } = useAddress();
 
   // Fetch addresses and set default address in context
+
   const fetchAddresses = useCallback(async () => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
@@ -118,6 +120,17 @@ const ManageAddressScreen = ({ navigation }) => {
     }
   };
 
+  const formatAddress = (address) => {
+    const addressParts = [
+      address.houseNumber,
+      address.apartmentName,
+      address.streetName,
+      address.landmark && `near ${address.landmark}`
+    ].filter(Boolean).join(', ');
+  
+    return addressParts;
+  };
+
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -134,8 +147,11 @@ const ManageAddressScreen = ({ navigation }) => {
             <FontAwesome name={address.type === 'Home' ? 'home' : 'briefcase'} size={24} color="gray" />
             <View style={styles.addressTextContainer}>
               <Text style={styles.addressType}>{address.type}</Text>
-              <Text style={styles.addressDetails}>{address.details}</Text>
-              <Text style={styles.addressDetails}>{address.country}</Text>
+              <Text style={styles.addressDetails} numberOfLines={1}>
+                  {formatAddress(address)}
+              </Text>
+              
+    
               {address.isDefault && (
                 <Text style={styles.defaultTag}>Default Address</Text>
               )}
@@ -190,8 +206,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   addressTextContainer: {
-    marginLeft: 8,
-    marginBottom: 8,
+    marginLeft: 15,
+    flex: 1,
   },
   addressType: {
     fontSize: 16,
@@ -201,6 +217,7 @@ const styles = StyleSheet.create({
     color: 'gray',
   },
   buttonContainer: {
+    marginTop: verticalScale(20),
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
@@ -232,7 +249,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   addButton: {
-    backgroundColor: '#FF3D00',
+    backgroundColor: '#000',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',

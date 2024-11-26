@@ -18,6 +18,7 @@ import OnBoardingScreen_1 from './src/screens/autScreens/Onboarding Pages/Onboar
 import OnBoardingScreen_2 from './src/screens/autScreens/Onboarding Pages/Onboarding_2';
 import OnBoardingScreen_3 from './src/screens/autScreens/Onboarding Pages/Onboarding_3';
 import LocationAccess_1 from './src/screens/autScreens/LocationAccess/LocationAccess1';
+import LocationAccess_2 from './src/screens/autScreens/LocationAccess/LocationAccess2';
 import { AddressProvider } from './src/components/AddressContext';
 import { PaymentProvider } from './src/components/paymentContext';
 import {CartProvider} from './src/components/GroupOrderContext'
@@ -161,12 +162,13 @@ function MyScreens() {
       <Stack.Screen name="Onboarding2" component={OnBoardingScreen_2} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
       <Stack.Screen name="Onboarding3" component={OnBoardingScreen_3} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
       <Stack.Screen name="LocationAccess1" component={LocationAccess_1} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
+      <Stack.Screen name="LocationAccess2" component={LocationAccess_2} options={{ headerShown: false, animationEnabled: false, gestureEnabled:false  }} />
       <Stack.Screen name="OTP" component={OTP} options={{ headerShown: false}}/>
       <Stack.Screen name="Login" component={Login} options={{ headerShown: false}}/>
       <Stack.Screen name='MyTabs' component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name='Manage Add' component={ManageAddressScreen} options={{ headerShown: true, title: 'Manage Addresses' }} />
       <Stack.Screen name='Payment Option' component={PaymentOptionsScreen} options={{ headerShown: true, title: 'Payment' }} />
-      <Stack.Screen name='Add Addy' component={AddNewAddressScreen} options={{ headerShown: true, title: 'Add Address' }} />
+      <Stack.Screen name='Add Addy' component={AddNewAddressScreen} options={{ headerShown: false, title: 'Add Address' }} />
       <Stack.Screen name='Edit Address' component={EditAddressScreen} options={{ headerShown: true, title: 'Edit Address' }} />
       <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'Support Chat' }} />
       <Stack.Screen name="OfferScreen" component={OffersScreen} options={{ headerShown: false }}/>
