@@ -23,6 +23,7 @@ export default {
         "@rnmapbox/maps",
         {
           RNMapboxMapsDownloadToken: process.env.MAPBOX_DOWNLOADS_TOKEN,
+          password:"Y4!n/FHjQB5e6,$"
         },
       ],
     ],
@@ -36,6 +37,7 @@ export default {
     ],
     ios: {
       supportsTablet: true,
+      bundleIdentifier: "com.foodie.client",
     },
     android: {
       adaptiveIcon: {

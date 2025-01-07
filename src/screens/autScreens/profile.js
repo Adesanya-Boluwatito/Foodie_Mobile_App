@@ -56,7 +56,17 @@ export default function User() {
     return () => unsubscribe();
   }, []);
 
-
+  const handleEditProfile = () => {
+    navigation.navigate('Edit Profile');
+  }
+  
+  const handleChangePassword = () => {
+    navigation.navigate('Change Password');
+  }
+  
+  const handleDeleteAccount = () => {
+    navigation.navigate('Delete Account');
+  }
 
   if (loading) {
     return (
@@ -65,6 +75,8 @@ export default function User() {
       </View>
     );
   }
+
+
 
 
 
@@ -113,10 +125,13 @@ export default function User() {
     <View style={styles.container}>
       <View>
         <View style={styles.profileSection}>
-          <Image
+          <TouchableOpacity onPress={ handleEditProfile }>
+            <Image
             source={{ uri: userData && userData.photoURL ? userData.photoURL : defaultProfileIcon}} // Replace with the URL of the profile picture
             style={styles.profileImage}
           />
+          </TouchableOpacity>
+          
           <Text style={styles.name}>{userData ? userData.displayName : 'Loading...'}</Text>
           <Text style={styles.contact}>{userData ? userData.email : 'Loading...'}</Text>
           {/* <TouchableOpacity>
