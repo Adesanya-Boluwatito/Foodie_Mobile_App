@@ -212,10 +212,10 @@ export default function SignUp({route}) {
                             value={password}
                             onChangeText={(text) => handlePasswordInputChange(text, 'password')}
                             secureTextEntry={!showPassword}
-                        />
-                        <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
+                            />
+                            <TouchableOpacity style={styles.eyeIcon} onPress={togglePasswordVisibility}>
                             <FontAwesome5 name={showPassword ? "eye" : "eye-slash"} size={24} color="#A5A5A5" />
-                        </TouchableOpacity>
+                            </TouchableOpacity>
 
                         </View>
                         

@@ -26,6 +26,8 @@ import AddNewAddressScreen from '../AddNewAddressScreen';
 import GroupOrderScreen from '../GroupOrderScreen';
 import EditAddressScreen from '../EditAddressScreen';
 import MyOrdersScreen from '../MyOrdersScreen';
+import Foodscreen from '../FoodScreen';
+import CustomTabBarLayout from '../../../components/CustomTabBarLayout';
 // import SignUpScreen from './src/screens/autScreens/SignUpScreen';
 import PaymentOptionsScreen from '../paymentMethod';
 import ManageAddressScreen from '../manageScreen';
@@ -102,22 +104,31 @@ function MyTabs() {
         }}
       />
       <Tab.Screen
-        name="Promo"
-        component={PromoScreen}
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <CustomTabBarButton icon="Food" focused={focused} />
-          ),
-          tabBarLabel: ({ focused }) => (
-            <Text style={[
-              styles.tabBarLabel,
-              { color: focused ? 'black' : '#A5A5A5' }
-            ]}>
-              Food
-            </Text>
-          ),
-        }}
-      />
+  name="Food"
+  // component={Foodscreen}
+  options={{
+    tabBarIcon: ({ focused }) => (
+      <CustomTabBarButton icon="Food" focused={focused} />
+    ),
+    tabBarLabel: ({ focused }) => (
+      <Text
+        style={[
+          styles.tabBarLabel,
+          { color: focused ? 'black' : '#A5A5A5' },
+        ]}
+      >
+        Food
+      </Text>
+    ),
+  }}
+>
+  {({ navigation, route }) => (
+    <CustomTabBarLayout navigation={navigation} route={route}>
+      <Foodscreen />
+    </CustomTabBarLayout>
+  )}
+</Tab.Screen>
+
       <Tab.Screen
         name="Mart"
         component={CartScreen}
@@ -206,16 +217,16 @@ export default function MyScreens() {
 }
 
 const styles = StyleSheet.create({
-  customTabButton: {
-    // borderRadius: 50,
-    // paddingTop: 2,
-    // marginRight: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    // width: 100,
-    // height: 20,
-    justifyContent: 'center',
-  },
+  // customTabButton: {
+  //   // borderRadius: 50,
+  //   // paddingTop: 2,
+  //   // marginRight: 8,
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   // width: 100,
+  //   // height: 20,
+  //   justifyContent: 'center',
+  // },
   tabBarLabel: {
     fontSize: moderateScale(15),
     fontFamily: fonts.bold,
@@ -227,8 +238,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: moderateScale(15),
     height: verticalScale(60),
-    paddingTop: verticalScale(10),
-    paddingBottom: verticalScale(5),
+    paddingTop: verticalScale(15),
+    paddingBottom: verticalScale(2),
   },
   iconContainer: {
     height: verticalScale(34),

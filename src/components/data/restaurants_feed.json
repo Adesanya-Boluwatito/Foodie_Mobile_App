@@ -504,6 +504,102 @@
 
       }
     }
-    ]
+    ],
+    "pharmacy": [
+    {
+      "id": "1",
+      "name": "Health Plus",
+      "details": {
+        "rating": 4.5,
+        "location": "234 Pharmacy Lane",
+        "logo": "https://i.pinimg.com/736x/98/4a/8a/984a8ac3f77d8868589119e054d8ab6b.jpg",
+        "coverImage": "https://example.com/pharmacycover.jpg",
+        "deliveryFee": 2.00,
+        "freeDelivery": false,
+        "offerData": "10% off all vitamins!",
+        "description": "Your trusted source for quality medications and wellness products.",
+        "products": [
+          {
+            "id": "P1",
+            "name": "Paracetamol",
+            "description": "Pain reliever and fever reducer.",
+            "price": 1.99,
+            "image": "https://example.com/paracetamol.jpg"
+          },
+          {
+            "id": "P2",
+            "name": "Cough Syrup",
+            "description": "Relieves cough and sore throat.",
+            "price": 4.50,
+            "image": "https://example.com/coughsyrup.jpg"
+          }
+        ]
+      }
+    }
+  ],
+  "mart": [
+    {
+      "id": "1",
+      "name": "FreshMart",
+      "details": {
+        "rating": 4.8,
+        "location": "567 Market Avenue",
+        "logo": "https://example.com/freshmartlogo.jpg",
+        "coverImage": "https://example.com/martcover.jpg",
+        "deliveryFee": 3.00,
+        "freeDelivery": true,
+        "offerData": "Buy 1 Get 1 Free on select items!",
+        "description": "Your go-to grocery mart for daily essentials.",
+        "products": [
+          {
+            "id": "M1",
+            "name": "Apple",
+            "description": "Fresh red apples.",
+            "price": 0.99,
+            "image": "https://example.com/apple.jpg"
+          },
+          {
+            "id": "M2",
+            "name": "Milk",
+            "description": "1 liter full cream milk.",
+            "price": 2.50,
+            "image": "https://example.com/milk.jpg"
+          }
+        ]
+      }
+    }
+  ],
+  "localMarket": [
+    {
+      "id": "1",
+      "name": "Local Farmers' Market",
+      "details": {
+        "rating": 4.6,
+        "location": "890 Green Street",
+        "logo": "https://example.com/localmarketlogo.jpg",
+        "coverImage": "https://example.com/localcover.jpg",
+        "deliveryFee": 1.50,
+        "freeDelivery": false,
+        "offerData": "20% off on all organic products!",
+        "description": "Support local farmers with fresh organic produce.",
+        "products": [
+          {
+            "id": "LM1",
+            "name": "Organic Tomatoes",
+            "description": "Fresh organic tomatoes from local farms.",
+            "price": 1.20,
+            "image": "https://example.com/tomatoes.jpg"
+          },
+          {
+            "id": "LM2",
+            "name": "Organic Carrots",
+            "description": "Fresh organic carrots.",
+            "price": 1.50,
+            "image": "https://example.com/carrots.jpg"
+          }
+        ]
+      }
+    }
+  ]
   }
   

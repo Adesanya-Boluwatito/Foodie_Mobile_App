@@ -42,7 +42,7 @@ export default {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "#ffffff",
+        backgroundColor: "white",
       },
       softwareKeyboardLayoutMode: "pan",
       package: "foodie.food12",

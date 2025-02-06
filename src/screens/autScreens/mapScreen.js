@@ -18,7 +18,7 @@ const MapScreen = () => {
 
   const handlSetLocations = () => {
     console.log("Location before navigation:", readableLocation)
-    navigation.navigate('Explore', {readableLocation })
+    navigation.navigate('Home', {readableLocation })
     console.log("Location after navigation:",readableLocation)
   }
 

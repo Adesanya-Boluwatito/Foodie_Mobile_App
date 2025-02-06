@@ -1,46 +1,32 @@
-import React, { useState,useEffect } from 'react';
-import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView, Alert} from 'react-native';
+import React, { useState,useEffect, useRef } from 'react';
+import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView, Alert, Animated, Dimensions} from 'react-native';
 import restaurantsData from "../../components/data/restaurants_feed.json"
+import CarouselIndicator from "../../components/CarouselIndicator"
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import {Icon } from 'react-native-elements';
 import * as Location from 'expo-location';
 import { useToast } from "react-native-toast-notifications"
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
+import { globalStyles, fonts } from '../../global/styles/theme';
+import { ProfileIcon } from '../../global/styles/icons/TabIcons';
 
 
+const { width } = Dimensions.get('window');
 
-const images = [
+
+const adBanners = [
     {
-        id: 1,
-        url: "https://i.pinimg.com/564x/b8/b5/d7/b8b5d7b7bb12ba423afc38d3401025c1.jpg",
-        name: "Jollof Rice"
-    },
+        "id": 1,
+        "image": require("../../../assets/ima/Ad Banneer.png"),
+    },  
+
     {
-        id: 2,
-        url: "https://i.pinimg.com/564x/a9/b8/a2/a9b8a266a4c061ca6ab6af63cf2e7caa.jpg",
-        name: "Ice cream"
-    },
-    {
-        id: 3,
-        url: "https://i.pinimg.com/564x/1e/65/4f/1e654fac595d426d7ffffccd754b5977.jpg",
-        name:"Burger"
-    },
-    {
-        id: 4,
-        url: "https://i.pinimg.com/564x/bf/97/51/bf9751c3245329ba2c05457d264418bb.jpg",
-        name: "Shawarma"
-    },
-    {
-        id: 5,
-        url: "https://i.pinimg.com/564x/4c/c7/9f/4cc79f76b53e00505c9facf01811f952.jpg",
-        name: "Fried rice"
-    },
-    {
-        id: 6,
-        url: "https://i.pinimg.com/564x/b1/4e/96/b14e967be4d2d4d121ec19d6de13ea7c.jpg",
-        name: "Pizza"
+        "id": 2,
+        "image": require("../../../assets/ima/ad-banner3.png")
     }
-];
+]
+
+
 
 
 
@@ -49,8 +35,10 @@ export default function HomeScreen({route, navigation}) {
     
     const [address, setAddress] = useState('Set Location')
     const [sortedRestaurants, setSortedRestaurants] = useState([]);
+    const [sortedPharmacy, setSortedPharmacy] = useState([]);
     const [sortById, setSortById] = useState([])
     const toast = useToast();
+    const scrollX = useRef(new Animated.Value(0)).current;
     // const { readableLocation } = route.params || { readableLocation: 'Unknown' };
     
 
@@ -77,10 +65,29 @@ export default function HomeScreen({route, navigation}) {
             .sort((a, b) => a.id - b.id)
             .slice(0, 6);
             setSortById(sorted);
-            }
+        
+        }
+
+        const fetchSortedPharmacy = async () => {
+            const sorted = [...restaurantsData.pharmacy]
+                .sort((a, b) => b.details.rating - a.details.rating)
+                .slice(0, 5);
+            setSortedPharmacy(sorted);
+        };
+
+        // const  fetchSortById = async () => {
+        //     const sorted = [...restaurantsData.restaurants]
+        //     .sort((a, b) => a.id - b.id)
+        //     .slice(0, 6);
+        //     setSortById(sorted);
+        //     }
+
+        
 
         fetchSortById()
+        fetchSortedPharmacy()
         fetchSortedRestaurants();
+        // fetchSortedPharmacy()
     }, [route.params?.readableLocation]);
     // const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating - a.details.rating).slice(0,5);
 
@@ -96,144 +103,236 @@ export default function HomeScreen({route, navigation}) {
     const handleRestaurantPress = (restaurants) => {
     navigation.navigate('ResturantScreen', { restaurants });
   }
+  const redirectSearchScreen = () => {
+    navigation.navigate('AllRestaurants')
+  }
     
 
     return( 
-        <SafeAreaView style={styles.container}>
+        <SafeAreaView style={[globalStyles.container, {paddingBottom:0}]}>
 
-            <View style={styles.searchBarContainer}>
+                        {/* Top Container for Location */}
+            <View style={styles.TopContainer}>
+                <View style={styles.locationContainer}>
+    
+                    <View style={styles.address}>
+                        <Text style={styles.HeadText}>Deliver Now</Text>
+                        <View style={styles.addressContainer}>
+                            <Text style = {styles.addressText}>{address}</Text>
+                            <TouchableOpacity style={styles.emoji} onPress={handleLocationSearch}>
+                                <Ionicons name="chevron-down" size={20} color="black"/>
+                            </TouchableOpacity>
 
-
-                <View style={[styles.locationContainer, styles.shadowProp]}>
-                    <TouchableOpacity style={styles.emoji} onPress={handleLocationSearch}>
-                    <Ionicons name="location-outline" size={26} color="black"/>
-                    </TouchableOpacity>
+                        </View>
+                        
+                    </View>
 
                 </View>
-                {/* {address && (
-          <Text style={styles.addressText}>
-            {address}
-          </Text>
-        )} */}
-        <View style={styles.address}>
-            <Text style = {styles.addressText}>🎯 {address}</Text>
-        </View>
-
                 <View>
-                    
-                    <TouchableOpacity onPress={() => navigation.navigate('AllRestaurants')}>
-                    <Ionicons name="search" size={32} color="black" style={styles.searchIcon} />
+                    <TouchableOpacity style={styles.ProfileIcon} onPress={() => navigation.navigate('User')}>
+                        <ProfileIcon size={32} color="black" />
+                    </TouchableOpacity>
+                </View>
+            </View>
+
+
+                                {/* Search Bar Design */}
+            <View style={styles.searchContainer}>
+                <View style={styles.searchBarContainer} onPress={redirectSearchScreen}>
+                    <TextInput
+                        style={styles.searchBar}
+                        value=""
+                        placeholder="Search restaurants, pharmacy, farmers market..."
+                        // onChangeText={handleSearch}
+                        onPress={redirectSearchScreen}
+                    />
+                    <View style={styles.searchIcon} >
+                        <AntDesign name="search1" size={24} color="black" />
+                    </View>
+                </View>
+            </View>
+
+
+
+
+
+            <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
+
+            
+                                    {/* Offered-Services Container */}
+                <View style={styles.offeredServicesContainer}>
+                    {/* Food */}
+                    <TouchableOpacity style={styles.serviceItem}>
+                        <Image 
+                            source={require('../../../assets/ima/food-service.png')} 
+                            style={styles.serviceIcon}
+                            resizeMode="contain"
+                        />
+                        <Text style={styles.serviceTitle}>Food</Text>
+                        <Text style={styles.serviceTime}>25 mins</Text>
                     </TouchableOpacity>
 
-                </View>
+                    {/* Mart */}
+                    <TouchableOpacity style={styles.serviceItem}>
+                        <Image 
+                            source={require('../../../assets/ima/grocery.png')} 
+                            style={styles.serviceIcon}
+                            resizeMode="contain"
+                        />
+                        <Text style={styles.serviceTitle}>Mart</Text>
+                        <Text style={styles.serviceTime}>20 mins</Text>
+                    </TouchableOpacity>
 
-            </View>
-            
-        <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
-                                {/* Top Categories */}
-            <View style={styles.topCategoryContainer}>
-                <Text style={styles.topCatText}> Top Categories</Text> 
-            </View>
+                    {/* Courier */}
+                    <TouchableOpacity style={styles.serviceItem}>
+                        <Image 
+                            source={require('../../../assets/ima/pharmacy.png')} 
+                            style={styles.serviceIcon}
+                            resizeMode="contain"
+                        />
+                        <Text style={styles.serviceTitle}>Pharmacy</Text>
+                        <Text style={styles.serviceTime}>30 mins</Text>
+                    </TouchableOpacity>
 
-            <View contentContainerStyle={styles.scrollViewContent}>
-            
-            <ScrollView  horizontal={true} showsHorizontalScrollIndicator={false}>
-            {images.map((item) => (
-                <TouchableOpacity key={item.id} onPress={() => handleFoodSearch(item.name)}>
-                <View  style={styles.imageContainer}>
-                    <Image source={{ uri: item.url }} style={styles.image} />
-                    <Text style={styles.imageName}>{item.name}</Text>
+                    {/* Dine in */}
+                    <TouchableOpacity style={[styles.serviceItem, { marginTop: 10 }, styles.dineInItem]}>
+                        <Image 
+                            source={require('../../../assets/ima/courier.png')} 
+                            style={styles.serviceIcon}
+                            resizeMode="contain"
+                        />
+                        <Text style={styles.serviceTitle}>Courier</Text>
+                        <Text style={styles.serviceTime}>No waiting</Text>
+                    </TouchableOpacity>
+
+                    {/* Gold Membership */}
+                    <TouchableOpacity style={[styles.serviceItem, { marginTop: 10 }, styles.goldMembershipItem]}>
+                        <Image 
+                            source={require('../../../assets/ima/farm-markt.png')} 
+                            style={styles.serviceIcon}
+                            resizeMode="contain"
+                        />
+                        <View>
+                        <Text style={styles.serviceTitle}>Farmers Market</Text>
+                        <Text style={[styles.serviceTime, {padding:5}]}>Fresh Farm Produce</Text>
+                        </View>
+                    </TouchableOpacity>
                 </View>
-                </TouchableOpacity>
-            ))}
-            </ScrollView>
             
-            </View>
+                                    {/* Advertisment Banners */}
+
+                <ScrollView
+                    horizontal={true}
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.scrollViewContent}
+                    // pagingEnabled={true}
+                    onScroll={Animated.event(
+                        [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                        { useNativeDriver: false }
+                    )}
+                    scrollEventThrottle={16}
+                >
+                    {adBanners.map((item) => (
+                        <TouchableOpacity key={item.id}>
+                            <View style={[styles.imageContainer, { width }]}>
+                                <Image 
+                                    source={item.image} 
+                                    style={[styles.image, { width }]} 
+                                    resizeMode={"cover"}
+                                />
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+
+                <CarouselIndicator 
+                    scrollX={scrollX} 
+                    data={adBanners} 
+                    itemWidth={width}
+                />
+
+            
+           
                             {/* Popular Restaurants    */}
-            <View style={{flexDirection:"row"}}>
-                <Text style={[styles.topCatText, styles.topCategoryContainer]} > Popular Resturants</Text>
-                <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
-                    <Text style={styles.viewallText}> View all</Text>
-                </TouchableOpacity>
-            </View>
-
-            <View style={styles.scrollViewContent}>
-            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {sortedRestaurants.map((restaurants, index) => (
-                    <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
-                        
-                    <View style={styles.restaurantContainer}>
-                        <Image source={{ uri: restaurants.details.logo}} style={styles.resturantImage} />
-                        <View style={styles.restaurantNameContainer}>
-                        <Text style={styles.name}>{restaurants.name} </Text>
-                        </View>
-                        {/* <Text style={styles.price}>{restaurant.price}</Text> */}
-                        <Text style={styles.location}>{restaurants.details.location}</Text>
+                <View style={styles.popularRestaurantContainer}>
+                    <View style={{flexDirection:"row"}}>
+                        <Text style={[styles.topCatText, styles.topCategoryContainer]} > Popular Resturants</Text>
+                        {/* <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
+                            <Text style={styles.viewallText}> View all</Text>
+                        </TouchableOpacity> */}
                     </View>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-            </View>
 
-                {/* Restaurants to Explore */}
-            <View>
-                <Text style={[styles.topCatText, styles.topCategoryContainer]} > Restaurant To Explore</Text>
-            </View>
-
-            <View style={styles.scrollViewContent}>
-            <ScrollView vertical={true} showsVerticalScrollIndicator={false} style={styles.shadowProp}>
-                {sortById.map((restaurants, index) => (
-                    <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
-                    <View style={styles.restaurantContainers}>
-                        <Image source={{ uri: restaurants.details.logo }} style={styles.resturantImage} />
-                        <View style={styles.restaurantNameContainer}>
-                        <Text style={styles.name}>{restaurants.name}</Text>
-                        </View>
-                        <View  style={styles.ratingContainer}>
-
-                            <Icon name="star" type="font-awesome" color="#FFD700" style={styles.ratingIcon}/>
-                            <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
-                            <Text style={styles.explorelocation}>| {restaurants.details.location}</Text>
-                        </View>
-                        
-
-                        <Text style={styles.descriptions}>{restaurants.details.description}</Text>
-                    
+                    <View style={styles.scrollViewContent}>
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+                        {sortedRestaurants.map((restaurants, index) => (
+                            <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
+                                
+                            <View style={styles.restaurantContainer}>
+                                <Image source={{ uri: restaurants.details.logo}} style={styles.resturantImage} />
+                                <Text style={styles.restaurantname}>{restaurants.name} </Text>
+                                <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
+                                <View  style={styles.ratingContainer}>
+                                    <Text style={styles.ratingText}>⭐{restaurants.details.rating}</Text>
+                                    <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">| {restaurants.details.location}</Text>
+                                </View>
+                            </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                     </View>
-                    
-                    
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-            </View>
+                </View>
+                
 
-            {/* <View style={styles.scrollViewContent}>
-            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                {limitedRestaurants.map((restaurant) => (
-                    <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
-                    <View key={restaurant.id} style={styles.restaurantContainer}>
-                        <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
-                        <View style={styles.restaurantNameContainer}>
-                        <Text style={styles.name}>{restaurant.name}</Text>
-                        </View>
-                        <Text style={styles.price}>{restaurant.price}</Text>
-                        <Text style={styles.location}>{restaurant.location}</Text>
+                                    {/* Restaurants to Explore */}
+                <View style={styles.popularRestaurantContainer}>
+                    <View style={{flexDirection:"row"}}>
+                        <Text style={[styles.topCatText, styles.topCategoryContainer]} > Pharmacy Near Me</Text>
+                        {/* <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
+                            <Text style={styles.viewallText}> View all</Text>
+                        </TouchableOpacity> */}
                     </View>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
-            </View> */}
+
+                    <View style={styles.scrollViewContent}>
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+                        {sortedPharmacy.map((pharmacy, index) => (
+                            <TouchableOpacity key={pharmacy.id} onPress={() => handleRestaurantPress(restaurants)}>
+                                
+                            <View style={styles.restaurantContainer}>
+                                <Image source={{ uri: pharmacy.details.logo}} style={styles.resturantImage} />
+                                <Text style={styles.restaurantname}>{pharmacy.name} </Text>
+                                <Text style={styles.restaurantDetails}>Abuja | Seafood | Sushi</Text>
+                                <View  style={styles.ratingContainer}>
+                                    <Text style={styles.ratingText}>⭐{pharmacy.details.rating}</Text>
+                                    <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">| {pharmacy.details.location}</Text>
+                                </View>
+                            </View>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                    </View>
+                </View>
+
+                {/* <View style={styles.scrollViewContent}>
+                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+                    {limitedRestaurants.map((restaurant) => (
+                        <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
+                        <View key={restaurant.id} style={styles.restaurantContainer}>
+                            <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
+                            <View style={styles.restaurantNameContainer}>
+                            <Text style={styles.name}>{restaurant.name}</Text>
+                            </View>
+                            <Text style={styles.price}>{restaurant.price}</Text>
+                            <Text style={styles.location}>{restaurant.location}</Text>
+                        </View>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+                </View> */}
 
             </ScrollView>
 
 
             
-
-
-
-
-
-
 
 
 
@@ -252,32 +351,73 @@ export default function HomeScreen({route, navigation}) {
 
 
 const styles = StyleSheet.create({
-container: {
-    flex: 1,
-    
-    // justifyContent: 'center', // You can change this to 'flex-end' to move the button to the bottom
-    // alignItems: 'center',
-    backgroundColor: "#fffbf8",
-    padding: 20, // Optional padding for the container
-    paddingTop:70,
-    // minHeight: 1000, // Adjust this value as needed (e.g., minHeight: 700)
-    // height:"100vh",
-    paddingBottom: 0,
-    }, 
+TopContainer:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop:verticalScale(35),
+    // width: '100%',
+    borderColor: "#000",
+    // borderWidth: 1,
+},
 locationContainer: {
-    backgroundColor: "white",
-    borderColor:"black",
-    borderRadius:7,
-    width: horizontalScale(40),
-    height:verticalScale(45),
+    flexDirection:'column',
     alignItems:'center',
-    // marginTop:25,
 
-    // paddingTop:,
-    },
-    emoji: {
-    paddingTop: moderateScale(10),
-    },
+},
+HeadText: {
+    fontFamily:fonts.bold,
+    fontWeight: "700",
+    fontSize: moderateScale(20),
+    color: "#898A8D",
+},
+addressContainer: {
+    flexDirection: 'row',
+    // borderWidth: 1,
+    // borderColor: "#000",
+},
+addressText: {
+    flexGrow:1,
+    fontSize: moderateScale(40),
+    fontWeight: "bold",
+    borderWidth: 1,
+    borderColor: "#000",
+
+},
+emoji: {
+marginTop: moderateScale(3),
+},
+ProfileIcon: {
+    // position: 'absolute',
+    alignSelf:'center',
+    alignContent:'center',
+    marginTop: verticalScale(9),
+    borderColor: "#000",
+    
+},
+searchContainer: {
+    marginTop: verticalScale(20)
+},
+searchBarContainer: {
+    flexDirection: "row",
+    position: "relative",
+
+},
+searchIcon: {
+    position:"absolute",
+    right: horizontalScale(15),
+    top: verticalScale(10),
+    zIndex:1,
+
+},
+searchBar: {
+    backgroundColor: '#F3F2F2',
+    padding: moderateScale(15),
+    borderRadius: moderateScale(15),
+    fontSize: moderateScale(15),
+    // borderRadius:20,
+    elevation:3,
+    width: '100%'
+},
 shadowProp: {
     shadowColor: '#171717',
     shadowOffset: {width: -2, height: 4},
@@ -298,25 +438,19 @@ TextInput1: {
     // marginStart: 10,
     width:horizontalScale(280),
     // height:50,
-    },
-    searchBarContainer:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%'
 },
+   
+
 input: {
-fontSize: 20,
-marginLeft: 10,
-width: "90%",
+    fontSize: 20,
+    marginLeft: 10,
+    width: "90%",
 },
-searchIcon: {
-position: 'absolute',
-right: 9,
-top: 10,
-zIndex: 1,
-},
+
 topCategoryContainer: {
-    paddingTop: 25,
+    paddingTop: 15,
+    // borderWidth:1,
+    borderColor: "#000",
 },
 topCatText:{
     fontSize: 25,
@@ -331,68 +465,65 @@ scrollViewContent: {
     
 },
 imageContainer: {
-    margin: 20, 
-    marginHorizontal: 5,// Add margin around each image
+    // margin: 10, 
+    // marginHorizontal: 5,// Add margin around each image
 },
 image: {
-    width: horizontalScale(100), // Set image width
-    height: verticalScale(100), // Set image height
-    borderRadius: 20, // Add border radius for rounded corners
+    width: horizontalScale(250), // Set image width
+    height: verticalScale(150), // Set image height
+    // borderRadius: 20, // Add border radius for rounded corners
+    // overflow: 'hidden'
 },
-imageName: {
-    marginTop: 5,
-    fontSize: moderateScale(16),
-    textAlign:"center",
-    fontWeight: "500",
-},
-name: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-},
-price: {
-    fontSize: 14,
-    marginBottom: 5,
-},
-location: {
-    fontSize: 17,
-    color: "#555555",
-    position: "absolute",
-    padding:verticalScale(85),
-    paddingLeft:horizontalScale(170),
-    paddingRight:horizontalScale(12),
-    fontWeight: "bold",
+popularRestaurantContainer:{
+    // borderWidth:1,
+    marginVertical:10
+    
 },
 restaurantContainer: {
-    marginRight: 10,
-    padding: verticalScale(10),
-    backgroundColor: "#f0f0f0",
+    // flex: 1,
+    marginHorizontal: 8,
+    // borderWidth:1,
+    // padding: verticalScale(10),
+    // backgroundColor: "#000",
     borderRadius: 20,
-    width: horizontalScale(300),
-    height:verticalScale(170),
+    width: horizontalScale(160),
+    // height:verticalScale(223),
+    // gap: moderateScale(5)
     
-},
-restaurantNameContainer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    paddingHorizontal: 10,
-    borderTopRightRadius: 10,
-    borderBottomLeftRadius: horizontalScale(10),
-},
-restaurantDetails: {
-    padding: horizontalScale(10),
 },
 resturantImage: {
-    width: horizontalScale(150), // Set image width
-    height: verticalScale(150), // Set image height
+    width: horizontalScale(160), // Set image width
+    height: verticalScale(160), // Set image height
     borderRadius: 20, // Add border radius for rounded corners
+    alignSelf:"center"
 },
+restaurantname: {
+    fontFamily: fonts.bold,
+    fontSize:18,
+    fontWeight: "700",
+},
+restaurantDetails: {
+    // padding: horizontalScale(10),
+},
+ratingIcon: {
+    marginRight: 5, // Add spacing between the star icon and the rating text
+    width: horizontalScale(15),
+    height:verticalScale(15) // Set icon width()
+},
+ratingText: {
+    fontSize: 17,
+    color: "#8b8c89", // Adjust color as needed
+    // fontWeight: "bold",
+},
+ratingContainer: {
+    flexDirection: 'row',
+    alignItems:"center"
+
+},
+
 viewallContainer: {
     left:120,
-    top:32,
-    
+    top:32,  
 },
 viewallText: {
     color: "gray",
@@ -422,29 +553,15 @@ descriptions: {
     paddingRight:9,
     fontWeight: "bold",
 },
-ratingText: {
-    fontSize: 16,
-    color: "#555555", // Adjust color as needed
-    fontWeight: "bold",
-},
-ratingContainer: {
-    position: 'absolute',
-    flexDirection: 'row',
-    top: 85, // Adjust this value to place the container as needed
-    left: 170,
-    zIndex: 10,
-
-},
 explorelocation: {
     fontSize: 17,
-    color: "#555555",
+    color: "#8b8c89",
     marginLeft: 10, // Add spacing from the rating text
-    fontWeight: "bold",
+    flexShrink: 1,  // Prevent text from expanding beyond container
+    maxWidth: "70%" 
+    // fontWeight: "bold",
 },
-ratingIcon: {
-    zIndex: 11, // Ensure the icon appears above other elements
-    marginRight: 5, // Add spacing between the star icon and the rating text
-},
+
 address: {
     alignContent:"center",
     justifyContent:"center",
@@ -454,7 +571,55 @@ address: {
     fontSize: 20,
     fontWeight:'bold',
 
-  }
+  },
+  offeredServicesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: horizontalScale(6),
+    marginTop: verticalScale(20),
+    // gap: moderateScale(10),
+},
+serviceItem: {
+    width: '30%', // Approximately one-third of container width
+    backgroundColor: '#F8F8F8',
+    borderRadius: moderateScale(10),
+    padding: moderateScale(10),
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+        width: 0,
+        height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+},
+dineInItem: {
+    width: '30%', // Same width as top row items
+},
+goldMembershipItem: {
+    width: '65%', // Takes up remaining space minus gap
+    flexDirection: 'row', // Aligns content horizontally
+    justifyContent: 'flex-start', // Aligns content to the left
+    paddingHorizontal: moderateScale(15),
+},
+farmText: {
 
+},
+serviceIcon: {
+    width: horizontalScale(50),
+    height: verticalScale(50),
+    marginBottom: verticalScale(5),
+},
+serviceTitle: {
+    fontSize: moderateScale(14),
+    fontWeight: '600',
+    marginVertical: verticalScale(2),
+},
+serviceTime: {
+    fontSize: moderateScale(12),
+    color: '#666',
+},
       
 })
