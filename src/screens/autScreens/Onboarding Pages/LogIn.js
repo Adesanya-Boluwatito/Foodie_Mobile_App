@@ -77,7 +77,10 @@ export default function LoginScreen() {
       
           // Store user information
           await AsyncStorage.setItem('@user', JSON.stringify(userCredential.user));
-          navigation.replace('HomeScreen');
+          navigation.reset({
+            index: 0, // reset the stack to only include the HomeScreen
+            routes: [{ name: 'HomeScreen' }],
+        });
          
           }catch (error) {
           console.error("Google Sign-In Error:", error); // Log the full error object
@@ -96,7 +99,10 @@ export default function LoginScreen() {
           const userCredential = await signInWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
           await AsyncStorage.setItem('@user', JSON.stringify(user));
-          navigation.replace('HomeScreen'); // Replace current screen with HomeScreen
+          navigation.reset({
+            index: 0, // reset the stack to only include the HomeScreen
+            routes: [{ name: 'HomeScreen' }],
+        });// Replace current screen with HomeScreen
         } catch (error) {
             console.error('Error adding document:', error);
             if (error.code === 'auth/email-already-in-use') {

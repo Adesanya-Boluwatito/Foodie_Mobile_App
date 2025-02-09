@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState} from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesome5, Fontisto, Octicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { isOnboardingCompleted } from '../../../../utils/onboradingStatus';
+import { getAuthToken } from '../../../../utils/AuthStorage';
 import SignUp from '../Onboarding Pages/SignUp';
 import OTP from '../Onboarding Pages/OTP';
 import Login from '../Onboarding Pages/LogIn'
@@ -131,7 +133,7 @@ function MyTabs() {
 
       <Tab.Screen
         name="Mart"
-        component={CartScreen}
+        component={ChatScreen}
         options={{
           tabBarIcon: ({ focused }) => (
             <CustomTabBarButton icon="mart" focused={focused}/>
@@ -178,8 +180,40 @@ function MyTabs() {
 }
 
 export default function MyScreens() {
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [initialRoute, setInitialRoute] = useState('Onboarding1');
+
+  useEffect(() => {
+    const checkAuthAndOnboardingStatus = async () => {
+      const onboardingCompleted = await isOnboardingCompleted();
+      const authToken = await getAuthToken();
+
+      if (authToken) {
+        setInitialRoute('HomeScreen'); // User is logged in, go to HomeScreen
+      } else if (onboardingCompleted) {
+        setInitialRoute('Sign In'); // Onboarding completed but not logged in, go to Sign In
+      } else {
+        setInitialRoute('Onboarding1'); // Show onboarding screens
+      }
+
+      setIsLoading(false);
+    };
+
+    checkAuthAndOnboardingStatus();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#cc" />
+      </View>
+    );
+  }
+
+
   return (
-    <Stack.Navigator initialRouteName= 'HomeScreen'>
+    <Stack.Navigator initialRouteName= {initialRoute}>
       <Stack.Screen name="Sign In" component={Login} options={{ headerShown: false }}/>
       
       <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
@@ -197,6 +231,7 @@ export default function MyScreens() {
       <Stack.Screen name='MyNavBar' component={BottomNavbar} options={{ headerShown: false }} />
       {/* <Stack.Screen name='MyTabs' component={BottomNavbar} options={{ headerShown: false }} /> */}
       <Stack.Screen name='Manage Add' component={ManageAddressScreen} options={{ headerShown: true, title: 'Manage Addresses' }} />
+      <Stack.Screen name='Cart' component={CartScreen} options={{ headerShown: false}} />
       <Stack.Screen name='Payment Option' component={PaymentOptionsScreen} options={{ headerShown: true, title: 'Payment' }} />
       <Stack.Screen name='Add Addy' component={AddNewAddressScreen} options={{ headerShown: false, title: 'Add Address' }} />
       <Stack.Screen name='Edit Address' component={EditAddressScreen} options={{ headerShown: true, title: 'Edit Address' }} />
