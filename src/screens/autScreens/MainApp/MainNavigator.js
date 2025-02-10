@@ -190,7 +190,7 @@ export default function MyScreens() {
       const authToken = await getAuthToken();
 
       if (authToken) {
-        setInitialRoute('HomeScreen'); // User is logged in, go to HomeScreen
+        setInitialRoute('MainTab'); // User is logged in, go to HomeScreen
       } else if (onboardingCompleted) {
         setInitialRoute('Sign In'); // Onboarding completed but not logged in, go to Sign In
       } else {
@@ -216,7 +216,7 @@ export default function MyScreens() {
     <Stack.Navigator initialRouteName= {initialRoute}>
       <Stack.Screen name="Sign In" component={Login} options={{ headerShown: false }}/>
       
-      <Stack.Screen name="HomeScreen" component={MyTabs} options={{ headerShown: false }} />
+      <Stack.Screen name="MainTab" component={MyTabs} options={{ headerShown: false }} />
       <Stack.Screen name="ResturantScreen" component={ResturantScreen} options={{ headerShown: false }} />
       <Stack.Screen name="MyOrdersScreen" component={MyOrdersScreen} options={{ headerShown: true, title: 'Order History' }} />
       <Stack.Screen name="SignUp" component={SignUp} options={{ headerShown: false }} />
@@ -239,7 +239,7 @@ export default function MyScreens() {
       <Stack.Screen name="OfferScreen" component={OffersScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="AllRestaurants" component={AllRestaurants} options={{ headerShown: false }}/>
       <Stack.Screen name="FavouriteScreen" component={FavouritesScreen} options={{ title: 'Favourites'}}/>
-      <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }}/>
+      {/* <Stack.Screen name="Map" component={MapScreen} options={{ headerShown: false }}/> */}
       <Stack.Screen name="GroupOrder" component={GroupOrderScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="CategoryRestaurantsScreen" component={CategoryRestaurantsScreen} />
       <Stack.Screen name="Edit Profile" component={EditProfile} options={{ headerShown: false }} />

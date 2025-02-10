@@ -1,353 +1,275 @@
-import React, { useState,useEffect, useRef } from 'react';
-import { View, Text, StyleSheet,TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView, Alert, Animated, Dimensions} from 'react-native';
-import restaurantsData from "../../components/data/restaurants_feed.json"
-import CarouselIndicator from "../../components/CarouselIndicator"
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Image, SafeAreaView, Alert, Animated, Dimensions } from 'react-native';
+import restaurantsData from "../../components/data/restaurants_feed.json";
+import CarouselIndicator from "../../components/CarouselIndicator";
 import { AntDesign, FontAwesome5, Ionicons } from '@expo/vector-icons';
-import {Icon } from 'react-native-elements';
-import * as Location from 'expo-location';
-import { useToast } from "react-native-toast-notifications"
+
+import { useToast } from "react-native-toast-notifications";
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 import { globalStyles, fonts } from '../../global/styles/theme';
 import { ProfileIcon } from '../../global/styles/icons/TabIcons';
 
-
 const { width } = Dimensions.get('window');
 
-
 const adBanners = [
-    {
-        "id": 1,
-        "image": require("../../../assets/ima/Ad Banneer.png"),
-    },  
+  {
+    id: 1,
+    image: require("../../../assets/ima/Ad Banneer.png"),
+  },
+  {
+    id: 2,
+    image: require("../../../assets/ima/ad-banner3.png"),
+  },
+];
 
-    {
-        "id": 2,
-        "image": require("../../../assets/ima/ad-banner3.png")
+export default function HomeScreen({ route, navigation }) {
+  const [address, setAddress] = useState();
+  const [sortedRestaurants, setSortedRestaurants] = useState([]);
+  const [sortedPharmacy, setSortedPharmacy] = useState([]);
+  const [sortById, setSortById] = useState([]);
+  const toast = useToast();
+  const scrollX = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    console.log('HomeScreen mounted with route:', route);
+    console.log('Route params:', route?.params);
+  
+    if (route?.params?.readableLocation) {
+      console.log('Setting address to:', route.params.readableLocation);
+      setAddress(route.params.readableLocation);
+    } else {
+      console.log("No readableLocation received");
     }
-]
+  }, [route]); // Empty dependency array for mount
 
-
-
-
-
-export default function HomeScreen({route, navigation}) {
-    
-    
-    const [address, setAddress] = useState('Set Location')
-    const [sortedRestaurants, setSortedRestaurants] = useState([]);
-    const [sortedPharmacy, setSortedPharmacy] = useState([]);
-    const [sortById, setSortById] = useState([])
-    const toast = useToast();
-    const scrollX = useRef(new Animated.Value(0)).current;
-    // const { readableLocation } = route.params || { readableLocation: 'Unknown' };
-    
-
-    // console.log("Location recieved after navigation:",readableLocation)
-
-    
-    useEffect(() => {
-        if (route.params?.readableLocation) {
-            // Log the updated location
-            console.log("Location updated after navigation:", route.params.readableLocation);
-            setAddress(route.params.readableLocation);
-        }
-    
-
-        const fetchSortedRestaurants = async () => {
-            const sorted = [...restaurantsData.restaurants]
-                .sort((a, b) => b.details.rating - a.details.rating)
-                .slice(0, 5);
-            setSortedRestaurants(sorted);
-        };
-
-        const  fetchSortById = async () => {
-            const sorted = [...restaurantsData.restaurants]
-            .sort((a, b) => a.id - b.id)
-            .slice(0, 6);
-            setSortById(sorted);
-        
-        }
-
-        const fetchSortedPharmacy = async () => {
-            const sorted = [...restaurantsData.pharmacy]
-                .sort((a, b) => b.details.rating - a.details.rating)
-                .slice(0, 5);
-            setSortedPharmacy(sorted);
-        };
-
-        // const  fetchSortById = async () => {
-        //     const sorted = [...restaurantsData.restaurants]
-        //     .sort((a, b) => a.id - b.id)
-        //     .slice(0, 6);
-        //     setSortById(sorted);
-        //     }
-
-        
-
-        fetchSortById()
-        fetchSortedPharmacy()
-        fetchSortedRestaurants();
-        // fetchSortedPharmacy()
-    }, [route.params?.readableLocation]);
-    // const sortedRestauarnts = restaurantsData.restaurants.sort((a,b) => b.details.rating - a.details.rating).slice(0,5);
-
-    const handleFoodSearch = (category) => {
-        navigation.navigate('CategoryRestaurantsScreen', { category });
-        console.log('Food Found');
-    }
-    const handleLocationSearch = async () => {
-        navigation.navigate("Map")
-        console.log('Location Found')
+  // Your existing useEffect for data fetching
+  useEffect(() => {
+    const fetchSortedRestaurants = async () => {
+      const sorted = [...restaurantsData.restaurants]
+        .sort((a, b) => b.details.rating - a.details.rating)
+        .slice(0, 5);
+      setSortedRestaurants(sorted);
     };
 
-    const handleRestaurantPress = (restaurants) => {
+    const fetchSortById = async () => {
+      const sorted = [...restaurantsData.restaurants]
+        .sort((a, b) => a.id - b.id)
+        .slice(0, 6);
+      setSortById(sorted);
+    };
+
+    const fetchSortedPharmacy = async () => {
+      const sorted = [...restaurantsData.pharmacy]
+        .sort((a, b) => b.details.rating - a.details.rating)
+        .slice(0, 5);
+      setSortedPharmacy(sorted);
+    };
+
+    fetchSortById();
+    fetchSortedPharmacy();
+    fetchSortedRestaurants();
+  }, []);
+
+
+  const handleFoodSearch = (category) => {
+    navigation.navigate('CategoryRestaurantsScreen', { category });
+    console.log('Food Found');
+  };
+
+  const handleLocationSearch = async () => {
+    navigation.navigate("Map");
+    console.log('Location Found');
+  };
+
+  const handleRestaurantPress = (restaurants) => {
     navigation.navigate('ResturantScreen', { restaurants });
-  }
+  };
+
   const redirectSearchScreen = () => {
-    navigation.navigate('AllRestaurants')
-  }
-    
+    navigation.navigate('AllRestaurants');
+  };
 
-    return( 
-        <SafeAreaView style={[globalStyles.container, {paddingBottom:0}]}>
-
-                        {/* Top Container for Location */}
-            <View style={styles.TopContainer}>
-                <View style={styles.locationContainer}>
-    
-                    <View style={styles.address}>
-                        <Text style={styles.HeadText}>Deliver Now</Text>
-                        <View style={styles.addressContainer}>
-                            <Text style = {styles.addressText}>{address}</Text>
-                            <TouchableOpacity style={styles.emoji} onPress={handleLocationSearch}>
-                                <Ionicons name="chevron-down" size={20} color="black"/>
-                            </TouchableOpacity>
-
-                        </View>
-                        
-                    </View>
-
-                </View>
-                <View>
-                    <TouchableOpacity style={styles.ProfileIcon} onPress={() => navigation.navigate('User')}>
-                        <ProfileIcon size={32} color="black" />
-                    </TouchableOpacity>
-                </View>
+  return (
+    <SafeAreaView style={[globalStyles.container, { paddingBottom: 0 }]}>
+      {/* Top Container for Location */}
+      <View style={styles.TopContainer}>
+        <View style={styles.locationContainer}>
+          <View style={styles.address}>
+            <Text style={styles.HeadText}>Deliver Now</Text>
+            <View style={styles.addressContainer}>
+              <Text style={styles.addressText}>{address}</Text>
+              {/* <TouchableOpacity style={styles.emoji} onPress={handleLocationSearch}>
+                <Ionicons name="chevron-down" size={20} color="black" />
+              </TouchableOpacity> */}
             </View>
+          </View>
+        </View>
+        <View>
+          <TouchableOpacity style={styles.ProfileIcon} onPress={() => navigation.navigate('User')}>
+            <ProfileIcon size={32} color="black" />
+          </TouchableOpacity>
+        </View>
+      </View>
 
+      {/* Search Bar Design */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchBarContainer} onPress={redirectSearchScreen}>
+          <TextInput
+            style={styles.searchBar}
+            value=""
+            placeholder="Search restaurants, pharmacy, farmers market..."
+            onPress={redirectSearchScreen}
+          />
+          <View style={styles.searchIcon}>
+            <AntDesign name="search1" size={24} color="black" />
+          </View>
+        </View>
+      </View>
 
-                                {/* Search Bar Design */}
-            <View style={styles.searchContainer}>
-                <View style={styles.searchBarContainer} onPress={redirectSearchScreen}>
-                    <TextInput
-                        style={styles.searchBar}
-                        value=""
-                        placeholder="Search restaurants, pharmacy, farmers market..."
-                        // onChangeText={handleSearch}
-                        onPress={redirectSearchScreen}
-                    />
-                    <View style={styles.searchIcon} >
-                        <AntDesign name="search1" size={24} color="black" />
-                    </View>
-                </View>
+      <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
+        {/* Offered-Services Container */}
+        <View style={styles.offeredServicesContainer}>
+          {/* Food */}
+          <TouchableOpacity style={styles.serviceItem}>
+            <Image
+              source={require('../../../assets/ima/food-service.png')}
+              style={styles.serviceIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.serviceTitle}>Food</Text>
+            <Text style={styles.serviceTime}>25 mins</Text>
+          </TouchableOpacity>
+
+          {/* Mart */}
+          <TouchableOpacity style={styles.serviceItem}>
+            <Image
+              source={require('../../../assets/ima/grocery.png')}
+              style={styles.serviceIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.serviceTitle}>Mart</Text>
+            <Text style={styles.serviceTime}>20 mins</Text>
+          </TouchableOpacity>
+
+          {/* Pharmacy */}
+          <TouchableOpacity style={styles.serviceItem}>
+            <Image
+              source={require('../../../assets/ima/pharmacy.png')}
+              style={styles.serviceIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.serviceTitle}>Pharmacy</Text>
+            <Text style={styles.serviceTime}>30 mins</Text>
+          </TouchableOpacity>
+
+          {/* Courier */}
+          <TouchableOpacity style={[styles.serviceItem, { marginTop: 10 }, styles.dineInItem]}>
+            <Image
+              source={require('../../../assets/ima/courier.png')}
+              style={styles.serviceIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.serviceTitle}>Courier</Text>
+            <Text style={styles.serviceTime}>No waiting</Text>
+          </TouchableOpacity>
+
+          {/* Farmers Market */}
+          <TouchableOpacity style={[styles.serviceItem, { marginTop: 10 }, styles.goldMembershipItem]}>
+            <Image
+              source={require('../../../assets/ima/farm-markt.png')}
+              style={styles.serviceIcon}
+              resizeMode="contain"
+            />
+            <View>
+              <Text style={styles.serviceTitle}>Farmers Market</Text>
+              <Text style={[styles.serviceTime, { padding: 5 }]}>Fresh Farm Produce</Text>
             </View>
+          </TouchableOpacity>
+        </View>
 
-
-
-
-
-            <ScrollView vertical={true} showsVerticalScrollIndicator={false}>
-
-            
-                                    {/* Offered-Services Container */}
-                <View style={styles.offeredServicesContainer}>
-                    {/* Food */}
-                    <TouchableOpacity style={styles.serviceItem}>
-                        <Image 
-                            source={require('../../../assets/ima/food-service.png')} 
-                            style={styles.serviceIcon}
-                            resizeMode="contain"
-                        />
-                        <Text style={styles.serviceTitle}>Food</Text>
-                        <Text style={styles.serviceTime}>25 mins</Text>
-                    </TouchableOpacity>
-
-                    {/* Mart */}
-                    <TouchableOpacity style={styles.serviceItem}>
-                        <Image 
-                            source={require('../../../assets/ima/grocery.png')} 
-                            style={styles.serviceIcon}
-                            resizeMode="contain"
-                        />
-                        <Text style={styles.serviceTitle}>Mart</Text>
-                        <Text style={styles.serviceTime}>20 mins</Text>
-                    </TouchableOpacity>
-
-                    {/* Courier */}
-                    <TouchableOpacity style={styles.serviceItem}>
-                        <Image 
-                            source={require('../../../assets/ima/pharmacy.png')} 
-                            style={styles.serviceIcon}
-                            resizeMode="contain"
-                        />
-                        <Text style={styles.serviceTitle}>Pharmacy</Text>
-                        <Text style={styles.serviceTime}>30 mins</Text>
-                    </TouchableOpacity>
-
-                    {/* Dine in */}
-                    <TouchableOpacity style={[styles.serviceItem, { marginTop: 10 }, styles.dineInItem]}>
-                        <Image 
-                            source={require('../../../assets/ima/courier.png')} 
-                            style={styles.serviceIcon}
-                            resizeMode="contain"
-                        />
-                        <Text style={styles.serviceTitle}>Courier</Text>
-                        <Text style={styles.serviceTime}>No waiting</Text>
-                    </TouchableOpacity>
-
-                    {/* Gold Membership */}
-                    <TouchableOpacity style={[styles.serviceItem, { marginTop: 10 }, styles.goldMembershipItem]}>
-                        <Image 
-                            source={require('../../../assets/ima/farm-markt.png')} 
-                            style={styles.serviceIcon}
-                            resizeMode="contain"
-                        />
-                        <View>
-                        <Text style={styles.serviceTitle}>Farmers Market</Text>
-                        <Text style={[styles.serviceTime, {padding:5}]}>Fresh Farm Produce</Text>
-                        </View>
-                    </TouchableOpacity>
-                </View>
-            
-                                    {/* Advertisment Banners */}
-
-                <ScrollView
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={styles.scrollViewContent}
-                    // pagingEnabled={true}
-                    onScroll={Animated.event(
-                        [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-                        { useNativeDriver: false }
-                    )}
-                    scrollEventThrottle={16}
-                >
-                    {adBanners.map((item) => (
-                        <TouchableOpacity key={item.id}>
-                            <View style={[styles.imageContainer, { width }]}>
-                                <Image 
-                                    source={item.image} 
-                                    style={[styles.image, { width }]} 
-                                    resizeMode={"cover"}
-                                />
-                            </View>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-
-                <CarouselIndicator 
-                    scrollX={scrollX} 
-                    data={adBanners} 
-                    itemWidth={width}
+        {/* Advertisement Banners */}
+        <ScrollView
+          horizontal={true}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.scrollViewContent}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: false }
+          )}
+          scrollEventThrottle={16}
+        >
+          {adBanners.map((item) => (
+            <TouchableOpacity key={item.id}>
+              <View style={[styles.imageContainer, { width }]}>
+                <Image
+                  source={item.image}
+                  style={[styles.image, { width }]}
+                  resizeMode={"cover"}
                 />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-            
-           
-                            {/* Popular Restaurants    */}
-                <View style={styles.popularRestaurantContainer}>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.topCatText, styles.topCategoryContainer]} > Popular Resturants</Text>
-                        {/* <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
-                            <Text style={styles.viewallText}> View all</Text>
-                        </TouchableOpacity> */}
+        <CarouselIndicator
+          scrollX={scrollX}
+          data={adBanners}
+          itemWidth={width}
+        />
+
+        {/* Popular Restaurants */}
+        <View style={styles.popularRestaurantContainer}>
+          <View style={{ flexDirection: "row" }}>
+            <Text style={[styles.topCatText, styles.topCategoryContainer]}>Popular Restaurants</Text>
+          </View>
+
+          <View style={styles.scrollViewContent}>
+            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+              {sortedRestaurants.map((restaurants) => (
+                <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
+                  <View style={styles.restaurantContainer}>
+                    <Image source={{ uri: restaurants.details.logo }} style={styles.resturantImage} />
+                    <Text style={styles.restaurantname}>{restaurants.name}</Text>
+                    <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
+                    <View style={styles.ratingContainer}>
+                      <Text style={styles.ratingText}>⭐{restaurants.details.rating}</Text>
+                      <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">| {restaurants.details.location}</Text>
                     </View>
-
-                    <View style={styles.scrollViewContent}>
-                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                        {sortedRestaurants.map((restaurants, index) => (
-                            <TouchableOpacity key={restaurants.id} onPress={() => handleRestaurantPress(restaurants)}>
-                                
-                            <View style={styles.restaurantContainer}>
-                                <Image source={{ uri: restaurants.details.logo}} style={styles.resturantImage} />
-                                <Text style={styles.restaurantname}>{restaurants.name} </Text>
-                                <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
-                                <View  style={styles.ratingContainer}>
-                                    <Text style={styles.ratingText}>⭐{restaurants.details.rating}</Text>
-                                    <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">| {restaurants.details.location}</Text>
-                                </View>
-                            </View>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                    </View>
-                </View>
-                
-
-                                    {/* Restaurants to Explore */}
-                <View style={styles.popularRestaurantContainer}>
-                    <View style={{flexDirection:"row"}}>
-                        <Text style={[styles.topCatText, styles.topCategoryContainer]} > Pharmacy Near Me</Text>
-                        {/* <TouchableOpacity style ={styles.viewallContainer} onPress={() => navigation.navigate('AllRestaurants')}>
-                            <Text style={styles.viewallText}> View all</Text>
-                        </TouchableOpacity> */}
-                    </View>
-
-                    <View style={styles.scrollViewContent}>
-                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                        {sortedPharmacy.map((pharmacy, index) => (
-                            <TouchableOpacity key={pharmacy.id} onPress={() => handleRestaurantPress(restaurants)}>
-                                
-                            <View style={styles.restaurantContainer}>
-                                <Image source={{ uri: pharmacy.details.logo}} style={styles.resturantImage} />
-                                <Text style={styles.restaurantname}>{pharmacy.name} </Text>
-                                <Text style={styles.restaurantDetails}>Abuja | Seafood | Sushi</Text>
-                                <View  style={styles.ratingContainer}>
-                                    <Text style={styles.ratingText}>⭐{pharmacy.details.rating}</Text>
-                                    <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">| {pharmacy.details.location}</Text>
-                                </View>
-                            </View>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                    </View>
-                </View>
-
-                {/* <View style={styles.scrollViewContent}>
-                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
-                    {limitedRestaurants.map((restaurant) => (
-                        <TouchableOpacity onPress={() => navigation.navigate('Restaurant')}>
-                        <View key={restaurant.id} style={styles.restaurantContainer}>
-                            <Image source={{ uri: restaurant.image }} style={styles.resturantImage} />
-                            <View style={styles.restaurantNameContainer}>
-                            <Text style={styles.name}>{restaurant.name}</Text>
-                            </View>
-                            <Text style={styles.price}>{restaurant.price}</Text>
-                            <Text style={styles.location}>{restaurant.location}</Text>
-                        </View>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-                </View> */}
-
+                  </View>
+                </TouchableOpacity>
+              ))}
             </ScrollView>
+          </View>
+        </View>
 
+        {/* Pharmacy Near Me */}
+        <View style={styles.popularRestaurantContainer}>
+          <View style={{ flexDirection: "row" }}>
+            <Text style={[styles.topCatText, styles.topCategoryContainer]}>Pharmacy Near Me</Text>
+          </View>
 
-            
-
-
-
-
-
-
-
-
-
-            
-        </SafeAreaView>
-    )
-
-    
-};
+          <View style={styles.scrollViewContent}>
+            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={styles.shadowProp}>
+              {sortedPharmacy.map((pharmacy) => (
+                <TouchableOpacity key={pharmacy.id} onPress={() => handleRestaurantPress(pharmacy)}>
+                  <View style={styles.restaurantContainer}>
+                    <Image source={{ uri: pharmacy.details.logo }} style={styles.resturantImage} />
+                    <Text style={styles.restaurantname}>{pharmacy.name}</Text>
+                    <Text style={styles.restaurantDetails}>Abuja | Seafood | Sushi</Text>
+                    <View style={styles.ratingContainer}>
+                      <Text style={styles.ratingText}>⭐{pharmacy.details.rating}</Text>
+                      <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">| {pharmacy.details.location}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
 
 const styles = StyleSheet.create({

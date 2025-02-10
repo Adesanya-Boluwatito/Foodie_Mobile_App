@@ -79,7 +79,7 @@ export default function LoginScreen() {
           await AsyncStorage.setItem('@user', JSON.stringify(userCredential.user));
           navigation.reset({
             index: 0, // reset the stack to only include the HomeScreen
-            routes: [{ name: 'HomeScreen' }],
+            routes: [{ name: 'LocationAccess1' }],
         });
          
           }catch (error) {
@@ -101,7 +101,7 @@ export default function LoginScreen() {
           await AsyncStorage.setItem('@user', JSON.stringify(user));
           navigation.reset({
             index: 0, // reset the stack to only include the HomeScreen
-            routes: [{ name: 'HomeScreen' }],
+            routes: [{ name: 'LocationAccess1' }],
         });// Replace current screen with HomeScreen
         } catch (error) {
             console.error('Error adding document:', error);
