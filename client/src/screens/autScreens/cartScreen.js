@@ -1,42 +1,66 @@
 import React, {useState, useEffect, useRef, useMemo} from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, Alert,  ActivityIndicator  } from 'react-native';
-import { Paystack, paystackProps } from 'react-native-paystack-webview';
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
-import AntDesign from '@expo/vector-icons/AntDesign'
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  StyleSheet, 
+  TouchableOpacity, 
+  TextInput, 
+  Alert, 
+  ActivityIndicator,
+  StatusBar,
+  Dimensions,
+  Platform,
+  Image,
+  SafeAreaView
+} from 'react-native';
+import { Paystack } from 'react-native-paystack-webview';
+import { Ionicons, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { useAddress } from '../../components/AddressContext';
 import EmptyCartScreen from './emptyCartScreen';
-import Decimal from 'decimal.js';
 import { auth, db } from '../../../firebaseconfi';
-// Helper for generating unique order IDs (You can also use Firebase auto-ID)
-// import { v4 as uuidv4 } from 'uuid'; 
-import { firebase } from '@react-native-firebase/auth';
-import {addDoc, collection, serverTimestamp, getDocs, query, where, setDoc, doc} from "firebase/firestore"
+import {addDoc, collection, serverTimestamp, getDocs, query, where, setDoc, doc} from "firebase/firestore";
+import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
+import { fonts } from '../../global/styles/theme';
 
+const { width, height } = Dimensions.get('window');
 
+// Calculate responsive dimensions
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const isSmallDevice = SCREEN_WIDTH < 375;
+const isLargeDevice = SCREEN_WIDTH >= 768; // Tablet or larger
 
-
+// Modern accent color - matching the restaurant screen
+const ACCENT_COLOR = '#FF4D4F';
+const BACKGROUND_COLOR = '#F8F9FA';
+const CARD_COLOR = '#FFFFFF';
+const TEXT_PRIMARY = '#222222';
+const TEXT_SECONDARY = '#666666';
 
 export default function CartScreen({ route, navigation }) {
   const { cartItems = {}, restaurants = {}, packs: packsFromRoute = [], message = '' } = route.params || {};
   const [updatedCartItems, setUpdatedCartItems] = useState({});
-  const [isLoading,  setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const {defaultAddress} = useAddress();
-  const [packs, setPacks] = useState(packsFromRoute)
+  const [packs, setPacks] = useState(packsFromRoute);
   const [isEmpty, setIsEmpty] = useState(packsFromRoute.length === 0);
   const [currentRestaurantId, setCurrentRestaurantId] = useState(restaurants?.id || null);
-  const [collapsedPacks, setCollapsedPacks] = useState([]); 
+  const [collapsedPacks, setCollapsedPacks] = useState([]);
   const [packNames, setPackNames] = useState([]);
   const [editingPackIndex, setEditingPackIndex] = useState(null);
   const paystackWebViewRef = useRef(null);
-  const userId = auth.currentUser.uid
-  const restaurantId = restaurants.id
+  const userId = auth.currentUser.uid;
+  const restaurantId = restaurants.id;
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
   
   useEffect(() => {
-  console.log('Received message:', message);
-}, [message]);
+    console.log('Received message:', message);
+  }, [message]);
   
-
   useEffect(() => {
     // Set the initial packs and pack names
     if (packsFromRoute.length > 0) {
@@ -59,15 +83,11 @@ export default function CartScreen({ route, navigation }) {
       setCollapsedPacks(prev => [...prev, false]);
       setPackNames(prevNames => [...prevNames, `Pack ${prevNames.length + 1}`]);
     }
-  }, [cartItems]);  // Removed unnecessary dependencies
-  ; // Removed `packs` to avoid redundant re-renders
-  ;
-  // console.log(cartItems)
-  // console.log("Food Pack:",packs)
+  }, [cartItems]);
 
   const handleChangeAddress = () => {
-      navigation.navigate('Manage Add')
-  }
+    navigation.navigate('Manage Add');
+  };
 
   const toggleCollapse = (index) => {
     setCollapsedPacks(prevState => {
@@ -76,6 +96,7 @@ export default function CartScreen({ route, navigation }) {
       return updatedState;
     });
   };
+  
   const handleAddNewPack = () => {
     if (Object.keys(updatedCartItems).length > 0) {
       const restaurantId = Object.keys(updatedCartItems)[0];
@@ -99,12 +120,8 @@ export default function CartScreen({ route, navigation }) {
     setUpdatedCartItems({});     // Clear cart items
     setCollapsedPacks([]);       // Reset collapsed packs
     setPackNames([]);            // Reset pack names
-  
-    // If you're using AsyncStorage to persist the cart, clear it as well
-    // AsyncStorage.removeItem('cartItems');  // Optional: Clear local storage cart
   };
   
-
   const generateUniqueId = async () => {
     let uniqueId;
     let exists = true;
@@ -120,13 +137,6 @@ export default function CartScreen({ route, navigation }) {
   
     return uniqueId;
   };
-  
-
-
-  // useEffect(() => {
-  //   console.log("Current cartItems:", cartItems);
-  //   console.log("Current packs:", packs);
-  // }, [cartItems, packs]);
 
   const handleDeletePack = (packIndex) => {
     setPacks(prevPacks => {
@@ -138,8 +148,7 @@ export default function CartScreen({ route, navigation }) {
         setCurrentRestaurantId(null); // Reset currentRestaurantId to null
         setUpdatedCartItems({}); // Clear cartItems to reflect an empty cart
         route.params.cartItems = {}; // Clear the cartItems from route params if they come from there
-        // console.log("Cart is now empty:", updatedPacks, updatedCartItems);
-      }// Update names // Update collapsed state
+      }
       return updatedPacks;
     });
   };
@@ -158,21 +167,12 @@ export default function CartScreen({ route, navigation }) {
     setCollapsedPacks(prev => [...prev, false]);
   };
 
-  // useEffect(() => {
-  //   setUpdatedCartItems(cartItems);
-  //   calculateTotal(); // Update cart items when route.params changes
-  // }, [cartItems]);
-
-
   useEffect(() => {
-
     if (JSON.stringify(updatedCartItems) !== JSON.stringify(cartItems)) {
-    setUpdatedCartItems(cartItems);
-  }
+      setUpdatedCartItems(cartItems);
+    }
     calculateTotal;
   }, [cartItems, packs]);
-
-  
 
   const calculateTotal = useMemo(() => {
     let newTotal = 0;
@@ -186,15 +186,11 @@ export default function CartScreen({ route, navigation }) {
     return newTotal;
   }, [packs]);
   
-  
-  
   useEffect(() => {
     setTotal(calculateTotal);
   }, [calculateTotal]);
   
-  
-
-  const increaseQuantity = (packIndex,restaurantId, item) => {
+  const increaseQuantity = (packIndex, restaurantId, item) => {
     setPacks(prevPacks => {
       const updatedPacks = [...prevPacks];
       if (updatedPacks[packIndex] && updatedPacks[packIndex][restaurantId] && updatedPacks[packIndex][restaurantId][item.name]) {
@@ -204,7 +200,7 @@ export default function CartScreen({ route, navigation }) {
     });
   };
 
-  const decreaseQuantity = (packIndex,restaurantId, item) => {
+  const decreaseQuantity = (packIndex, restaurantId, item) => {
     setPacks(prevPacks => {
       const updatedPacks = [...prevPacks];
       if (updatedPacks[packIndex] && updatedPacks[packIndex][restaurantId] && updatedPacks[packIndex][restaurantId][item.name]) {
@@ -217,7 +213,6 @@ export default function CartScreen({ route, navigation }) {
     });
   };
   
-
   const removeItem = (packIndex, restaurantId, item) => {
     setPacks(prevPacks => {
       const updatedPacks = [...prevPacks];
@@ -227,6 +222,7 @@ export default function CartScreen({ route, navigation }) {
       return updatedPacks;
     });
   };
+  
   const getTotal = () => {
     let total = 0;
   
@@ -241,113 +237,91 @@ export default function CartScreen({ route, navigation }) {
     return total;
   };
   
-  
   const calculateTotalItems = () => {
     return Object.values(updatedCartItems).reduce((sum, item) => sum + item.quantity, 0);
   };
-  
-
- 
-
 
   const totalPrice = () => {
     const subtotal = calculateTotal;
     return subtotal + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - subtotal * restaurants.details.discount;
   };
-const handleMakePayment = () => {
-  const totalItems = calculateTotalItems();
-  // const totalPrice = getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount;
+  
+  const handleMakePayment = () => {
+    const totalItems = calculateTotalItems();
 
-
-  // setLoading(true)
-  // Configure Paystack
-  const paymentConfig = {
-    amount: totalPrice() * 100, // Convert to kobo
-    billingEmail: 'paystackwebview@something.com', // Replace with user email or default
-    onCancel: (e) => {
-      console.log('Transaction cancelled:', e);
-      // setLoading(false)
-
-    },
-    onSuccess: async (res) => {
-      // console.log('Transaction successful:', res);
-
-      // setLoading(true)
-
-
-      // Save order details to Firebase on payment success
-      try {
-        console.log('Calling saveOrderToFirebase...');
-        await saveOrderToFirebase();
-        clearCart();
-        console.log('Order saved successfully after payment');
-      } catch (error) {
-        console.error('Error saving order after payment:', error);
-        Alert.alert('Error', 'There was an issue saving your order. Please try again.');
-      } finally {
-        // setLoading(false)
-      }
-    },
-  };
-
-  if (paystackWebViewRef.current) {
-    console.log('Starting Paystack transaction...');
-    paystackWebViewRef.current.startTransaction(paymentConfig);
-  } else {
-    console.error('Paystack WebView reference is null.');
-    // setLoading(false)
-
-  }
-};
-
-
-const saveOrderToFirebase = async () => {
-  try {
-    // Generate a unique order ID
-    console.log('Starting to save order to Firebase...');
-    const orderId = await generateUniqueId();
-
-    // Structure order data
-    const orderData = {
-      orderId,
-      userId,
-      restaurantId,
-      message,
-      restaurantName: restaurants.name,
-      packs,
-      restaurant: restaurants,
-      totalAmount: totalPrice(),
-      address: defaultAddress,
-      timestamp: serverTimestamp(),
-      status: 'pending',
+    // Configure Paystack
+    const paymentConfig = {
+      amount: totalPrice() * 100, // Convert to kobo
+      billingEmail: 'paystackwebview@something.com', // Replace with user email or default
+      onCancel: (e) => {
+        console.log('Transaction cancelled:', e);
+      },
+      onSuccess: async (res) => {
+        try {
+          console.log('Calling saveOrderToFirebase...');
+          await saveOrderToFirebase();
+          clearCart();
+          console.log('Order saved successfully after payment');
+        } catch (error) {
+          console.error('Error saving order after payment:', error);
+          Alert.alert('Error', 'There was an issue saving your order. Please try again.');
+        } finally {
+        }
+      },
     };
 
-    
+    if (paystackWebViewRef.current) {
+      console.log('Starting Paystack transaction...');
+      paystackWebViewRef.current.startTransaction(paymentConfig);
+    } else {
+      console.error('Paystack WebView reference is null.');
+    }
+  };
 
-    //  Save order to the centralized orders collection
-    const orderRef = await setDoc(doc(db, 'orders', orderId), orderData);
-    console.log("Orders added succesfully. Order ID:", orderId)
+  const saveOrderToFirebase = async () => {
+    try {
+      // Generate a unique order ID
+      console.log('Starting to save order to Firebase...');
+      const orderId = await generateUniqueId();
 
+      // Structure order data
+      const orderData = {
+        orderId,
+        userId,
+        restaurantId,
+        message,
+        restaurantName: restaurants.name,
+        packs,
+        restaurant: restaurants,
+        totalAmount: totalPrice(),
+        address: defaultAddress,
+        timestamp: serverTimestamp(),
+        status: 'pending',
+      };
 
-    //  Create a reference in the user's orders
-    await setDoc(doc(collection(db, 'users', userId, 'orders'), orderId), {
-      timestamp: serverTimestamp(),
-    });
-    console.log('Order reference added to user\'s orders.');
+      //  Save order to the centralized orders collection
+      const orderRef = await setDoc(doc(db, 'orders', orderId), orderData);
+      console.log("Orders added succesfully. Order ID:", orderId);
 
-    // Create a reference in the restaurant's orders
-    await setDoc(doc(collection(db, 'restaurants', restaurantId, 'orders'), orderId), {
-      timestamp: serverTimestamp(),
-    });
-    console.log('Order reference added to restaurant\'s orders.');
+      //  Create a reference in the user's orders
+      await setDoc(doc(collection(db, 'users', userId, 'orders'), orderId), {
+        timestamp: serverTimestamp(),
+      });
+      console.log('Order reference added to user\'s orders.');
 
-    navigation.navigate('MyOrdersScreen', { orderId });
-    Alert.alert('Order Success', 'Your order has been placed successfully!');
-  } catch (error) {
-    console.error('Error saving order to Firebase:', error);
-    Alert.alert('Error', 'There was an issue saving your order. Please try again.');
-  }
-}
+      // Create a reference in the restaurant's orders
+      await setDoc(doc(collection(db, 'restaurants', restaurantId, 'orders'), orderId), {
+        timestamp: serverTimestamp(),
+      });
+      console.log('Order reference added to restaurant\'s orders.');
+
+      navigation.navigate('MyOrdersScreen', { orderId });
+      Alert.alert('Order Success', 'Your order has been placed successfully!');
+    } catch (error) {
+      console.error('Error saving order to Firebase:', error);
+      Alert.alert('Error', 'There was an issue saving your order. Please try again.');
+    }
+  };
 
   const handlePackNameChange = (index, newName) => {
     setPackNames(prevNames => {
@@ -361,491 +335,774 @@ const saveOrderToFirebase = async () => {
     setEditingPackIndex(null); // Stop editing once the user submits
   };
 
-  if (packs.length === 0 ) {
-    return <EmptyCartScreen />; // Render EmptyCartScreen if cart is empty
+  if (packs.length === 0) {
+    return <EmptyCartScreen />;
   }
 
-  
-  
-  console.log('Formatted Pack from resturant screen Items:', JSON.stringify(packs, null, 2))
-// console.log('Formatted Cart Items:', JSON.stringify(cartItems, null, 2))
-
   const renderCartItem = ({ packIndex, restaurantId, item }) => {
-    // console.log('Item object:', item);
-  // console.log('Item ID:', item.id);
     return (
-      <View style={styles.cartItem} key={`${packIndex}-${restaurantId}`}>
-      <View style={styles.itemDetailsContainer}>
-        <Text style={styles.itemName}>{item.name}</Text>
+      <View style={styles.cartItem} key={`${packIndex}-${restaurantId}-${item.name}`}>
+        <View style={styles.cartItemContent}>
+          {item.image && (
+            <Image 
+              source={{ uri: item.image }}
+              style={styles.itemImage}
+            />
+          )}
+          <View style={styles.itemDetailsContainer}>
+            <Text style={styles.itemName}>{item.name}</Text>
+            <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text>
+          </View>
+        </View>
+        <View style={styles.itemActions}>
+          <View style={styles.quantityContainer}>
+            <TouchableOpacity 
+              onPress={() => decreaseQuantity(packIndex, restaurantId, item)} 
+              style={styles.quantityButton}
+            >
+              <Feather name="minus" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+            <Text style={styles.quantityText}>{item.quantity}</Text>
+            <TouchableOpacity 
+              onPress={() => increaseQuantity(packIndex, restaurantId, item)} 
+              style={styles.quantityButton}
+            >
+              <Feather name="plus" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity 
+            onPress={() => removeItem(packIndex, restaurantId, item)} 
+            style={styles.removeButton}
+          >
+            <Feather name="trash-2" size={14} color={ACCENT_COLOR} />
+            <Text style={styles.removeButtonText}>Remove</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      {/* <Text style={styles.itemPrice}>₦ {item.price.toFixed(2)}</Text> */}
-      <View style={styles.quantityContainer}>
-        <TouchableOpacity onPress={() => decreaseQuantity(packIndex, restaurantId, item)} style={styles.quantityButton}>
-          <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>-</Text>
-        </TouchableOpacity>
-        <Text style={styles.quantityText}>{item.quantity}</Text>
-        <TouchableOpacity onPress={() => increaseQuantity(packIndex, restaurantId, item)} style={styles.quantityButton}>
-          <Text style={{fontSize: 20, fontWeight: "bold", color:"white",}}>+</Text>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity onPress={() => removeItem(packIndex, restaurantId, item)} style={styles.removeButton}>
-        <Text style={styles.removeButtonText}>Remove</Text>
-      </TouchableOpacity>
-    </View>
-    )
-    
-}
-
-
-
+    );
+  };
 
   return (
-    <View style={styles.container}>
-    {isLoading ? (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#bf0603" />
-        <Text>Saving your order, please wait...</Text>
-      </View>
-    ) : (
-      <>
-       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
-          <AntDesign name="left" size={20} color="#8b8c89" onPress={() => navigation.goBack()} />
-        </TouchableOpacity>
-        
-        {/* {restaurantDetails.logo && <Image source={{ uri: restaurantDetails.logo }} style={styles.logo} />} */}
-        <View style={styles.restaurantInfo}>
-          {restaurants?.name && <Text style={styles.restaurantName}>{restaurants.name}</Text>}
-          {restaurants.details.location && <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>}
-        </View>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar 
+        barStyle="dark-content" 
+        backgroundColor={BACKGROUND_COLOR}
+        translucent={Platform.OS === 'android'}
+      />
       
-      <ScrollView style={styles.cartList}>
-      {packs.map((pack, packIndex) => (
-          <View key={packIndex} style={styles.packContainer}>
-            <View style={styles.packHeaderContainer}>
-              {/* Toggle between Text and TextInput */}
-              {editingPackIndex === packIndex ? (
-                <TextInput
-                  style={styles.packNameInput}
-                  value={packNames[packIndex]}
-                  onChangeText={(text) => handlePackNameChange(packIndex, text)}
-                  onBlur={() => handlePackNameSubmit(packIndex)} // Submit on blur (losing focus)
-                  autoFocus={true} // Auto focus the input when clicked
-                />
-              ) : (
-                <TouchableOpacity onPress={() => setEditingPackIndex(packIndex)}>
-                  <Text style={styles.packHeader}>{packNames[packIndex] || `Pack ${packIndex + 1}`}</Text>
-                </TouchableOpacity>
-              )}
-              <AntDesign
-                name={collapsedPacks[packIndex] ? 'down' : 'up'}
-                size={20}
-                color="black"
-                onPress={() => toggleCollapse(packIndex)}
-              />
-            </View>
-            {!collapsedPacks[packIndex] && (
-        <View>
-          {Object.entries(pack).map(([restaurantId, cartItems]) => (
-            <View key={restaurantId}>
-              {/* Render each item with unique key */}
-              {Object.values(cartItems).map((item, index) => (
-                <View key={`${packIndex}-${item.id}-${index}`}>
-                  {renderCartItem({ packIndex, restaurantId, item })}
-                </View>
-              ))}
-            </View>
-          ))}
-        </View>
-      )}
-
-            <TouchableOpacity onPress={() => handleDuplicatePack(packIndex)} style={styles.duplicatePackButton}>
-              <Text style={styles.duplicatePackButtonText}>Duplicate Pack</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => handleDeletePack(packIndex)} style={styles.deletePackButton}>
-              <Text style={styles.deletePackButtonText}>Delete Pack</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </ScrollView>
-      <View style={styles.billDetails}>
-        <Text style={styles.billHeader}>Bill Details</Text>
-        <View style={styles.billRow}>
-          <Text style={styles.billLabel}>Item Total</Text>
-          <Text style={styles.billValue}>₦ {getTotal().toFixed(2)}</Text>
-        </View>
-        <View style={styles.billRow}>
-          <Text style={styles.billLabel}>Restaurant Charges</Text>
-          <Text style={styles.billValue}>₦ {restaurants.details.restaurantCharges.toFixed(2)}</Text>
-        </View>
-        <View style={styles.billRow}>
-          <Text style={styles.billLabel}>Delivery Fee</Text>
-          <Text style={styles.billValue}>₦ {restaurants.details.deliveryFee.toFixed(2)}</Text>
-        </View>
-        <View style={styles.billRow}>
-          <Text style={styles.billLabel}>Offer {restaurants.details.discount * 100}% OFF</Text>
-          <Text style={styles.billValue}>₦ {(-getTotal() * restaurants.details.discount).toFixed(2)}</Text>
-        </View>
-        <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>To Pay</Text>
-          <Text style={styles.totalValue}>₦ {(getTotal() + restaurants.details.restaurantCharges + restaurants.details.deliveryFee - getTotal() * restaurants.details.discount).toFixed(2)}</Text>
-        </View>
-      </View>
-      <View style={styles.discountContainer}>
-        <TextInput style={styles.discountInput} placeholder="Enter discount code" />
-        <TouchableOpacity style={styles.applyButton}>
-          <Text style={styles.applyButtonText}>APPLY</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.deliveryDetails}>
-      {defaultAddress ? (
-          <View style={styles.addressContainer}>
-            <View style={styles.addressDesign}>
-              <FontAwesome name={defaultAddress.type === 'Home' ? 'home' : 'briefcase'} size={24} color="gray" />
-            <Text style={styles.addressHeader}>Deliver To {defaultAddress.type}</Text>
-
-            <TouchableOpacity onPress={handleChangeAddress} style={styles.changeButton}>
-            <FontAwesome name="edit" size={24} color="black" />
-            </TouchableOpacity>
-            </View>
-            <Text style={styles.addressDetails}>{defaultAddress.details}</Text>
-            
+      <View style={styles.container}>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={ACCENT_COLOR} />
+            <Text style={styles.loadingText}>Processing your order...</Text>
           </View>
         ) : (
-          <Text>No default address set</Text>
-          
+          <>
+            {/* Header */}
+            <View style={[styles.header, isLargeDevice && styles.headerLarge]}>
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={() => navigation.goBack()}
+                hitSlop={{top: 15, bottom: 15, left: 15, right: 15}}
+              >
+                <Ionicons 
+                  name="arrow-back" 
+                  size={isSmallDevice ? 18 : 22} 
+                  color="#333" 
+                />
+              </TouchableOpacity>
+              
+              <View style={styles.restaurantInfo}>
+                {restaurants?.name && (
+                  <Text 
+                    style={[styles.restaurantName, isLargeDevice && styles.restaurantNameLarge]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {restaurants.name}
+                  </Text>
+                )}
+                {restaurants.details?.location && (
+                  <View style={styles.locationContainer}>
+                    <Ionicons 
+                      name="location-outline" 
+                      size={isSmallDevice ? 12 : 14} 
+                      color="#666" 
+                    />
+                    <Text 
+                      style={[styles.restaurantLocation, isLargeDevice && styles.restaurantLocationLarge]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {restaurants.details.location}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+            
+            <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+              {/* Packs */}
+              <View style={styles.packsContainer}>
+                {packs.map((pack, packIndex) => (
+                  <View key={packIndex} style={styles.packContainer}>
+                    <View style={styles.packHeaderContainer}>
+                      {editingPackIndex === packIndex ? (
+                        <TextInput
+                          style={styles.packNameInput}
+                          value={packNames[packIndex]}
+                          onChangeText={(text) => handlePackNameChange(packIndex, text)}
+                          onBlur={() => handlePackNameSubmit(packIndex)}
+                          autoFocus={true}
+                        />
+                      ) : (
+                        <TouchableOpacity onPress={() => setEditingPackIndex(packIndex)}>
+                          <Text style={styles.packHeader}>{packNames[packIndex] || `Pack ${packIndex + 1}`}</Text>
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity 
+                        style={styles.collapseButton}
+                        onPress={() => toggleCollapse(packIndex)}
+                      >
+                        <Ionicons 
+                          name={collapsedPacks[packIndex] ? 'chevron-down' : 'chevron-up'} 
+                          size={22} 
+                          color="#555"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    
+                    {!collapsedPacks[packIndex] && (
+                      <View style={styles.packItemsContainer}>
+                        {Object.entries(pack).map(([restaurantId, cartItems]) => (
+                          <View key={restaurantId}>
+                            {Object.values(cartItems).map((item, index) => (
+                              <View key={`${packIndex}-${item.id || index}-${index}`}>
+                                {renderCartItem({ packIndex, restaurantId, item })}
+                              </View>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                    
+                    <View style={styles.packActionsContainer}>
+                      <TouchableOpacity 
+                        onPress={() => handleDuplicatePack(packIndex)} 
+                        style={styles.packActionButton}
+                      >
+                        <Ionicons name="copy-outline" size={16} color="#FFFFFF" />
+                        <Text style={styles.packActionButtonText}>Duplicate</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                        onPress={() => handleDeletePack(packIndex)} 
+                        style={[styles.packActionButton, styles.deleteButton]}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#FFFFFF" />
+                        <Text style={styles.packActionButtonText}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Add New Pack Button */}
+              <TouchableOpacity 
+                style={styles.addNewPackButton} 
+                onPress={handleAddNewPack}
+              >
+                <Ionicons name="add-circle-outline" size={20} color={ACCENT_COLOR} />
+                <Text style={styles.addNewPackText}>Add Another Pack</Text>
+              </TouchableOpacity>
+              
+              {/* Delivery Address */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Delivery Address</Text>
+                {defaultAddress ? (
+                  <View style={styles.addressCard}>
+                    <View style={styles.addressHeader}>
+                      <View style={styles.addressTypeContainer}>
+                        <View style={styles.addressTypeIcon}>
+                          <Ionicons 
+                            name={defaultAddress.type === 'Home' ? 'home' : 'briefcase'} 
+                            size={16} 
+                            color="#FFFFFF" 
+                          />
+                        </View>
+                        <Text style={styles.addressType}>{defaultAddress.type}</Text>
+                      </View>
+                      <TouchableOpacity 
+                        style={styles.changeAddressButton}
+                        onPress={handleChangeAddress}
+                      >
+                        <Feather name="edit-2" size={16} color={ACCENT_COLOR} />
+                        <Text style={styles.changeAddressText}>Change</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.addressDetails}>{defaultAddress.details}</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity 
+                    style={styles.addAddressButton}
+                    onPress={handleChangeAddress}
+                  >
+                    <Ionicons name="add-circle" size={20} color={ACCENT_COLOR} />
+                    <Text style={styles.addAddressText}>Add a delivery address</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              
+              {/* Promo Code */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Promo Code</Text>
+                <View style={styles.promoContainer}>
+                  <TextInput 
+                    style={styles.promoInput} 
+                    placeholder="Enter promo code" 
+                    value={promoCode}
+                    onChangeText={setPromoCode}
+                  />
+                  <TouchableOpacity 
+                    style={[
+                      styles.promoButton,
+                      promoCode.length > 0 ? styles.promoButtonActive : {}
+                    ]}
+                    disabled={promoCode.length === 0}
+                  >
+                    <Text style={styles.promoButtonText}>Apply</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              {/* Bill Details */}
+              <View style={styles.sectionContainer}>
+                <Text style={styles.sectionTitle}>Bill Details</Text>
+                <View style={styles.billCard}>
+                  <View style={styles.billRow}>
+                    <Text style={styles.billLabel}>Item Total</Text>
+                    <Text style={styles.billValue}>₦ {getTotal().toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.billRow}>
+                    <Text style={styles.billLabel}>Restaurant Charges</Text>
+                    <Text style={styles.billValue}>₦ {restaurants.details.restaurantCharges.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.billRow}>
+                    <Text style={styles.billLabel}>Delivery Fee</Text>
+                    <Text style={styles.billValue}>₦ {restaurants.details.deliveryFee.toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.billRow}>
+                    <Text style={styles.billLabel}>Discount ({restaurants.details.discount * 100}% OFF)</Text>
+                    <Text style={styles.billValue}>-₦ {(getTotal() * restaurants.details.discount).toFixed(2)}</Text>
+                  </View>
+                  <View style={styles.billDivider}></View>
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalLabel}>Total Amount</Text>
+                    <Text style={styles.totalValue}>₦ {totalPrice().toFixed(2)}</Text>
+                  </View>
+                </View>
+              </View>
+              
+              {/* Payment Button */}
+              <TouchableOpacity 
+                style={styles.paymentButton}
+                onPress={handleMakePayment}
+              >
+                <Text style={styles.paymentButtonText}>Proceed to Payment</Text>
+                <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+              
+              <View style={styles.bottomPadding}></View>
+            </ScrollView>
+            
+            <Paystack
+              paystackKey="pk_test_58253816127400d5a706afa7347a6be34107a93d"
+              billingEmail="adesanyaboluwatito225@gmail.com"
+              amount={totalPrice()}
+              onCancel={(e) => {
+                console.log('Transaction cancelled:', e);
+              }}
+              onSuccess={async (res) => {
+                setIsLoading(true)
+                await saveOrderToFirebase()
+                console.log('Transaction successful:', res);
+                setIsLoading(false)
+              }}
+              ref={paystackWebViewRef}
+            />
+          </>
         )}
       </View>
-      
-        <View>
-          <TouchableOpacity style={styles.newPack} onPress={handleAddNewPack}> 
-           <Text style={styles.newPackText}>Add Another pack</Text> 
-            </TouchableOpacity>
-        </View>
-
-      <TouchableOpacity style={styles.paymentButton} onPress={handleMakePayment}>
-        <Text style={styles.paymentButtonText}>MAKE PAYMENT</Text>
-      </TouchableOpacity>
-
-      <Paystack
-        paystackKey="pk_test_58253816127400d5a706afa7347a6be34107a93d"
-        billingEmail="adesanyaboluwatito225@gmail.com"
-        amount={totalPrice()} // Amount should be in kobo or minor currency units
-        onCancel={(e) => {
-          console.log('Transaction cancelled:', e);
-        }}
-        onSuccess={async (res) => {
-          setIsLoading(true)
-          await saveOrderToFirebase()
-          console.log('Transaction successful:', res);
-          setIsLoading(false)
-        }}
-        ref={paystackWebViewRef}
-      />
-
-      </>
-      )}
-     
-      
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: BACKGROUND_COLOR,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    paddingTop:50,
+    backgroundColor: BACKGROUND_COLOR,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: TEXT_PRIMARY,
+    fontFamily: fonts.MEDIUM,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 6,
+    paddingHorizontal: horizontalScale(isSmallDevice ? 12 : 16),
+    paddingVertical: verticalScale(isSmallDevice ? 10 : 12),
+    minHeight: verticalScale(isSmallDevice ? 50 : 60),
+    backgroundColor: CARD_COLOR,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+    width: '100%',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
-  logo: {
-    width: 55,
-    height: 60,
-    left: 15,
-    borderRadius:10,
+  headerLarge: {
+    paddingHorizontal: horizontalScale(24),
+    paddingVertical: verticalScale(16),
+    minHeight: verticalScale(70),
+  },
+  backButton: {
+    width: isSmallDevice ? 36 : 40,
+    height: isSmallDevice ? 36 : 40,
+    borderRadius: isSmallDevice ? 18 : 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginRight: horizontalScale(isSmallDevice ? 8 : 12),
   },
   restaurantInfo: {
-    marginLeft: 20,
-    alignItems:"center",
-    justifyContent: "center",
-    flex: 0.8, 
+    flex: 1,
+    paddingRight: horizontalScale(8),
+    justifyContent: 'center',
   },
   restaurantName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: "center"
-    
+    fontSize: Math.min(isSmallDevice ? 16 : 18, SCREEN_WIDTH / 25),
+    fontFamily: fonts.BOLD,
+    color: TEXT_PRIMARY,
+    marginBottom: isSmallDevice ? 1 : 2,
+  },
+  restaurantNameLarge: {
+    fontSize: 22,
+    marginBottom: 4,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
   },
   restaurantLocation: {
-    fontSize: 14,
-    color: 'gray',
-    // left:90,
-    textAlign: "center"
-  },
-  cartList: {
+    fontSize: Math.min(isSmallDevice ? 11 : 13, SCREEN_WIDTH / 35),
+    color: TEXT_SECONDARY,
+    fontFamily: fonts.REGULAR,
+    marginLeft: 4,
     flex: 1,
-    padding: 16,
+  },
+  restaurantLocationLarge: {
+    fontSize: 15,
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  packsContainer: {
+    padding: horizontalScale(16),
+  },
+  packContainer: {
+    backgroundColor: CARD_COLOR,
+    borderRadius: 12,
+    marginBottom: verticalScale(16),
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  packHeaderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: horizontalScale(16),
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  packHeader: {
+    fontSize: 16,
+    fontFamily: fonts.MEDIUM,
+    color: TEXT_PRIMARY,
+  },
+  packNameInput: {
+    fontSize: 16,
+    fontFamily: fonts.MEDIUM,
+    color: TEXT_PRIMARY,
+    borderBottomWidth: 1,
+    borderBottomColor: ACCENT_COLOR,
+    padding: 4,
+    minWidth: 150,
+  },
+  collapseButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  packItemsContainer: {
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(8),
+  },
+  packActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(12),
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  packActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+    paddingHorizontal: horizontalScale(12),
+    paddingVertical: verticalScale(8),
+    borderRadius: 8,
+    marginLeft: horizontalScale(8),
+  },
+  deleteButton: {
+    backgroundColor: '#666',
+  },
+  packActionButtonText: {
+    marginLeft: 6,
+    color: '#fff',
+    fontSize: 12,
+    fontFamily: fonts.MEDIUM,
   },
   cartItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
+    flexDirection: 'column',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: 'rgba(0,0,0,0.04)',
+    paddingVertical: verticalScale(12),
   },
-  itemInfo: {
+  cartItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  itemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: horizontalScale(12),
+  },
+  itemDetailsContainer: {
     flex: 1,
   },
   itemName: {
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 15,
+    fontFamily: fonts.MEDIUM,
+    color: TEXT_PRIMARY,
+    marginBottom: 4,
   },
-  itemDetailsContainer: {
-    flex: 1, // Takes up the available space
-    paddingRight: 10, // Space between the item name and quantity buttons
-  },
-  itemDetails: {
+  itemPrice: {
     fontSize: 14,
-    color: 'gray',
+    fontFamily: fonts.BOLD,
+    color: ACCENT_COLOR,
   },
-  customizeButton: {
+  itemActions: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  customizeText: {
-    fontSize: 14,
-    color: 'gray',
-    marginRight: 5,
-  },
-  itemControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: verticalScale(10),
   },
   quantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: "space-between",
-    width: 100,
-    // padding:
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   quantityButton: {
-    width: 25,
-    height: 25,
-    borderRadius: 20,
-    backgroundColor: '#bf0603',
+    width: 28,
+    height: 28,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 5,
-    marginRight: 5,
-    fontSize: "bold",
-    fontSize: 20,
-  },
-  quantityInput: {
-    width: 30,
-    height: 30,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    textAlign: 'center',
-    marginRight: 10,
+    backgroundColor: ACCENT_COLOR,
   },
   quantityText: {
-    fontSize: 15,
-    fontWeight: "bold",
+    paddingHorizontal: horizontalScale(12),
+    fontSize: 14,
+    fontFamily: fonts.MEDIUM,
+    color: TEXT_PRIMARY,
   },
-  // quantityButton: {
-  //   fontSize: 15,
-  //   fontWeight: "bold",
-  // },
-  itemPrice: {
+  removeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 6,
+  },
+  removeButtonText: {
+    fontSize: 12,
+    fontFamily: fonts.MEDIUM,
+    color: ACCENT_COLOR,
+    marginLeft: 4,
+  },
+  addNewPackButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: horizontalScale(16),
+    marginBottom: verticalScale(16),
+    paddingVertical: verticalScale(12),
+    backgroundColor: 'rgba(255,77,79,0.1)',
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    borderWidth: 1,
+    borderColor: ACCENT_COLOR,
+  },
+  addNewPackText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontFamily: fonts.MEDIUM,
+    color: ACCENT_COLOR,
+  },
+  sectionContainer: {
+    padding: horizontalScale(16),
+    marginBottom: verticalScale(12),
+  },
+  sectionTitle: {
     fontSize: 16,
+    fontFamily: fonts.BOLD,
+    color: TEXT_PRIMARY,
+    marginBottom: verticalScale(12),
   },
-  billDetails: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    
+  addressCard: {
+    backgroundColor: CARD_COLOR,
+    borderRadius: 12,
+    padding: horizontalScale(16),
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
-  billHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
+  addressHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: verticalScale(10),
+  },
+  addressTypeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addressTypeIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: ACCENT_COLOR,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  addressType: {
+    fontSize: 15,
+    fontFamily: fonts.MEDIUM,
+    color: TEXT_PRIMARY,
+  },
+  changeAddressButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  changeAddressText: {
+    fontSize: 13,
+    fontFamily: fonts.MEDIUM,
+    color: ACCENT_COLOR,
+    marginLeft: 4,
+  },
+  addressDetails: {
+    fontSize: 14,
+    fontFamily: fonts.REGULAR,
+    color: TEXT_SECONDARY,
+    lineHeight: 20,
+  },
+  addAddressButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: CARD_COLOR,
+    borderRadius: 12,
+    padding: horizontalScale(16),
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  addAddressText: {
+    fontSize: 14,
+    fontFamily: fonts.MEDIUM,
+    color: ACCENT_COLOR,
+    marginLeft: 8,
+  },
+  promoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: CARD_COLOR,
+    borderRadius: 12,
+    overflow: 'hidden',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  promoInput: {
+    flex: 1,
+    paddingHorizontal: horizontalScale(16),
+    paddingVertical: verticalScale(14),
+    fontFamily: fonts.REGULAR,
+    fontSize: 14,
+    color: TEXT_PRIMARY,
+  },
+  promoButton: {
+    paddingHorizontal: horizontalScale(20),
+    paddingVertical: verticalScale(14),
+    backgroundColor: '#ccc',
+  },
+  promoButtonActive: {
+    backgroundColor: ACCENT_COLOR,
+  },
+  promoButtonText: {
+    fontSize: 14,
+    fontFamily: fonts.MEDIUM,
+    color: '#FFFFFF',
+  },
+  billCard: {
+    backgroundColor: CARD_COLOR,
+    borderRadius: 12,
+    padding: horizontalScale(16),
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(0,0,0,0.1)',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   billRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
+    alignItems: 'center',
+    marginBottom: verticalScale(12),
   },
   billLabel: {
-    fontSize: 16,
-    fontWeight: "400",
-    color: 'gray',
+    fontSize: 14,
+    fontFamily: fonts.REGULAR,
+    color: TEXT_SECONDARY,
   },
   billValue: {
     fontSize: 14,
+    fontFamily: fonts.MEDIUM,
+    color: TEXT_PRIMARY,
+  },
+  billDivider: {
+    height: 1,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    marginVertical: verticalScale(12),
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    alignItems: 'center',
   },
   totalLabel: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: fonts.BOLD,
+    color: TEXT_PRIMARY,
   },
   totalValue: {
     fontSize: 18,
-    fontWeight: 'bold',
-  },
-  discountContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    alignItems: 'center',
-  },
-  discountInput: {
-    flex: 1,
-    borderColor: '#ccc',
-    borderRadius: 15,
-    borderWidth: 1,
-    padding: 10,
-    marginRight: 10,
-  },
-  applyButton: {
-    backgroundColor: 'gray',
-    padding: 10,
-    borderRadius: 5,
-  },
-  applyButtonText: {
-    color: '#fff',
-  },
-  deliveryDetails: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    flexDirection: "row",
-  },
-  deliveryLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-
-  addressContainer: {
-    // fontSize: 14,
-    color: 'gray',
-  },
-  addressDesign: {
-    flexDirection: "row",
-  },
-  addressHeader: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      left: 10,
-      marginBottom: 10,
-  },
-  addressDetails: {
-      fontSize: 17,
-      color: "grey",
-      // marginTop: 9,
-      // left: 34,
-  },
-  changeButton: {
-      left: 200,
+    fontFamily: fonts.BOLD,
+    color: ACCENT_COLOR,
   },
   paymentButton: {
-    backgroundColor: '#bf0603',
-    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    margin: 16,
-    borderRadius: 5,
+    backgroundColor: ACCENT_COLOR,
+    borderRadius: isSmallDevice ? 10 : 12,
+    marginHorizontal: horizontalScale(16),
+    marginTop: verticalScale(16),
+    marginBottom: verticalScale(10),
+    paddingVertical: verticalScale(isSmallDevice ? 14 : 16),
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(255,77,79,0.4)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
   paymentButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: isSmallDevice ? 14 : 16,
+    fontFamily: fonts.BOLD,
+    color: '#FFFFFF',
+    marginRight: 8,
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  backButton:{
-    backgroundColor: "#F9F9F9",
-    borderRadius: 10,
-    // position: "absolute",
-    // zIndex: 10,
-    // bottom:180,
-    // left: 18,
-    width: 45,
-    height:40,
-    alignItems: "center",
-    justifyContent: "center",
-    elevation: 5,
-   },
-   newPack: {
-      padding:10,
-      alignContent: "center",
-      alignSelf: "center",
-   },
-   newPackText: {
-      color: "#bf0603"
-   },
-   restaurantNameHeader: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  packContainer: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 10,
-  },
-  packHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  deletePackButton: {
-    alignSelf: 'flex-end',
-    padding: 10,
-    backgroundColor: '#bf0603',
-    borderRadius: 5,
-  },
-  deletePackButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  packHeaderContainer:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-
-  },
-  duplicatePackButton: {
-    alignSelf:"flex-start",
-    padding: 10,
-    backgroundColor: '#bf0603',
-    borderRadius: 5,
-    top:36
-  },
-  duplicatePackButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+  bottomPadding: {
+    height: isSmallDevice ? 30 : 40,
   }
 });

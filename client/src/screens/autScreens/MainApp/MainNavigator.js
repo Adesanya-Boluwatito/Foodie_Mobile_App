@@ -39,6 +39,8 @@ import FavouritesScreen from '../FavouriteScreen';
 import { HomeIcon, Food, MartIcon, Pharmart, ProfileIcon } from '../../../global/styles/icons/TabIcons';
 import { horizontalScale, verticalScale, moderateScale } from "../../../theme/Metrics"
 import { globalStyles, fonts } from "../../../global/styles/theme";
+import MartComingSoonScreen from '../ComingSoon/MartComingSoonScreen';
+import PharmartComingSoonScreen from '../ComingSoon/PharmartComingSoonScreen';
 
 
 const Stack = createStackNavigator();
@@ -153,8 +155,8 @@ function MyTabs({ route }) {
         }}
       >
         {({ navigation, route }) => (
-          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams} }}>
-            <ChatScreen />
+          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams, hideLocationBanner: true} }}>
+            <MartComingSoonScreen navigation={navigation} route={route} />
           </CustomTabBarLayout>
         )}
       </Tab.Screen>
@@ -173,8 +175,8 @@ function MyTabs({ route }) {
         }}
       >
         {({ navigation, route }) => (
-          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams} }}>
-            <Profile />
+          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams, hideLocationBanner: true} }}>
+            <PharmartComingSoonScreen navigation={navigation} route={route} />
           </CustomTabBarLayout>
         )}
       </Tab.Screen>
@@ -193,9 +195,7 @@ function MyTabs({ route }) {
         }}
       >
         {({ navigation, route }) => (
-          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams, hideLocationBanner: true} }}>
-            <Profile />
-          </CustomTabBarLayout>
+          <Profile navigation={navigation} route={route} />
         )}
       </Tab.Screen>
     </Tab.Navigator>

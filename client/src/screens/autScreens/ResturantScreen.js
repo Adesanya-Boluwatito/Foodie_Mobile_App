@@ -1,136 +1,141 @@
-import React, { useState, useEffect,useRef } from 'react';
-import { View, Text, Image, ScrollView, StyleSheet, TouchableOpacity, Animated, PanResponder } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, 
+  Text, 
+  Image, 
+  ScrollView, 
+  StyleSheet, 
+  TouchableOpacity, 
+  Animated, 
+  PanResponder,
+  StatusBar,
+  Dimensions,
+  Platform
+} from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ChatModal from '../../components/chatModal';
-import AntDesign from '@expo/vector-icons/AntDesign'
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { auth, db } from '../../../firebaseconfi';
-import { doc,  getDoc, deleteDoc, setDoc } from "firebase/firestore"
+import { doc, getDoc, deleteDoc, setDoc } from "firebase/firestore";
 
+const { width, height } = Dimensions.get('window');
 
-const CartBanner = ({ itemCount, total, cartItems, restaurants, message}) => {
-  const navigation = useNavigation();  // Use the hook here
-  
+// Modern accent color
+const ACCENT_COLOR = '#FF4D4F';
+
+const CartBanner = ({ itemCount, total, cartItems, restaurants, message }) => {
+  const navigation = useNavigation();
 
   const handleCheckout = () => {
-    const newPack = [cartItems];
     console.log("Current message:", message);
-    navigation.navigate('Cart', { cartItems, restaurants, message});
-
+    navigation.navigate('Cart', { cartItems, restaurants, message });
   };
+  
   return (
     <View style={styles.banner}>
-      <Text style={styles.bannerText}>{itemCount} {itemCount === 1 ? 'Item' : 'Items'} | ₦ {total.toFixed(2)}</Text>
-      <Text style={styles.bannerSubText}>Extra charges may apply</Text>
-      <Button 
-        title="CHECKOUT" 
+      <View style={styles.bannerLeftContent}>
+        <View style={styles.bannerTextContainer}>
+          <Text style={styles.bannerText}>{itemCount} {itemCount === 1 ? 'Item' : 'Items'}</Text>
+          <Text style={styles.bannerAmount}>₦ {total.toFixed(2)}</Text>
+        </View>
+        <Text style={styles.bannerSubText}>Extra charges may apply</Text>
+      </View>
+      <TouchableOpacity 
+        style={styles.checkoutButton} 
         onPress={handleCheckout}
-        buttonStyle={styles.checkoutButton} 
-        titleStyle={styles.checkoutButtonText} 
-      />
+        activeOpacity={0.8}
+      >
+        <Text style={styles.checkoutButtonText}>Checkout</Text>
+        <MaterialIcons name="arrow-forward-ios" size={16} color="white" style={{ marginLeft: 5 }} />
+      </TouchableOpacity>
     </View>
   );
 };
 
 export default function ResturantScreen({}) {
-
-  
   const [cartItems, setCartItems] = useState({});
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
   const [message, setMessage] = useState('');
-  const [isModalVisible, setModalVisible] = useState(false)
-  const [isFavourite, setIsFavourite] = useState(false)
+  const [isModalVisible, setModalVisible] = useState(false);
+  const [isFavourite, setIsFavourite] = useState(false);
   const [isFavouriteButtonDisabled, setIsFavouriteButtonDisabled] = useState(false);
+  const [scrollY] = useState(new Animated.Value(0));
   const route = useRoute();
-  const { restaurants } = route.params
+  const { restaurants } = route.params;
   const restaurantId = restaurants.id;
-  
 
-//   const handleChatService = (msg) => {
-//     setMessage(msg);
-// }
+  const handleMessageSubmit = (msg) => {
+    setMessage(msg); 
+    console.log("Message submitted:", msg);
+  };
 
-const handleMessageSubmit = (msg) => {
-  setMessage(msg); 
- console.log("Message submitted:", msg);// Store the message in state
-};
-
-const toggleFavourites = async () => {
-  setIsFavourite(prevState => !prevState); // Immediate toggle
-  setIsFavouriteButtonDisabled(true);
-
-  try {
-    const userId = auth.currentUser.uid;
-    // const restaurantId = restaurants.id;
-
-    const favRef = doc(db, "users", userId, "favourites", restaurantId);
-
-    if (isFavourite) {
-      // The user has unfavored, so remove from Firestore
-      await deleteDoc(favRef);
-    } else {
-      // The user has favored, so add to Firestore
-      await setDoc(favRef, {
-        id: restaurantId,
-        name: restaurants.name,
-        details: restaurants.details,
-      });
-    }
-  } catch (error) {
-    console.error("Error updating favorites: ", error);
-    // Revert the toggle in case of error
+  const toggleFavourites = async () => {
     setIsFavourite(prevState => !prevState);
-  } finally {
-    setIsFavouriteButtonDisabled(false);
-  }
-};
+    setIsFavouriteButtonDisabled(true);
 
-useEffect(() => {
-  const fetchFavouriteStatus = async () => {
     try {
       const userId = auth.currentUser.uid;
-      // const restaurantId = restaurants.id;
       const favRef = doc(db, "users", userId, "favourites", restaurantId);
-      const favDoc = await getDoc(favRef);
 
-      if (favDoc.exists()) {
-        setIsFavourite(true);
+      if (isFavourite) {
+        await deleteDoc(favRef);
       } else {
-        setIsFavourite(false);
+        await setDoc(favRef, {
+          id: restaurantId,
+          name: restaurants.name,
+          details: restaurants.details,
+        });
       }
     } catch (error) {
-      if (error.code === 'unavailable') {
-        console.error('Network error, retrying in 5 seconds...');
-        setTimeout(fetchData, 5000);
-      } else {
-        console.error('Error fetching document:', error);
-      }
+      console.error("Error updating favorites: ", error);
+      setIsFavourite(prevState => !prevState);
+    } finally {
+      setIsFavouriteButtonDisabled(false);
     }
   };
 
-  fetchFavouriteStatus();
-}, [restaurants]);
+  useEffect(() => {
+    const fetchFavouriteStatus = async () => {
+      try {
+        const userId = auth.currentUser.uid;
+        const favRef = doc(db, "users", userId, "favourites", restaurantId);
+        const favDoc = await getDoc(favRef);
 
+        if (favDoc.exists()) {
+          setIsFavourite(true);
+        } else {
+          setIsFavourite(false);
+        }
+      } catch (error) {
+        if (error.code === 'unavailable') {
+          console.error('Network error, retrying in 5 seconds...');
+          setTimeout(fetchFavouriteStatus, 5000);
+        } else {
+          console.error('Error fetching document:', error);
+        }
+      }
+    };
 
-
-const handlebackPree = () => {
-    navigation.goBack()
-}
+    fetchFavouriteStatus();
+  }, [restaurants]);
 
   useEffect(() => {
     // Simulate fetching data
     setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 1000);
 
-  if (route.params?.cartItems) {
-    setCartItems(route.params.cartItems);
-    const newTotal = Object.values(route.params.cartItems[restaurantId] || {}).reduce((sum, item) => sum + item.price * item.quantity, 0);
-    setTotal(newTotal);
-  }
-}, [route.params?.cartItems]);
+    if (route.params?.cartItems) {
+      setCartItems(route.params.cartItems);
+      const newTotal = Object.values(route.params.cartItems[restaurantId] || {}).reduce((sum, item) => sum + item.price * item.quantity, 0);
+      setTotal(newTotal);
+    }
+  }, [route.params?.cartItems]);
 
   const addItemToCart = (item) => {
     setCartItems((prevCartItems) => {
@@ -143,10 +148,9 @@ const handlebackPree = () => {
       } else {
         updatedCartItems[restaurantId][item.name] = { ...item, quantity: 1 };
       }
-      setTotal((prevTotal) => prevTotal + item.price)
+      setTotal((prevTotal) => prevTotal + item.price);
       return updatedCartItems;
     });
-    
   };
 
   const removeItemFromCart = (item) => {
@@ -154,15 +158,12 @@ const handlebackPree = () => {
       const updatedCartItems = { ...prevCartItems };
   
       if (updatedCartItems[restaurantId] && updatedCartItems[restaurantId][item.name]) {
-        // Reduce the quantity
         updatedCartItems[restaurantId][item.name].quantity -= 1;
   
-        // If quantity is 0, remove the item from the cart
         if (updatedCartItems[restaurantId][item.name].quantity === 0) {
           delete updatedCartItems[restaurantId][item.name];
         }
   
-        // Recalculate the total
         setTotal((prevTotal) => (prevTotal - item.price >= 0 ? prevTotal - item.price : 0));
       }
   
@@ -171,26 +172,26 @@ const handlebackPree = () => {
   };
 
   const getItemCount = () => {
-    return Object.keys(cartItems[restaurantId] || {}).length;
+    return Object.values(cartItems[restaurantId] || {}).reduce((count, item) => count + item.quantity, 0);
   };
 
   const renderItemButtons = (item) => {
     const itemInCart = cartItems[restaurantId]?.[item.name];
     if (itemInCart) {
       return (
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={styles.counterContainer}>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#bf0603' }]}
+            style={styles.counterButton}
             onPress={() => removeItemFromCart(item)}
           >
-            <Text style={styles.buttonText}>-</Text>
+            <AntDesign name="minus" size={16} color="white" />
           </TouchableOpacity>
           <Text style={styles.quantityText}>{itemInCart.quantity}</Text>
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: '#bf0603' }]}
+            style={styles.counterButton}
             onPress={() => addItemToCart(item)}
           >
-            <Text style={styles.buttonText}>+</Text>
+            <AntDesign name="plus" size={16} color="white" />
           </TouchableOpacity>
         </View>
       );
@@ -199,326 +200,560 @@ const handlebackPree = () => {
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => addItemToCart(item)}
+          activeOpacity={0.8}
         >
           <Text style={styles.addButtonText}>Add</Text>
+          <AntDesign name="plus" size={16} color="white" style={{ marginLeft: 4 }} />
         </TouchableOpacity>
       );
     }
   };
- 
+
+  // Animation for header fade effect
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
   
+  // Animation for title appearing in header
+  const headerTitleOpacity = scrollY.interpolate({
+    inputRange: [100, 150],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
 
-  const pan = useRef(new Animated.ValueXY({ x: 310, y: 300})).current;
+  const pan = useRef(new Animated.ValueXY({ x: width - 70, y: height - 150 })).current;
 
-  const currentUser  = auth.currentUser
-  const UserId  = currentUser.uid
-
-  const panResponder = useRef (
+  const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder:() => true,
+      onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         pan.setOffset({
           x: pan.x._value,
           y: pan.y._value,
         });
-        pan.setValue({ x: 0, y:0});
+        pan.setValue({ x: 0, y: 0 });
       },
       onPanResponderMove: Animated.event(
-        [
-          null,
-          { dx: pan.x, dy: pan.y}
-        ],
-        { useNativeDriver: false}
+        [null, { dx: pan.x, dy: pan.y }],
+        { useNativeDriver: false }
       ),
       onPanResponderRelease: () => {
         pan.flattenOffset();
       }
     })
   ).current;
-  // console.log(message)
 
   const fallbackImageUri = 'https://thewomenleaders.com/wp-content/uploads/2023/04/McDonalds-is-squeezing-the-formulae-for-its-iconic-burgers-including-the-Big-Mac-and-McDouble.png';
 
   return (
-    <View style={{ flex: 1 }}>
-
-       <View style={styles.header}>
-
-        <View style={styles.backContainer}>
-
-            <Image
-          source={{ uri: restaurants.details.coverImage || fallbackImageUri }}
-          style={{ width: '100%', height: 300, resizeMode: 'cover' }}
-        />
-            <TouchableOpacity style={styles.backButton} onPress={handlebackPree}>
-            <AntDesign name="left" size={20} color="#8b8c89" />
-            </TouchableOpacity>
-          </View>
-        <View style = {styles.headerCard}>
-          <Text style={styles.title}>{restaurants.name}</Text>
-          <Text style={styles.location}>{restaurants.details.location}</Text>
-          <View style={styles.ratingContainer}>
-            <Icon name="star" type="font-awesome" color="#FFD700" />
-            <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
-
-            <TouchableOpacity style={styles.favouriteButton} onPress={toggleFavourites} disabled={isFavouriteButtonDisabled} >
-            <AntDesign name={isFavourite ? "heart": "hearto" } size={24} color="#bf0603" />
-            </TouchableOpacity> 
-          </View>
-          <Text style={styles.deliveryTime}>{restaurants.details.deliveryTime}</Text>
-          <Text style={styles.offer}>OFFER - 10% OFF ON ALL BEVERAGES</Text>
-        </View>
-          
-        </View>
-
-
-
-
+    <View style={styles.container}>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
       
-        
-
-      <ScrollView contentContainerStyle={{ paddingBottom: 150 }}>   
-        {restaurants.details.menu.map((item) =>(
-          <View style={styles.menuItem} key={item.id}>
-          <Image source={{ uri: item.image}} style={styles.image} />
-          <View style={styles.menuText}>
-            <Text style={styles.menuTitle}>{item.name}</Text>
-            <Text style={styles.menuDescription}>{item.description}</Text>
-            <Text style={styles.menuPrice}>₦ {item.price.toFixed(2)}</Text>
+      {/* Animated Header Bar */}
+      <Animated.View 
+        style={[
+          styles.animatedHeader, 
+          { opacity: headerTitleOpacity }
+        ]}
+      >
+        <TouchableOpacity 
+          style={styles.headerBackButton} 
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={22} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>{restaurants.name}</Text>
+        <TouchableOpacity 
+          style={styles.headerFavButton}
+          onPress={toggleFavourites} 
+          disabled={isFavouriteButtonDisabled}
+        >
+          <AntDesign 
+            name={isFavourite ? "heart" : "hearto"} 
+            size={22} 
+            color={ACCENT_COLOR} 
+          />
+        </TouchableOpacity>
+      </Animated.View>
+      
+      <Animated.ScrollView 
+        contentContainerStyle={{ paddingBottom: 150 }}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
+        {/* Restaurant Cover Image */}
+        <View style={styles.coverImageContainer}>
+          <Image
+            source={{ uri: restaurants.details.coverImage || fallbackImageUri }}
+            style={styles.coverImage}
+          />
+          <View style={styles.coverOverlay} />
+          
+          {/* Back Button on Cover */}
+          <Animated.View style={[styles.coverBackButton, { opacity: headerOpacity }]}>
+            <TouchableOpacity 
+              style={styles.backButtonInner} 
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={22} color="#fff" />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          {/* Restaurant Basic Info Card */}
+          <View style={styles.restaurantInfoCard}>
+            <View style={styles.restaurantBasicInfo}>
+              <View>
+                <Text style={styles.title}>{restaurants.name}</Text>
+                <View style={styles.locationRow}>
+                  <Ionicons name="location-outline" size={16} color="#666" />
+                  <Text style={styles.location}>{restaurants.details.location}</Text>
+                </View>
+                
+                <View style={styles.restaurantMetrics}>
+                  <View style={styles.metricItem}>
+                    <View style={styles.ratingBadge}>
+                      <AntDesign name="star" size={14} color="#FFD700" />
+                      <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
+                    </View>
+                    <Text style={styles.metricLabel}>Rating</Text>
+                  </View>
+                  
+                  <View style={styles.metricDivider} />
+                  
+                  <View style={styles.metricItem}>
+                    <Ionicons name="time-outline" size={16} color="#666" />
+                    <Text style={styles.metricValue}>{restaurants.details.deliveryTime}</Text>
+                    <Text style={styles.metricLabel}>Delivery</Text>
+                  </View>
+                </View>
+              </View>
+              
+              <TouchableOpacity 
+                style={styles.favouriteButton} 
+                onPress={toggleFavourites} 
+                disabled={isFavouriteButtonDisabled}
+              >
+                <AntDesign 
+                  name={isFavourite ? "heart" : "hearto"} 
+                  size={24} 
+                  color={ACCENT_COLOR} 
+                />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Promotion Banner */}
+            <View style={styles.offerContainer}>
+              <MaterialIcons name="local-offer" size={18} color={ACCENT_COLOR} />
+              <Text style={styles.offer}>10% OFF ON ALL BEVERAGES</Text>
+            </View>
           </View>
-          {renderItemButtons(item)}
         </View>
-        ))} 
-      </ScrollView>
+        
+        {/* Menu Title */}
+        <View style={styles.menuSectionHeader}>
+          <Text style={styles.menuSectionTitle}>Menu</Text>
+          <View style={styles.menuSectionDivider} />
+        </View>
+        
+        {/* Menu Items */}
+        <View style={styles.menuItemsContainer}>
+          {restaurants.details.menu.map((item) => (
+            <View style={styles.menuItem} key={item.id}>
+              <View style={styles.menuItemMain}>
+                <View style={styles.menuText}>
+                  <Text style={styles.menuTitle}>{item.name}</Text>
+                  <Text style={styles.menuDescription} numberOfLines={2}>
+                    {item.description || "Delicious dish prepared with fresh ingredients"}
+                  </Text>
+                  <Text style={styles.menuPrice}>₦ {item.price.toFixed(2)}</Text>
+                </View>
+                <Image source={{ uri: item.image }} style={styles.menuImage} />
+              </View>
+              <View style={styles.menuItemActions}>
+                {renderItemButtons(item)}
+              </View>
+            </View>
+          ))}
+        </View>
+      </Animated.ScrollView>
 
+      {/* Chat Modal */}
       <ChatModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
         onSubmit={handleMessageSubmit}
-        message={message} // Pass the current message
+        message={message}
       />
       
+      {/* Floating Chat Button */}
       <Animated.View
-
         {...panResponder.panHandlers}
-        style={[pan.getLayout(), styles.floaterStyle]}
-      ><TouchableOpacity  onPress={ () => setModalVisible(true)}>
-        <AntDesign name="message1" size={24} color="white" />
+        style={[pan.getLayout(), styles.chatButton]}
+      >
+        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.chatButtonInner}>
+          <Ionicons name="chatbubble-ellipses" size={24} color="white" />
         </TouchableOpacity>
       </Animated.View>
       
+      {/* Cart Banner */}
       {getItemCount() > 0 && (
-      <CartBanner itemCount={getItemCount()} total={total} cartItems={cartItems} restaurants={restaurants} message={message}/>)}
+        <CartBanner 
+          itemCount={getItemCount()} 
+          total={total} 
+          cartItems={cartItems} 
+          restaurants={restaurants} 
+          message={message}
+        />
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    // flex: 1,
-    // backgroundColor: '#fff',
+    flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  header: {
-    
-    backgroundColor: '#ffff',
-    alignItems: 'center',
-    position:"relative",
-    // flexDirection: "row",
-    zIndex:20,
-  },
-  headerCard: {
-  
-    backgroundColor: "#F9F9F9",
-    borderBlockColor: "#bf0603",
-    // elevation: 5,
-    borderRadius:10,
-    width:365,
-    padding: 20,
-    position: "absolute",
-    zIndex: 10,
-    bottom: -110,
-
-  },
-  favouriteButton: {
-      left:250,
-      bottom: 50,
-      // flexDirection: "row",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  location: {
-    fontSize: 16,
-    color: 'gray',
-  },
-  ratingContainer: {
+  animatedHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: Platform.OS === 'ios' ? 90 : 70,
+    backgroundColor: 'white',
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    paddingTop: Platform.OS === 'ios' ? 40 : 25,
+    paddingHorizontal: 15,
+    zIndex: 100,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  headerBackButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F0F0F0',
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#222',
+    marginHorizontal: 15,
+  },
+  headerFavButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF0F0',
+  },
+  coverImageContainer: {
+    position: 'relative',
+    marginBottom: 10,
+  },
+  coverImage: {
+    width: '100%',
+    height: 240,
+    resizeMode: 'cover',
+  },
+  coverOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+  },
+  coverBackButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 40,
+    left: 15,
+    zIndex: 5,
+  },
+  backButtonInner: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  restaurantInfoCard: {
+    margin: 15,
+    marginTop: -50,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  restaurantBasicInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  location: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 5,
+  },
+  restaurantMetrics: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  metricItem: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  metricDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#EEE',
+    marginHorizontal: 15,
+  },
+  ratingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFAEB',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 12,
   },
   ratingText: {
-    marginLeft: 5,
-    fontSize: 16,
-  },
-  deliveryTime: {
     fontSize: 14,
-    color: 'gray',
+    fontWeight: 'bold',
+    color: '#222',
+    marginLeft: 4,
+  },
+  metricValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#222',
+    marginTop: 4,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 4,
+  },
+  favouriteButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFF0F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  offerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 15,
   },
   offer: {
     fontSize: 14,
-    color: 'red',
-    marginVertical: 10,
-    borderStyle: 'dotted',
-    borderWidth: 1,
-    borderColor: 'red',
-    padding: 5,
-    borderRadius: 5,
+    color: ACCENT_COLOR,
+    fontWeight: '600',
+    marginLeft: 8,
+  },
+  menuSectionHeader: {
+    marginTop: 10,
+    marginBottom: 5,
+    paddingHorizontal: 15,
+  },
+  menuSectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#222',
+  },
+  menuSectionDivider: {
+    height: 3,
+    width: 40,
+    backgroundColor: ACCENT_COLOR,
+    marginTop: 8,
+    borderRadius: 2,
+  },
+  menuItemsContainer: {
+    padding: 15,
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#F9F9F9',
-    marginHorizontal: 10,
-    marginVertical: 5,
-    borderRadius: 10,
-    top: 115, 
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  image: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
+  menuItemMain: {
+    flexDirection: 'row',
   },
   menuText: {
     flex: 1,
-    marginLeft: 20,
+    marginRight: 15,
   },
   menuTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
+    color: '#222',
   },
   menuDescription: {
     fontSize: 14,
-    color: 'gray',
+    color: '#777',
+    marginTop: 5,
+    lineHeight: 20,
   },
   menuPrice: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginVertical: 5,
+    color: ACCENT_COLOR,
+    marginTop: 8,
   },
-  cart: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+  menuImage: {
+    width: 90,
+    height: 90,
+    borderRadius: 10,
+  },
+  menuItemActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
+    borderTopWidth: 1,
+    borderTopColor: '#F2F2F2',
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  counterContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  cartText: {
-    fontSize: 18,
-  },
-  button: {
-    width: 40,
-    height: 40,
+    backgroundColor: '#F8F8F8',
     borderRadius: 20,
-    backgroundColor: '#bf0603',
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#EEEEEE',
+  },
+  counterButton: {
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 5,
-    marginRight: 5,
+    backgroundColor: ACCENT_COLOR,
   },
-  buttonText: {
-    color: 'white',
-    fontSize: 20,
+  quantityText: {
+    width: 36,
+    textAlign: 'center',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   addButton: {
-    backgroundColor: '#bf0603',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
   addButtonText: {
     color: 'white',
-    fontSize: 16,
     fontWeight: 'bold',
+    fontSize: 14,
+  },
+  chatButton: {
+    position: 'absolute',
+    zIndex: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: ACCENT_COLOR,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+  },
+  chatButtonInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   banner: {
     position: 'absolute',
     bottom: 0,
-    width: '100%',
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    padding: 15,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
     elevation: 10,
   },
+  bannerLeftContent: {
+    flex: 1,
+  },
+  bannerTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   bannerText: {
-    fontSize: 16,
+    fontSize: 14,
+    color: '#666',
+  },
+  bannerAmount: {
+    fontSize: 18,
     fontWeight: 'bold',
+    marginLeft: 10,
   },
   bannerSubText: {
     fontSize: 12,
-    color: 'gray',
+    color: '#888',
+    marginTop: 4,
   },
   checkoutButton: {
-    backgroundColor: '#bf0603',
-    borderRadius: 5,
-    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: ACCENT_COLOR,
+    paddingVertical: 12,
     paddingHorizontal: 20,
+    borderRadius: 25,
   },
   checkoutButtonText: {
     color: 'white',
+    fontWeight: 'bold',
     fontSize: 16,
-    fontWeight: 'bold',
   },
-  quantityText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginHorizontal: 10,
-  },
-  floaterStyle: {
-    //Here is the trick
-    position: 'absolute',
-    zIndex: 20,
-    width: 50,
-    borderRadius:10 ,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    right: 30,
-    bottom: 30,
-    backgroundColor:'#bf0603',
- },
- backContainer: {
-  flexDirection: "row",
-    
- },
- backButton:{
-  backgroundColor: "#fff",
-  borderRadius: 10,
-  position: "absolute",
-  zIndex: 10,
-  bottom:180,
-  left: 18,
-  width: 45,
-  height:40,
-  alignItems: "center",
-  justifyContent: "center",
- },
- scrollViewContainer: {
-  flex: 1,
-  paddingTop: 20, // Adjust to add spacing under the header card
-  paddingHorizontal: 10,
-},
 });

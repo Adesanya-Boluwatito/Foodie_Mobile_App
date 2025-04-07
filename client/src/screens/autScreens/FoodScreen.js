@@ -16,6 +16,7 @@ import CarouselIndicator from "../../components/CarouselIndicator"
 import Icon from 'react-native-vector-icons/Ionicons';
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 import { globalStyles, fonts } from '../../global/styles/theme';
+import { useLocation } from '../../context/LocationContext';
 
 const categories = [
   { id: '1', name: 'Pizza', icon: require('../../../assets/ima/Pizza.jpg') },
@@ -39,22 +40,100 @@ const adBanners = [
   }
 ]
 
+// Helper function to normalize location text for comparison
+const normalizeLocationText = (text) => {
+  if (!text) return '';
+  return text.toLowerCase().trim();
+};
+
+// Enhanced location matcher that checks if keywords are present
+const isLocationMatch = (userLocation, vendorLocation) => {
+  if (!userLocation || !vendorLocation) return false;
+  
+  // Normalize both locations
+  const normalizedUserLocation = normalizeLocationText(userLocation);
+  const normalizedVendorLocation = normalizeLocationText(vendorLocation);
+  
+  // Extract keywords from user location (typically city and area names)
+  const userLocationParts = normalizedUserLocation.split(',').map(part => part.trim());
+  
+  // Check if any part of the user's location appears in the vendor's location
+  return userLocationParts.some(part => {
+    // Skip very short parts (like single letters)
+    if (part.length < 3) return false;
+    
+    // Check if this part of user location is in vendor location
+    return normalizedVendorLocation.includes(part);
+  });
+};
+
+// Function to extract the main area name from a location string
+const extractMainArea = (location) => {
+  if (!location) return '';
+  
+  // Split the location by commas and clean each part
+  const parts = location.split(',').map(part => part.trim());
+  
+  // Return the first part as the main area
+  return parts[0] || '';
+};
 
 export default function FoodScreen({ navigation, route }) {
     console.log('FoodScreen rendered with navigation:', !!navigation);
 
     const [sortedRestaurants, setSortedRestaurants] = useState([]);
+    const [filteredRestaurants, setFilteredRestaurants] = useState([]);
+    const [userLocation, setUserLocation] = useState('');
+    const [mainArea, setMainArea] = useState('');
     const scrollX = useRef(new Animated.Value(0)).current;
+    const { locationData } = useLocation();
 
+    // Update user location from location context
     useEffect(() => {
-        const fetchSortedRestaurants = async () => {
-            const sorted = [...restaurantsData.restaurants]
-                .sort((a, b) => b.details.rating - a.details.rating)
-                .slice(0, 5);
-            setSortedRestaurants(sorted);
-        };
-      fetchSortedRestaurants();
-    }, [restaurantsData]);
+      if (locationData?.readableLocation) {
+        const location = locationData.readableLocation;
+        console.log("Setting user location in FoodScreen:", location);
+        setUserLocation(location);
+        
+        // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
+        const area = extractMainArea(location);
+        console.log("Main area extracted in FoodScreen:", area);
+        setMainArea(area);
+      }
+    }, [locationData]);
+
+    // Filter and sort restaurants based on location
+    useEffect(() => {
+      console.log("Filtering restaurants for location in FoodScreen:", userLocation);
+      
+      if (!userLocation) {
+        // If no location set, just get top rated restaurants
+        const sorted = [...restaurantsData.restaurants]
+            .sort((a, b) => b.details.rating - a.details.rating)
+            .slice(0, 5);
+        setSortedRestaurants(sorted);
+        setFilteredRestaurants(restaurantsData.restaurants);
+        return;
+      }
+
+      // Filter restaurants by location match
+      const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
+        isLocationMatch(userLocation, restaurant.details.location)
+      );
+      
+      console.log(`Found ${matchingRestaurants.length} matching restaurants in FoodScreen`);
+
+      // Sort restaurants by rating and take top 5
+      const topRestaurants = [...matchingRestaurants]
+        .sort((a, b) => b.details.rating - a.details.rating)
+        .slice(0, 5);
+        
+      setSortedRestaurants(topRestaurants);
+      
+      // For explore section - all matching restaurants or all if none match
+      setFilteredRestaurants(matchingRestaurants.length > 0 ? matchingRestaurants : restaurantsData.restaurants);
+
+    }, [userLocation]);
 
     const handleRestaurantPress = (restaurants) => {
       console.log('Restaurant pressed, navigation:', !!navigation);
@@ -65,11 +144,16 @@ export default function FoodScreen({ navigation, route }) {
       }
     };
 
+    // Fallback message when no restaurants are available
+    const renderEmptyRestaurantsMessage = () => (
+      <View style={styles.emptyMessageContainer}>
+        <Text style={styles.emptyMessageText}>
+          No restaurants available in {mainArea || 'your area'}.
+        </Text>
+      </View>
+    );
 
-  return (
-
-    
-    
+  return (    
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 50 }}>
       {/* Categories */}
       <FlatList
@@ -117,63 +201,69 @@ export default function FoodScreen({ navigation, route }) {
 
       {/* Top Rated Restaurants */}
       <View style={styles.RatedRestaurant}>
-        <Text style={styles.sectionTitle}>Top Rated Restaurants</Text>
-        <FlatList
-            horizontal
-            data={sortedRestaurants}  // Ensure `sortedRestaurants` is the array you're mapping over
-            keyExtractor={(item) => item.id.toString()}  // Ensure each item has a unique key
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.restaurantContainer} onPress={() => handleRestaurantPress(item)}>
-                <Image source={{ uri: item.details.logo }} style={styles.restaurantImage} />
-                  <Text style={styles.restaurantName}>{item.name}</Text>
-                  <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
-                <View style={styles.ratingContainer}>
-                  <Text style={styles.ratingText}>⭐ {item.details.rating}</Text>
-                  <Text style={styles.ratingLocation} numberOfLines={1} ellipsizeMode="tail"> | {item.details.location}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            )}
-            showsHorizontalScrollIndicator={false}  // This removes the scrollbar
-            contentContainerStyle={styles.topRatedListContainer}
-          />
-
+        <Text style={styles.sectionTitle}>
+          Top Rated Restaurants {mainArea ? `in ${mainArea}` : ''}
+        </Text>
+        {sortedRestaurants.length > 0 ? (
+          <FlatList
+              horizontal
+              data={sortedRestaurants}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.restaurantContainer} onPress={() => handleRestaurantPress(item)}>
+                  <Image source={{ uri: item.details.logo }} style={styles.restaurantImage} />
+                    <Text style={styles.restaurantName}>{item.name}</Text>
+                    <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
+                  <View style={styles.ratingContainer}>
+                    <Text style={styles.ratingText}>⭐ {item.details.rating}</Text>
+                    <Text style={styles.ratingLocation} numberOfLines={1} ellipsizeMode="tail"> | {item.details.location}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.topRatedListContainer}
+            />
+        ) : (
+          renderEmptyRestaurantsMessage()
+        )}
       </View>
       
 
       {/* Restaurants To Explore */}
       <View style={styles.exploreContainer}>
-    <Text style={styles.sectionTitle}>Restaurants To Explore</Text>
-    {restaurantsData.restaurants.map((restaurant) => (
-        <TouchableOpacity key={restaurant.id} style={styles.restaurantExploreCard} onPress={() => handleRestaurantPress(restaurant)}>
-            {/* Restaurant Image */}
-            <Image 
-                source={{ uri: restaurant.details.menu[0].image }} 
-                style={styles.exploreRestaurantImage} 
-            />
-            {/* Restaurant Details */}
-            <View style={styles.restaurantDetailsContainer}>
-                <Text style={styles.restaurantName}>{restaurant.name}</Text>
-                <Text style={styles.restaurantDetails}>
-                {restaurant.details.description || 'Cuisine not available'}
-                </Text>
-                <View style={styles.ratingAndLocation}>
-                    <Text style={styles.restaurantRating}>⭐ {restaurant.details.rating}</Text>
-                    <Text style={styles.restaurantDistance}>
-                        {restaurant.details.distance} | {restaurant.details.deliveryTime}
+        <Text style={styles.sectionTitle}>
+          Restaurants To Explore {mainArea ? `in ${mainArea}` : ''}
+        </Text>
+        {filteredRestaurants.length > 0 ? (
+          filteredRestaurants.map((restaurant) => (
+            <TouchableOpacity key={restaurant.id} style={styles.restaurantExploreCard} onPress={() => handleRestaurantPress(restaurant)}>
+                {/* Restaurant Image */}
+                <Image 
+                    source={{ uri: restaurant.details.menu[0].image }} 
+                    style={styles.exploreRestaurantImage} 
+                />
+                {/* Restaurant Details */}
+                <View style={styles.restaurantDetailsContainer}>
+                    <Text style={styles.restaurantName}>{restaurant.name}</Text>
+                    <Text style={styles.restaurantDetails}>
+                    {restaurant.details.description || 'Cuisine not available'}
                     </Text>
+                    <View style={styles.ratingAndLocation}>
+                        <Text style={styles.restaurantRating}>⭐ {restaurant.details.rating}</Text>
+                        <Text style={styles.restaurantDistance}>
+                            {restaurant.details.distance} | {restaurant.details.deliveryTime}
+                        </Text>
+                    </View>
                 </View>
-            </View>
-        </TouchableOpacity>
-    ))}
-</View>
-      
+            </TouchableOpacity>
+          ))
+        ) : (
+          renderEmptyRestaurantsMessage()
+        )}
+      </View>
     </ScrollView>
-
-    
-    
   );
-  
 };
 
 
@@ -323,8 +413,30 @@ restaurantDistance: {
   fontSize: moderateScale(12),
   color: '#888',
 },
-    
 
+emptyMessageContainer: {
+  padding: 20,
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: 150,
+},
+emptyMessageText: {
+  fontSize: 16,
+  color: '#666',
+  textAlign: 'center',
+},
 
+ratingText: {
+  fontSize: 17,
+  color: "#8b8c89",
+},
+
+ratingLocation: {
+  fontSize: 17,
+  color: "#8b8c89",
+  marginLeft: 10,
+  flexShrink: 1,
+  maxWidth: "70%" 
+},
 });
 

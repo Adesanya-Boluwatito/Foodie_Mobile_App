@@ -12,6 +12,45 @@ import { Ionicons } from '@expo/vector-icons';
 import restaurantsData from '../../components/data/restaurants_feed.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
+import { useLocation } from '../../context/LocationContext';
+
+// Helper function to normalize location text for comparison
+const normalizeLocationText = (text) => {
+  if (!text) return '';
+  return text.toLowerCase().trim();
+};
+
+// Enhanced location matcher that checks if keywords are present
+const isLocationMatch = (userLocation, vendorLocation) => {
+  if (!userLocation || !vendorLocation) return false;
+  
+  // Normalize both locations
+  const normalizedUserLocation = normalizeLocationText(userLocation);
+  const normalizedVendorLocation = normalizeLocationText(vendorLocation);
+  
+  // Extract keywords from user location (typically city and area names)
+  const userLocationParts = normalizedUserLocation.split(',').map(part => part.trim());
+  
+  // Check if any part of the user's location appears in the vendor's location
+  return userLocationParts.some(part => {
+    // Skip very short parts (like single letters)
+    if (part.length < 3) return false;
+    
+    // Check if this part of user location is in vendor location
+    return normalizedVendorLocation.includes(part);
+  });
+};
+
+// Function to extract the main area name from a location string
+const extractMainArea = (location) => {
+  if (!location) return '';
+  
+  // Split the location by commas and clean each part
+  const parts = location.split(',').map(part => part.trim());
+  
+  // Return the first part as the main area
+  return parts[0] || '';
+};
 
 const SearchScreen = ({ navigation }) => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +58,10 @@ const SearchScreen = ({ navigation }) => {
   const [recentSearches, setRecentSearches] = useState([]);
   const [trendingDishes, setTrendingDishes] = useState([]);
   const [matchingDishes, setMatchingDishes ] = useState([]);
+  const [userLocation, setUserLocation] = useState('');
+  const [mainArea, setMainArea] = useState('');
+  const [availableRestaurants, setAvailableRestaurants] = useState([]);
+  const { locationData } = useLocation();
   
   // Categories with proper food icons and names from your data
   const categories = [
@@ -59,6 +102,41 @@ const SearchScreen = ({ navigation }) => {
       keywords: ['fries', 'mashed potatoes', 'salad', 'coleslaw']
     }
   ];
+
+  // Update user location from location context
+  useEffect(() => {
+    if (locationData?.readableLocation) {
+      const location = locationData.readableLocation;
+      console.log("Setting user location in AllRestaurants:", location);
+      setUserLocation(location);
+      
+      // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
+      const area = extractMainArea(location);
+      console.log("Main area extracted in AllRestaurants:", area);
+      setMainArea(area);
+    }
+  }, [locationData]);
+
+  // Filter restaurants based on location
+  useEffect(() => {
+    console.log("Filtering restaurants for location in AllRestaurants:", userLocation);
+    
+    if (!userLocation) {
+      // If no location set, use all restaurants
+      setAvailableRestaurants(restaurantsData.restaurants);
+      return;
+    }
+
+    // Filter restaurants by location match
+    const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
+      isLocationMatch(userLocation, restaurant.details.location)
+    );
+    
+    console.log(`Found ${matchingRestaurants.length} matching restaurants in AllRestaurants`);
+
+    // Use matched restaurants if any, otherwise fall back to all restaurants
+    setAvailableRestaurants(matchingRestaurants.length > 0 ? matchingRestaurants : restaurantsData.restaurants);
+  }, [userLocation]);
 
   // Load recent searches on component mount
   useEffect(() => {
@@ -113,8 +191,8 @@ const SearchScreen = ({ navigation }) => {
   // Get trending dishes from AsyncStorage
   const getTrendingDishes = async () => {
     try {
-      // Load the current database
-      const database = restaurantsData;
+      // Use location-filtered restaurants if available
+      const database = { restaurants: availableRestaurants };
   
       // Flatten all dishes into a single array
       const allDishes = database.restaurants.flatMap((restaurant) => 
@@ -135,21 +213,24 @@ const SearchScreen = ({ navigation }) => {
       return [];
     }
   };
-  ;
-
-  // Fetch trending dishes
-  const fetchTrendingDishes = async () => {
-    const dishes = await getTrendingDishes();
-    setTrendingDishes(dishes);
-  };
+  
+  // Update trending dishes when available restaurants change
+  useEffect(() => {
+    const fetchTrendingDishes = async () => {
+      const trending = await getTrendingDishes();
+      setTrendingDishes(trending);
+    };
+    
+    fetchTrendingDishes();
+  }, [availableRestaurants]);
 
   // Handle search input
   const handleSearch = (text) => {
     setSearchQuery(text);
   
     if (text.trim()) {
-      // Filter restaurants that match the search query
-      const filtered = restaurantsData.restaurants.filter((restaurant) =>
+      // Filter from available restaurants that match the search query
+      const filtered = availableRestaurants.filter((restaurant) =>
         restaurant.name.toLowerCase().includes(text.toLowerCase()) ||
         restaurant.details.menu.some((item) =>
           item.name.toLowerCase().includes(text.toLowerCase())
@@ -179,33 +260,6 @@ const SearchScreen = ({ navigation }) => {
       setMatchingDishes([]);
     }
   };
-
-  
-//   const updateDishClicks = async (dishId) => {
-//     try {
-//       // Load the current database
-//       database = restaurantsData
-  
-//       // Iterate through restaurants to find the dish
-//       database.restaurants.forEach((restaurant) => {
-//         restaurant.details.menu.forEach((dish) => {
-//           if (dish.id === dishId) {
-//             dish.clicks += 1; // Increment the clicks count
-//           }
-//         });
-//       });
-  
-//       // Save the updated database back to the file (if applicable)
-//       const fs = require('fs');
-//       fs.writeFileSync('../../components/data/restaurants_feed.json', JSON.stringify(database, null, 2));
-  
-//       console.log(`Dish with ID ${dishId} has been clicked. Click count updated.`);
-//     } catch (error) {
-//       console.error('Error updating dish clicks:', error);
-//     }
-//   };
-
-  
   
   // Handle search submission
   const handleSearchSubmit = async () => {
@@ -245,8 +299,8 @@ const SearchScreen = ({ navigation }) => {
   const handleCategoryPress = (category) => {
     setSearchQuery(category.name);
     
-    // Find restaurants that have menu items matching the category
-    const filtered = restaurantsData.restaurants.filter(restaurant =>
+    // Find restaurants that have menu items matching the category from available restaurants
+    const filtered = availableRestaurants.filter(restaurant =>
       restaurant.details.menu.some(item =>
         // Check if the dish name or description includes any of the category keywords
         item.name.toLowerCase().includes(category.name.toLowerCase()) ||
@@ -288,8 +342,8 @@ const SearchScreen = ({ navigation }) => {
   const handleTrendingDishSelect = (dish) => {
     setSearchQuery(dish.name);
     
-    // Find the restaurant that contains this dish
-    const restaurant = restaurantsData.restaurants.find((r) => 
+    // Find the restaurant that contains this dish from available restaurants
+    const restaurant = availableRestaurants.find((r) => 
       r.details.menu.some((menuItem) => menuItem.name === dish.name)
     );
 
@@ -313,7 +367,7 @@ const SearchScreen = ({ navigation }) => {
   const CategoriesSection = () => {
     const getCategoryItemCount = (category) => {
       let count = 0;
-      restaurantsData.restaurants.forEach(restaurant => {
+      availableRestaurants.forEach(restaurant => {
         restaurant.details.menu.forEach(item => {
           if (
             item.name.toLowerCase().includes(category.name.toLowerCase()) ||
@@ -341,7 +395,7 @@ const SearchScreen = ({ navigation }) => {
           <Ionicons name="search" size={20} color="gray" style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search for food, grocery, meat etc."
+            placeholder={`Search in ${mainArea || 'your area'}...`}
             value={searchQuery}
             onChangeText={handleSearch}
             onSubmitEditing={handleSearchSubmit}
@@ -356,6 +410,14 @@ const SearchScreen = ({ navigation }) => {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Location Info Banner */}
+        {mainArea && (
+          <View style={styles.locationBanner}>
+            <Ionicons name="location" size={16} color="#4CAF50" />
+            <Text style={styles.locationText}>Showing results for {mainArea}</Text>
+          </View>
+        )}
+
         {/* Search Results */}
         {searchQuery.length > 0 && (filteredRestaurants.length > 0 || matchingDishes.length > 0) && (
             <View style={styles.resultsContainer}>
@@ -418,8 +480,14 @@ const SearchScreen = ({ navigation }) => {
   </View>
 )}
 
-
-
+        {/* No Results Message */}
+        {searchQuery.length > 0 && filteredRestaurants.length === 0 && matchingDishes.length === 0 && (
+          <View style={styles.noResultsContainer}>
+            <Ionicons name="search-outline" size={48} color="#ccc" />
+            <Text style={styles.noResultsText}>No results found for "{searchQuery}"</Text>
+            <Text style={styles.noResultsSubtext}>Try searching for something else</Text>
+          </View>
+        )}
 
         {/* Categories */}
         <View style={styles.section}>
@@ -433,7 +501,7 @@ const SearchScreen = ({ navigation }) => {
       {categories.map((category, index) => {
         // Calculate count for this category
         let count = 0;
-        restaurantsData.restaurants.forEach(restaurant => {
+        availableRestaurants.forEach(restaurant => {
           restaurant.details.menu.forEach(item => {
             if (
               item.name.toLowerCase().includes(category.name.toLowerCase()) ||
@@ -481,17 +549,21 @@ const SearchScreen = ({ navigation }) => {
 
         {/* Trending Dishes */}
         <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Trending Dishes</Text>
-        {trendingDishes.slice(0, 5).map((dish, index) => (
-          <TouchableOpacity 
-            key={dish.id}
-            style={styles.trendingItem}
-            onPress={() => handleTrendingDishSelect(dish)}
-          >
-            <Ionicons name="search" size={20} color="gray" />
-            <Text style={styles.trendingText}>{dish.name}</Text>
-          </TouchableOpacity>
-        ))}
+        <Text style={styles.sectionTitle}>Trending Dishes {mainArea ? `in ${mainArea}` : ''}</Text>
+        {trendingDishes.length > 0 ? (
+          trendingDishes.slice(0, 5).map((dish, index) => (
+            <TouchableOpacity 
+              key={dish.id}
+              style={styles.trendingItem}
+              onPress={() => handleTrendingDishSelect(dish)}
+            >
+              <Ionicons name="search" size={20} color="gray" />
+              <Text style={styles.trendingText}>{dish.name}</Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={styles.noResultsSubtext}>No trending dishes available in this area</Text>
+        )}
       </View>
 
         {/* Recent Searches */}
@@ -558,6 +630,19 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: moderateScale(16),
   },
+  locationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: horizontalScale(16),
+    marginBottom: verticalScale(12),
+  },
+  locationText: {
+    marginLeft: horizontalScale(6),
+    fontSize: moderateScale(14),
+    color: '#2E7D32',
+  },
   resultsContainer: {
     padding: moderateScale(16),
   },
@@ -600,6 +685,20 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(18),
     fontWeight: 'bold',
     marginBottom: verticalScale(16),
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    padding: moderateScale(32),
+  },
+  noResultsText: {
+    fontSize: moderateScale(16),
+    fontWeight: 'bold',
+    marginTop: verticalScale(16),
+  },
+  noResultsSubtext: {
+    fontSize: moderateScale(14),
+    color: 'gray',
+    marginTop: verticalScale(8),
   },
   categoriesScrollView: {
     marginTop: verticalScale(10),
