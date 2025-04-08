@@ -5,6 +5,8 @@ import { FontAwesome5, Fontisto, Octicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { isOnboardingCompleted } from '../../../../utils/onboradingStatus';
 import { getAuthToken } from '../../../../utils/AuthStorage';
+import { getLocationData, isLocationPermissionGranted } from '../../../../utils/LocationStorage';
+import { useLocation } from '../../../context/LocationContext';
 import SignUp from '../Onboarding Pages/SignUp';
 import OTP from '../Onboarding Pages/OTP';
 import Login from '../Onboarding Pages/LogIn'
@@ -80,6 +82,24 @@ const CustomTabBarButton = ({  icon, focused }) => {
 function MyTabs({ route }) {
   // Extract route params to be shared across tabs
   const routeParams = route?.params || {};
+  const { locationData } = useLocation();
+  
+  // Add location data from context to routeParams if not already in route params
+  useEffect(() => {
+    if (!routeParams.readableLocation && locationData?.readableLocation) {
+      console.log('Adding location data from context to route params:', locationData.readableLocation);
+      // Since we can't modify routeParams directly (it's from props), 
+      // we can ensure it's used in the nested components
+    }
+  }, [locationData, routeParams]);
+  
+  // Create a combined params object with priority for route params, then context
+  const combinedParams = {
+    ...routeParams,
+    // Only use context data if route params don't have the data
+    location: routeParams.location || locationData?.location,
+    readableLocation: routeParams.readableLocation || locationData?.readableLocation
+  };
   
   return (
     <Tab.Navigator
@@ -110,7 +130,7 @@ function MyTabs({ route }) {
         }}
       >
         {({ navigation, route }) => (
-          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams} }}>
+          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...combinedParams} }}>
             <HomeScreen />
           </CustomTabBarLayout>
         )}
@@ -135,7 +155,7 @@ function MyTabs({ route }) {
   }}
 >
   {({ navigation, route }) => (
-    <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams} }}>
+    <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...combinedParams} }}>
       <Foodscreen />
     </CustomTabBarLayout>
   )}
@@ -155,7 +175,7 @@ function MyTabs({ route }) {
         }}
       >
         {({ navigation, route }) => (
-          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams, hideLocationBanner: true} }}>
+          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...combinedParams, hideLocationBanner: true} }}>
             <MartComingSoonScreen navigation={navigation} route={route} />
           </CustomTabBarLayout>
         )}
@@ -175,7 +195,7 @@ function MyTabs({ route }) {
         }}
       >
         {({ navigation, route }) => (
-          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...routeParams, hideLocationBanner: true} }}>
+          <CustomTabBarLayout navigation={navigation} route={{ ...route, params: {...route.params, ...combinedParams, hideLocationBanner: true} }}>
             <PharmartComingSoonScreen navigation={navigation} route={route} />
           </CustomTabBarLayout>
         )}
@@ -203,28 +223,65 @@ function MyTabs({ route }) {
 }
 
 export default function MyScreens() {
-
   const [isLoading, setIsLoading] = useState(true);
   const [initialRoute, setInitialRoute] = useState('Onboarding1');
+  const [initialRouteParams, setInitialRouteParams] = useState({});
+  const { locationData, setLocationData } = useLocation();
 
   useEffect(() => {
     const checkAuthAndOnboardingStatus = async () => {
       const onboardingCompleted = await isOnboardingCompleted();
       const authToken = await getAuthToken();
+      const savedLocationData = await getLocationData();
+      const locationPermissionGranted = await isLocationPermissionGranted();
+      
+      console.log('Auth check: Token exists:', !!authToken);
+      console.log('Onboarding completed:', onboardingCompleted);
+      console.log('Location permission granted:', locationPermissionGranted);
+      console.log('Saved location data exists:', !!savedLocationData?.location && !!savedLocationData?.readableLocation);
+      
+      // If we have saved location data that isn't in context yet, load it
+      if (savedLocationData?.location && 
+          savedLocationData?.readableLocation && 
+          (!locationData?.location || !locationData?.readableLocation)) {
+        console.log('Loading saved location data into context:', savedLocationData);
+        await setLocationData(savedLocationData);
+        
+        // Also prepare to pass it as route params when directly navigating to MainTab
+        setInitialRouteParams({
+          location: savedLocationData.location,
+          readableLocation: savedLocationData.readableLocation
+        });
+      }
 
       if (authToken) {
-        setInitialRoute('MainTab'); // User is logged in, go to HomeScreen
+        // User is logged in, determine if we need location or can go directly to MainTab
+        if (locationPermissionGranted) {
+          // If permission was granted previously, go directly to MainTab
+          setInitialRoute('MainTab');
+          console.log('Auth and location permission granted, navigating to MainTab');
+        } else if (locationData?.location && locationData?.readableLocation) {
+          // We have location data in context but no permission flag, set the flag and go to MainTab
+          setInitialRoute('MainTab');
+          console.log('Auth and location data exist, navigating to MainTab');
+        } else {
+          // User is logged in but needs location, go to LocationAccess1
+          setInitialRoute('LocationAccess1');
+          console.log('Auth granted but location needed, navigating to LocationAccess1');
+        }
       } else if (onboardingCompleted) {
         setInitialRoute('Sign In'); // Onboarding completed but not logged in, go to Sign In
+        console.log('Onboarding completed, navigating to Sign In');
       } else {
         setInitialRoute('Onboarding1'); // Show onboarding screens
+        console.log('Onboarding needed, navigating to Onboarding1');
       }
 
       setIsLoading(false);
     };
 
     checkAuthAndOnboardingStatus();
-  }, []);
+  }, [locationData, setLocationData]);
 
   if (isLoading) {
     return (
@@ -242,6 +299,7 @@ export default function MyScreens() {
       <Stack.Screen 
         name="MainTab" 
         options={{ headerShown: false }}
+        initialParams={initialRouteParams}
       >
         {props => <MyTabs {...props} />}
       </Stack.Screen>

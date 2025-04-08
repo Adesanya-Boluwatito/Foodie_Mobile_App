@@ -7,6 +7,7 @@ import axios from 'axios';
 import { check, request, PERMISSIONS, RESULTS } from "react-native-permissions";
 import { globalStyles, fonts } from "../../../global/styles/theme";
 import { verticalScale, horizontalScale, moderateScale } from "../../../theme/Metrics";
+import { setLocationPermissionGranted } from "../../../../utils/LocationStorage";
 
 export default function LocationAccessScreen_1() {
   const [location, setLocation] = useState(null);
@@ -60,6 +61,9 @@ const getCurrentLocation = async () => {
       return;
     }
 
+    // Mark that location permission has been granted
+    await setLocationPermissionGranted();
+
     let currentLocation = await Location.getCurrentPositionAsync({});
     const { latitude, longitude } = currentLocation.coords;
     setLocation({ latitude, longitude });
@@ -87,15 +91,16 @@ const getCurrentLocation = async () => {
 
         setReadableLocation(locationName);
 
-        // Add these console logs
         console.log('Location data ready:', locationName);
 
-
-        // ADD THIS CODE HERE - Set location data in context
-        setLocationData({
+        // Create location data object
+        const locationData = {
           location: { latitude, longitude },
           readableLocation: locationName
-        });
+        };
+
+        // Set location data in context - this will also save to AsyncStorage
+        await setLocationData(locationData);
         
         // Pass location and readableLocation directly to MainTab
         navigation.navigate("MainTab", {

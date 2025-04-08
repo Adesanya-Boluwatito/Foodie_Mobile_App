@@ -72,19 +72,31 @@ export default function HomeScreen({ route, navigation }) {
 
 
   console.log("locationData", locationData);
-  // Update user location from route params
+  // Update user location from route params or context
   useEffect(() => {
-    if (locationData?.readableLocation) {
-      const location = locationData.readableLocation;
-      console.log("Setting user location:", location);
+    // First check route params (these take precedence if provided)
+    if (route?.params?.readableLocation) {
+      const location = route.params.readableLocation;
+      console.log("Setting user location from route params:", location);
       setUserLocation(location);
       
       // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
       const area = extractMainArea(location);
-      console.log("Main area extracted:", area);
+      console.log("Main area extracted from route params:", area);
+      setMainArea(area);
+    } 
+    // If no route params, check location context
+    else if (locationData?.readableLocation) {
+      const location = locationData.readableLocation;
+      console.log("Setting user location from context:", location);
+      setUserLocation(location);
+      
+      // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
+      const area = extractMainArea(location);
+      console.log("Main area extracted from context:", area);
       setMainArea(area);
     }
-  }, [route?.params]);
+  }, [locationData, route?.params]);
 
   // Filter and sort vendors based on location
   useEffect(() => {

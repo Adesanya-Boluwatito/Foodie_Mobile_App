@@ -4,35 +4,60 @@ import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { ProfileIcon } from '../global/styles/icons/TabIcons';
 import { globalStyles, fonts } from '../global/styles/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../theme/Metrics';
-
+import { useLocation } from '../context/LocationContext';
+import { getFormattedLocationName } from '../../utils/LocationStorage';
 
 export default function CustomTabBarLayout({ route, navigation, children }) {
-
-  const [address, setAddress] = useState('Set Location')
+  const [address, setAddress] = useState('Set Location');
   const hideLocationBanner = route.params?.hideLocationBanner || false;
+  const { locationData } = useLocation();
+  const addressInitialized = useRef(false);
+
+  // Load address from storage when component mounts
+  useEffect(() => {
+    const loadAddressFromStorage = async () => {
+      if (!addressInitialized.current) {
+        const storedAddress = await getFormattedLocationName();
+        if (storedAddress !== 'Set Location') {
+          console.log("Preloading address from storage:", storedAddress);
+          setAddress(storedAddress);
+          addressInitialized.current = true;
+        }
+      }
+    };
+    
+    loadAddressFromStorage();
+  }, []);
 
   useEffect(() => {
     console.log('CustomTabBarLayout mounted for screen:', route.name);
     console.log('Route params received:', route?.params);
     
+    // First priority: Check route params
     if (route.params?.readableLocation) {
-      // Log the updated location
-      console.log("Setting address to:", route.params.readableLocation);
+      console.log("Setting address from route params:", route.params.readableLocation);
       setAddress(route.params.readableLocation);
+      addressInitialized.current = true;
+    } 
+    // Second priority: Check location context
+    else if (locationData?.readableLocation && !addressInitialized.current) {
+      console.log("Setting address from location context:", locationData.readableLocation);
+      setAddress(locationData.readableLocation);
+      addressInitialized.current = true;
     } else {
-      console.log("No readableLocation in params, keeping default:", address);
+      console.log("No location found in params or context, keeping default:", address);
     }
-  }, [route.params?.readableLocation, route.name])
-
+  }, [route.params?.readableLocation, locationData?.readableLocation, route.name]);
 
   const handleLocationSearch = async () => {
-      navigation.navigate("Map")
-      console.log('Location Found')
+      navigation.navigate("Map");
+      console.log('Location Found');
   };
 
   const redirectSearchScreen = () => {
-      navigation.navigate('AllRestaurants')
-    };
+      navigation.navigate('AllRestaurants');
+  };
+  
   return (
     <SafeAreaView style={{ flex: 1 }}>
     <View style={[globalStyles.container, {paddingBottom:0}]}>
@@ -44,7 +69,7 @@ export default function CustomTabBarLayout({ route, navigation, children }) {
               <View style={styles.address}>
                 <Text style={styles.HeadText}>Deliver Now</Text>
                 <View style={styles.addressContainer}>
-                  <Text style = {styles.addressText}>{address}</Text>
+                  <Text style={styles.addressText} numberOfLines={1} ellipsizeMode="tail">{address}</Text>
                   <TouchableOpacity style={styles.emoji} onPress={handleLocationSearch}>
                     <Ionicons name="chevron-down" size={20} color="black" />
                   </TouchableOpacity>

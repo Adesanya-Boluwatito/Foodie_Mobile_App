@@ -13,6 +13,7 @@ import restaurantsData from '../../components/data/restaurants_feed.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 import { useLocation } from '../../context/LocationContext';
+import { useRoute } from '@react-navigation/native';
 
 // Helper function to normalize location text for comparison
 const normalizeLocationText = (text) => {
@@ -62,6 +63,7 @@ const SearchScreen = ({ navigation }) => {
   const [mainArea, setMainArea] = useState('');
   const [availableRestaurants, setAvailableRestaurants] = useState([]);
   const { locationData } = useLocation();
+  const route = useRoute();
   
   // Categories with proper food icons and names from your data
   const categories = [
@@ -103,19 +105,31 @@ const SearchScreen = ({ navigation }) => {
     }
   ];
 
-  // Update user location from location context
+  // Update user location from location context or route params
   useEffect(() => {
-    if (locationData?.readableLocation) {
-      const location = locationData.readableLocation;
-      console.log("Setting user location in AllRestaurants:", location);
+    // First check route params (these take precedence if provided)
+    if (route?.params?.readableLocation) {
+      const location = route.params.readableLocation;
+      console.log("Setting user location in AllRestaurants from route params:", location);
       setUserLocation(location);
       
       // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
       const area = extractMainArea(location);
-      console.log("Main area extracted in AllRestaurants:", area);
+      console.log("Main area extracted in AllRestaurants from route params:", area);
       setMainArea(area);
     }
-  }, [locationData]);
+    // If no route params, check location context
+    else if (locationData?.readableLocation) {
+      const location = locationData.readableLocation;
+      console.log("Setting user location in AllRestaurants from context:", location);
+      setUserLocation(location);
+      
+      // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
+      const area = extractMainArea(location);
+      console.log("Main area extracted in AllRestaurants from context:", area);
+      setMainArea(area);
+    }
+  }, [locationData, route?.params]);
 
   // Filter restaurants based on location
   useEffect(() => {

@@ -5,6 +5,7 @@ import { verticalScale, horizontalScale, moderateScale } from "../../../theme/Me
 import { useNavigation } from '@react-navigation/native';
 import { useAnimation } from '../../../components/AnimationContext';
 import DisableBackAction from "../../../components/DisableBackActionContext";
+import { setOnboardingCompleted } from "../../../../utils/onboradingStatus";
 
 
 
@@ -20,7 +21,11 @@ export default function OnBoardingScreen_3 () {
 
     
 
-    const handleNextPage = () => {
+    const handleNextPage = async () => {
+        // Mark onboarding as completed
+        await setOnboardingCompleted();
+        console.log("Onboarding marked as completed");
+        
         animateTransition('next', () => {
             navigation.navigate('Login');
         });

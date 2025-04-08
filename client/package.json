@@ -38,6 +38,7 @@
     "react-native": "0.74.5",
     "react-native-alert-notification": "^0.4.0",
     "react-native-animatable": "^1.4.0",
+    "react-native-biometrics": "^3.0.1",
     "react-native-dotenv": "^3.4.11",
     "react-native-drop-shadow": "^1.0.0",
     "react-native-elements": "^3.4.3",
@@ -60,7 +61,8 @@
     "react-native-toast-notifications": "^3.4.0",
     "react-native-vector-icons": "^10.1.0",
     "react-native-webview": "13.8.6",
-    "react-navigation": "^5.0.0"
+    "react-navigation": "^5.0.0",
+    "expo-local-authentication": "~14.0.1"
   },
   "devDependencies": {
     "@babel/core": "^7.24.0"

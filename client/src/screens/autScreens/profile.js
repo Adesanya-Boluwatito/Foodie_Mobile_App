@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react"; 
-import { Text, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator } from "react-native"; 
+import { Text, View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, ScrollView } from "react-native"; 
 import { Ionicons } from "@expo/vector-icons"; 
 import { signOut } from 'firebase/auth';
-import { auth, db } from '../../../firebaseconfi.js';
-import { doc,  getDoc } from "firebase/firestore"
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import BiometricAuthSwitch from '../../components/BiometricAuthSwitch';
+// Import Firebase directly using require to avoid issues with module resolution
+const { auth, db } = require('../../../firebaseconfi.js');
+const { doc, getDoc } = require('firebase/firestore');
 
 const options = [
   { label: 'My Orders', icon: 'list-circle', screen: 'MyOrdersScreen' },
@@ -23,34 +25,139 @@ export default function User({ navigation, route }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        let { displayName, email, photoURL } = user;
-        const userID = user.uid;
-
-        if (!displayName) {
-          try {
-            const docRef = doc(db, "users", userID);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-              displayName = docSnap.data().displayName;
-            } else {
-              // console.log("No such document!");
+    const loadUserData = async () => {
+      setLoading(true);
+      try {
+        console.log('Loading user data in profile.js...');
+        // First check if we have user data in AsyncStorage
+        const cachedUserDataString = await AsyncStorage.getItem('@user');
+        
+        if (cachedUserDataString) {
+          const cachedUserData = JSON.parse(cachedUserDataString);
+          console.log('Found cached user data in profile:', cachedUserData);
+          
+          // Extract profile image URL using multiple possible property names
+          const photoURL = cachedUserData.photoURL || 
+                           cachedUserData.profilePictureUrl || 
+                           cachedUserData.photo || 
+                           cachedUserData.picture;
+          
+          setUserData({
+            displayName: cachedUserData.displayName || 'User',
+            email: cachedUserData.email || '',
+            photoURL: photoURL
+          });
+          
+          // Even after loading from cache, try to get the most up-to-date data from Firestore
+          if (cachedUserData.uid) {
+            try {
+              console.log('Fetching Firestore data for UID:', cachedUserData.uid);
+              const docRef = doc(db, "users", cachedUserData.uid);
+              const docSnap = await getDoc(docRef);
+              
+              if (docSnap.exists()) {
+                const firestoreData = docSnap.data();
+                console.log('Firestore data:', firestoreData);
+                
+                // Get profile image with fallbacks
+                const updatedPhotoURL = firestoreData.profilePictureUrl || 
+                                        firestoreData.photoURL || 
+                                        firestoreData.photo || 
+                                        photoURL;
+                
+                const updatedUserData = {
+                  displayName: firestoreData.displayName || cachedUserData.displayName || 'User',
+                  email: firestoreData.email || cachedUserData.email || '',
+                  photoURL: updatedPhotoURL
+                };
+                
+                console.log('Updated user data:', updatedUserData);
+                setUserData(updatedUserData);
+                
+                // Update the cache with latest data
+                await AsyncStorage.setItem('@user', JSON.stringify({
+                  uid: cachedUserData.uid,
+                  ...updatedUserData,
+                  ...firestoreData
+                }));
+              }
+            } catch (error) {
+              console.error('Error updating user data from Firestore:', error);
             }
-          } catch (error) {
-            console.error("Error fetching user data: ", error);
+          }
+        } else {
+          // No cached data, rely on Firebase auth
+          const currentUser = auth.currentUser;
+          console.log('Current Firebase user:', currentUser);
+          
+          if (currentUser) {
+            let { displayName, email, photoURL, uid } = currentUser;
+            
+            try {
+              console.log('Fetching Firestore data for auth user:', uid);
+              const docRef = doc(db, "users", uid);
+              const docSnap = await getDoc(docRef);
+              
+              if (docSnap.exists()) {
+                const firestoreData = docSnap.data();
+                console.log('Firestore data for auth user:', firestoreData);
+                
+                // Get profile image with fallbacks
+                const updatedPhotoURL = firestoreData.profilePictureUrl || 
+                                        firestoreData.photoURL || 
+                                        firestoreData.photo || 
+                                        photoURL;
+                
+                displayName = firestoreData.displayName || displayName || 'User';
+                email = firestoreData.email || email || '';
+                photoURL = updatedPhotoURL;
+                
+                // Cache the data for future use
+                await AsyncStorage.setItem('@user', JSON.stringify({
+                  uid,
+                  displayName,
+                  email,
+                  photoURL,
+                  ...firestoreData
+                }));
+              }
+              
+              setUserData({ displayName, email, photoURL });
+            } catch (error) {
+              console.error('Error fetching user data from Firestore:', error);
+              // Still set whatever data we have from auth
+              setUserData({ 
+                displayName: displayName || 'User', 
+                email: email || '', 
+                photoURL 
+              });
+            }
+          } else {
+            console.log('No current user and no cached data');
+            setUserData(null);
           }
         }
-
-        setUserData({ displayName, email, photoURL });
-      } else {
-        setUserData(null);
+      } catch (error) {
+        console.error('Error in loadUserData:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
+    };
+    
+    loadUserData();
+    
+    // Also set up an auth state listener for changes
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (user) {
+        console.log('Auth state changed, user logged in:', user.uid);
+        loadUserData(); // Reload data when auth state changes
+      } else {
+        console.log('Auth state changed, user logged out');
+        setUserData(null);
+        setLoading(false);
+      }
     });
-
-    // Cleanup the subscription on unmount
+    
     return () => unsubscribe();
   }, []);
 
@@ -76,53 +183,71 @@ export default function User({ navigation, route }) {
 
   const handleLogout = async () => {
     try {
-      // First check authentication method being used
-      const user = auth.currentUser;
-      const isEmailPassword = user?.providerData[0]?.providerId === 'password';
-      
-      if (!isEmailPassword) {
-        // Only try Google sign out if not using email/password
+      // Try to sign out from Google if available
+      if (GoogleSignin.currentUser) {
         try {
-          // First revoke access
-          await GoogleSignin.revokeAccess();
-          // Then sign out from Google
           await GoogleSignin.signOut();
-        } catch (error) {
-          console.log("Google sign out error (non-critical):", error);
+          console.log('Successfully signed out from Google');
+        } catch (googleError) {
+          console.log('Google sign out error (non-critical):', googleError);
+          // Continue with logout even if Google sign out fails
         }
       }
-
-      await AsyncStorage.multiRemove([
-        '@user',
-        '@userToken',
-        '@googleCredential',
-        // Add any other auth-related keys you might be storing
-      ]);
       
-      // Firebase sign out
+      // Clear user data from AsyncStorage
+      await AsyncStorage.removeItem('@user');
+      await AsyncStorage.removeItem('@googleProfileImage');
+      
+      // Sign out from Firebase
       await signOut(auth);
       
-      
-      // Navigate to login screen
-      navigation.replace('Login');
-      
+      // Navigate back to login screen
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' }],
+      });
     } catch (error) {
-      console.error('Logout Error:', error);
-      alert('Failed to logout. Please try again.');
+      console.error("Error during logout:", error);
+      
+      // If error occurs, still try to sign out from Firebase as a fallback
+      try {
+        await signOut(auth);
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Login' }],
+        });
+      } catch (fallbackError) {
+        console.error("Error during fallback logout:", fallbackError);
+        // If all else fails, just navigate to login
+        navigation.navigate('Login');
+      }
     }
   };
   
   
 
   return ( 
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <View>
         <View style={styles.profileSection}>
-          <TouchableOpacity onPress={ handleEditProfile }>
+          <TouchableOpacity onPress={handleEditProfile}>
             <Image
-            source={{ uri: userData && userData.photoURL ? userData.photoURL : defaultProfileIcon}} // Replace with the URL of the profile picture
-            style={styles.profileImage}
-          />
+              source={{ 
+                uri: userData && userData.photoURL ? userData.photoURL : defaultProfileIcon
+              }}
+              style={styles.profileImage}
+              // Add error handler to use default if image fails to load
+              onError={(e) => {
+                console.log('Error loading profile image, using default');
+                // This will update the component to use the default image if there's an error
+                if (userData) {
+                  setUserData({
+                    ...userData,
+                    photoURL: defaultProfileIcon
+                  });
+                }
+              }}
+            />
           </TouchableOpacity>
           
           <Text style={styles.name}>{userData ? userData.displayName : 'Loading...'}</Text>
@@ -133,6 +258,12 @@ export default function User({ navigation, route }) {
         </View>
       </View>
 
+      {/* Security Section */}
+      <View style={styles.securitySection}>
+        <Text style={styles.sectionTitle}>Security</Text>
+        <BiometricAuthSwitch />
+      </View>
+
       <View style={styles.optionsSection}>
         {options.map((option, index) => (
           <TouchableOpacity key={index} style={styles.option} onPress={() => option.label === 'Logout' ? handleLogout() : option.screen && navigation.navigate(option.screen)}>
@@ -141,7 +272,7 @@ export default function User({ navigation, route }) {
           </TouchableOpacity>
         ))}
       </View>
-    </View> 
+    </ScrollView> 
   ); 
 }; 
 
@@ -154,7 +285,7 @@ const styles = StyleSheet.create({
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: 50,
+    marginBottom: 30,
   },
   profileImage: {
     width: 100,
@@ -170,10 +301,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#888',
   },
-  edit: {
-    fontSize: 14,
-    color: 'red',
-    marginTop: 8,
+  securitySection: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   optionsSection: {
     backgroundColor: '#fff',
@@ -184,6 +319,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     shadowOffset: { width: 0, height: 5 },
     elevation: 5,
+    marginBottom: 20,
   },
   option: {
     flexDirection: 'row',

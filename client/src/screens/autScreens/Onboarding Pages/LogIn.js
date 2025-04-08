@@ -3,7 +3,7 @@ import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator,
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useNavigation, useIsFocused } from '@react-navigation/native'
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithCredential, sendPasswordResetEmail } from "firebase/auth"
-import {auth}  from '../../../../firebaseconfi.js';
+import {auth, db, doc, getDoc}  from '../../../../firebaseconfi.js';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { GoogleSignin, GoogleSigninButton } from '@react-native-google-signin/google-signin';
 import { ALERT_TYPE, AlertNotificationRoot, Toast } from "react-native-alert-notification";
@@ -11,7 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { globalStyles, fonts } from '../../../global/styles/theme.js';
 import PasswordResetModal from '../../../components/PasswordResetModal.js'
 import { verticalScale, horizontalScale, moderateScale } from '../../../theme/Metrics.js'
-
+import { setAuthToken } from '../../../../utils/AuthStorage.js';
+import { getLocationData } from '../../../../utils/LocationStorage.js';
+import { useLocation } from '../../../context/LocationContext';
+import BiometricLoginButton from '../../../components/BiometricLoginButton';
+import { isBiometricEnabled, getBiometricType } from '../../../../utils/BiometricAuth';
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('')
@@ -21,6 +26,9 @@ export default function LoginScreen() {
     const isFocused = useIsFocused(); // Check if this screen is focused
     const [isResetModalVisible, setIsResetModalVisible] = useState(false)
     const [loading, setLoading] = useState(false);
+    const { locationData } = useLocation();
+    const [biometricsAvailable, setBiometricsAvailable] = useState(false);
+    const [biometricType, setBiometricType] = useState('');
 
     useEffect(() => {
         if (isFocused) {
@@ -30,6 +38,15 @@ export default function LoginScreen() {
             };
 
             const backHandler = BackHandler.addEventListener('hardwareBackPress', handleBackPress);
+
+            const checkBiometrics = async () => {
+                const biometricEnabled = await isBiometricEnabled();
+                const type = await getBiometricType();
+                setBiometricsAvailable(biometricEnabled);
+                setBiometricType(type);
+            };
+            
+            checkBiometrics();
 
             return () => {
                 backHandler.remove();
@@ -41,16 +58,36 @@ export default function LoginScreen() {
         setShowPassword(!showPassword)
     };
 
-
     const signUpOption = () => {
         console.log("Sign Up");
         navigation.navigate('SignUp');
-      };
+    };
 
-
-    
-
-
+    // Helper function to determine where to navigate after login
+    const navigateAfterLogin = async () => {
+        // Check if location data already exists
+        const savedLocation = await getLocationData();
+        
+        if (savedLocation?.location && savedLocation?.readableLocation) {
+            console.log("Location data found, navigating to MainTab");
+            navigation.reset({
+                index: 0,
+                routes: [{ 
+                  name: 'MainTab',
+                  params: {
+                    location: savedLocation.location,
+                    readableLocation: savedLocation.readableLocation
+                  }
+                }],
+            });
+        } else {
+            console.log("No location data found, navigating to LocationAccess1");
+            navigation.reset({
+                index: 0,
+                routes: [{ name: 'LocationAccess1' }],
+            });
+        }
+    };
 
     const handleGoogleLogin = async () => {
         setLoading(true);
@@ -64,8 +101,13 @@ export default function LoginScreen() {
           const tokens = await GoogleSignin.getTokens();
           const { idToken, accessToken } = tokens;
           console.log("Google ID Token:", tokens);
+          console.log("Google User Info:", userInfo);
     
-          
+          // Save Google profile image if available - this is key for biometric auth
+          if (userInfo?.user?.photo) {
+            await AsyncStorage.setItem('@googleProfileImage', userInfo.user.photo);
+            console.log("Saved Google profile image URL:", userInfo.user.photo);
+          }
       
           if (!idToken) {
             throw new Error("Google Sign-In ID token is missing");
@@ -75,14 +117,21 @@ export default function LoginScreen() {
           const googleCredential = GoogleAuthProvider.credential(idToken, accessToken);
           const userCredential = await signInWithCredential(auth, googleCredential);
       
-          // Store user information
-          await AsyncStorage.setItem('@user', JSON.stringify(userCredential.user));
-          navigation.reset({
-            index: 0, // reset the stack to only include the HomeScreen
-            routes: [{ name: 'LocationAccess1' }],
-        });
+          // Make sure we include the Google profile photo in user data
+          const userData = {
+            ...userCredential.user,
+            photoURL: userInfo?.user?.photo || userCredential.user.photoURL
+          };
+      
+          // Store enhanced user information
+          await AsyncStorage.setItem('@user', JSON.stringify(userData));
+          // Set auth token with expiry
+          await setAuthToken(userCredential.user.uid);
+          
+          // Navigate based on whether location data exists
+          await navigateAfterLogin();
          
-          }catch (error) {
+        } catch (error) {
           console.error("Google Sign-In Error:", error); // Log the full error object
           console.log("Detailed Error Info:", JSON.stringify(error, Object.getOwnPropertyNames(error))); // Log all properties in error
         } finally {
@@ -99,12 +148,15 @@ export default function LoginScreen() {
           const userCredential = await signInWithEmailAndPassword(auth, email, password);
           const user = userCredential.user;
           await AsyncStorage.setItem('@user', JSON.stringify(user));
-          navigation.reset({
-            index: 0, // reset the stack to only include the HomeScreen
-            routes: [{ name: 'LocationAccess1' }],
-        });// Replace current screen with HomeScreen
+          await setAuthToken(userCredential.user.uid);
+          
+          // Navigate based on whether location data exists
+          await navigateAfterLogin();
+          
         } catch (error) {
             console.error('Error adding document:', error);
+            let errorMessage = 'An unexpected error occurred. Please try again.';
+            
             if (error.code === 'auth/email-already-in-use') {
                 errorMessage = 'The email address is already in use. Please try with a different email.';
             } else if (error.code === 'auth/invalid-email') {
@@ -115,6 +167,8 @@ export default function LoginScreen() {
                 errorMessage = 'Network error. Please check your internet connection.';
             } else if (error.message === 'empty-fields') {
                 errorMessage = 'Please fill in all the required fields.';
+            } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                errorMessage = 'Invalid email or password. Please try again.';
             }
         
             Toast.show({
@@ -128,9 +182,53 @@ export default function LoginScreen() {
         }
     };
 
+    // Handle biometric login success
+    const handleBiometricLoginSuccess = async (userId) => {
+        try {
+            // Get the user data that was stored during biometric authentication
+            const userDataString = await AsyncStorage.getItem('@user');
+            const userData = userDataString ? JSON.parse(userDataString) : null;
 
+            if (!userData) {
+                console.warn('No user data found after biometric authentication');
+                // Try to fetch user data from Firestore as a fallback
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', userId));
+                    if (userDoc.exists()) {
+                        const userDocData = userDoc.data();
+                        // Store complete user data
+                        await AsyncStorage.setItem('@user', JSON.stringify({
+                            uid: userId,
+                            ...userDocData
+                        }));
+                        console.log('User data retrieved from Firestore after biometric login');
+                    }
+                } catch (fallbackError) {
+                    console.error('Error fetching fallback user data:', fallbackError);
+                }
+            } else {
+                console.log('User data successfully loaded after biometric login');
+            }
 
-
+            Toast.show({
+                type: ALERT_TYPE.SUCCESS,
+                title: 'Login Success',
+                textBody: 'Successfully authenticated with biometrics',
+                button: 'Close',
+            });
+            
+            // Navigate based on whether location data exists
+            await navigateAfterLogin();
+        } catch (error) {
+            console.error('Error handling biometric login success:', error);
+            Toast.show({
+                type: ALERT_TYPE.DANGER,
+                title: 'Error',
+                textBody: 'Something went wrong after biometric authentication',
+                button: 'Close',
+            });
+        }
+    };
 
     return (
         <AlertNotificationRoot>
@@ -140,6 +238,19 @@ export default function LoginScreen() {
                 <Text style={styles.instruction}>Fill in your details to continue</Text>
             </View>
 
+            {/* Show biometric info message if available */}
+            {biometricsAvailable && (
+                <View style={styles.biometricsInfoContainer}>
+                    <Ionicons 
+                        name={biometricType.includes('Face') ? 'md-scan-outline' : 'finger-print'} 
+                        size={20} 
+                        color="#444"
+                    />
+                    <Text style={styles.biometricsInfoText}>
+                        {biometricType} login is available
+                    </Text>
+                </View>
+            )}
 
             <View style={styles.formContainer}>
                 <View style={styles.detailsContainer}>
@@ -184,8 +295,13 @@ export default function LoginScreen() {
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity  style={styles.SignInbutton} onPress={handleLogin}>
                         {loading ? <ActivityIndicator size="small" color="#fff"/> : <Text style={styles.SignInText}>Sign In</Text>} 
-                    </TouchableOpacity> 
+                    </TouchableOpacity>
 
+                    {/* Biometric Login Button */}
+                    <BiometricLoginButton 
+                        onLoginSuccess={handleBiometricLoginSuccess} 
+                        style={styles.biometricButton}
+                    />
                 </View>
 
                 <View style={styles.GoogleSection}>
@@ -335,5 +451,26 @@ const styles = StyleSheet.create({
         fontFamily: fonts.bold,
         fontWeight:"700",
         fontSize: moderateScale(16)
-    }
+    },
+    biometricButton: {
+        marginTop: verticalScale(10),
+        backgroundColor: '#444',
+    },
+    biometricsInfoContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f0f0f0',
+        borderRadius: moderateScale(10),
+        paddingVertical: verticalScale(10),
+        paddingHorizontal: horizontalScale(20),
+        marginHorizontal: horizontalScale(20),
+        marginTop: verticalScale(10),
+    },
+    biometricsInfoText: {
+        marginLeft: horizontalScale(10),
+        fontFamily: fonts.medium,
+        fontSize: moderateScale(14),
+        color: '#444',
+    },
 })

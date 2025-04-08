@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -26,12 +26,25 @@ const { width, height } = Dimensions.get('window');
 // Modern accent color
 const ACCENT_COLOR = '#FF4D4F';
 
-const CartBanner = ({ itemCount, total, cartItems, restaurants, message }) => {
+const CartBanner = ({ itemCount, total, cartItems, restaurants, message, fromCart, existingPacks }) => {
   const navigation = useNavigation();
 
   const handleCheckout = () => {
     console.log("Current message:", message);
-    navigation.navigate('Cart', { cartItems, restaurants, message });
+    if (fromCart) {
+      // If we came from cart, navigate back with the new pack
+      // The global state will handle preserving existing packs
+      navigation.navigate('Cart', { 
+        cartItems,
+        restaurants, 
+        message,
+        newPack: true, // Flag that this is a new pack being added to existing cart
+        packName: `Pack ${existingPacks + 1}` // Suggest a name based on count
+      });
+    } else {
+      // Regular checkout flow
+      navigation.navigate('Cart', { cartItems, restaurants, message });
+    }
   };
   
   return (
@@ -41,14 +54,18 @@ const CartBanner = ({ itemCount, total, cartItems, restaurants, message }) => {
           <Text style={styles.bannerText}>{itemCount} {itemCount === 1 ? 'Item' : 'Items'}</Text>
           <Text style={styles.bannerAmount}>₦ {total.toFixed(2)}</Text>
         </View>
-        <Text style={styles.bannerSubText}>Extra charges may apply</Text>
+        <Text style={styles.bannerSubText}>
+          {fromCart ? `Adding to Pack ${existingPacks + 1}` : "Extra charges may apply"}
+        </Text>
       </View>
       <TouchableOpacity 
         style={styles.checkoutButton} 
         onPress={handleCheckout}
         activeOpacity={0.8}
       >
-        <Text style={styles.checkoutButtonText}>Checkout</Text>
+        <Text style={styles.checkoutButtonText}>
+          {fromCart ? "Add to Cart" : "Checkout"}
+        </Text>
         <MaterialIcons name="arrow-forward-ios" size={16} color="white" style={{ marginLeft: 5 }} />
       </TouchableOpacity>
     </View>
@@ -56,6 +73,7 @@ const CartBanner = ({ itemCount, total, cartItems, restaurants, message }) => {
 };
 
 export default function ResturantScreen({}) {
+  // Initialize cartItems as empty object to ensure we always start clean
   const [cartItems, setCartItems] = useState({});
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,8 +84,52 @@ export default function ResturantScreen({}) {
   const [isFavouriteButtonDisabled, setIsFavouriteButtonDisabled] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
   const route = useRoute();
-  const { restaurants } = route.params;
+  
+  // Get params but with defaults to handle null cases
+  const { 
+    restaurants = {}, 
+    fromCart = false, 
+    existingPacks = 0, 
+    clearCart = false
+  } = route.params || {};
+  
   const restaurantId = restaurants.id;
+
+  // Check if we're coming from the cart screen
+  const isFromCart = route.params?.fromCart || false;
+  const existingPacksCount = route.params?.existingPacks || 0;
+  
+  // Replace multiple useEffects with one consolidated effect that runs once on mount
+  // This prevents dependency cycles and infinite rendering
+  useEffect(() => {
+    console.log('Restaurant screen mounted');
+    
+    // ALWAYS start with an empty cart regardless of where we came from
+    setCartItems({});
+    setTotal(0);
+    
+    // Simulate loading
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    
+    // Only populate from route.params if NOT coming from cart
+    if (route.params?.cartItems && !isFromCart) {
+      console.log('Loading cart items from params');
+      setCartItems(route.params.cartItems);
+      
+      if (route.params.cartItems[restaurantId]) {
+        const newTotal = Object.values(route.params.cartItems[restaurantId] || {})
+          .reduce((sum, item) => sum + item.price * item.quantity, 0);
+        setTotal(newTotal);
+      }
+    }
+    
+    // Cleanup function to ensure we don't leave lingering state
+    return () => {
+      console.log('Restaurant screen unmounting');
+    };
+  }, []); // Empty dependency array - runs only once on mount
 
   const handleMessageSubmit = (msg) => {
     setMessage(msg); 
@@ -124,19 +186,6 @@ export default function ResturantScreen({}) {
     fetchFavouriteStatus();
   }, [restaurants]);
 
-  useEffect(() => {
-    // Simulate fetching data
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-
-    if (route.params?.cartItems) {
-      setCartItems(route.params.cartItems);
-      const newTotal = Object.values(route.params.cartItems[restaurantId] || {}).reduce((sum, item) => sum + item.price * item.quantity, 0);
-      setTotal(newTotal);
-    }
-  }, [route.params?.cartItems]);
-
   const addItemToCart = (item) => {
     setCartItems((prevCartItems) => {
       const updatedCartItems = { ...prevCartItems };
@@ -172,10 +221,28 @@ export default function ResturantScreen({}) {
   };
 
   const getItemCount = () => {
+    // Safely handle the case where cartItems or restaurantId might be undefined
+    if (!cartItems || !restaurantId || !cartItems[restaurantId]) {
+      return 0;
+    }
     return Object.values(cartItems[restaurantId] || {}).reduce((count, item) => count + item.quantity, 0);
   };
 
   const renderItemButtons = (item) => {
+    // Safely handle case where cartItems might be empty
+    if (!cartItems || !cartItems[restaurantId]) {
+      return (
+        <TouchableOpacity
+          style={styles.addButton}
+          onPress={() => addItemToCart(item)}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.addButtonText}>Add</Text>
+          <AntDesign name="plus" size={16} color="white" style={{ marginLeft: 4 }} />
+        </TouchableOpacity>
+      );
+    }
+    
     const itemInCart = cartItems[restaurantId]?.[item.name];
     if (itemInCart) {
       return (
@@ -409,6 +476,8 @@ export default function ResturantScreen({}) {
           cartItems={cartItems} 
           restaurants={restaurants} 
           message={message}
+          fromCart={isFromCart}
+          existingPacks={existingPacksCount}
         />
       )}
     </View>

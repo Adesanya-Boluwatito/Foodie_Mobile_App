@@ -88,19 +88,31 @@ export default function FoodScreen({ navigation, route }) {
     const scrollX = useRef(new Animated.Value(0)).current;
     const { locationData } = useLocation();
 
-    // Update user location from location context
+    // Update user location from location context or route params
     useEffect(() => {
-      if (locationData?.readableLocation) {
-        const location = locationData.readableLocation;
-        console.log("Setting user location in FoodScreen:", location);
+      // First check route params (these take precedence if provided)
+      if (route?.params?.readableLocation) {
+        const location = route.params.readableLocation;
+        console.log("Setting user location in FoodScreen from route params:", location);
         setUserLocation(location);
         
         // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
         const area = extractMainArea(location);
-        console.log("Main area extracted in FoodScreen:", area);
+        console.log("Main area extracted in FoodScreen from route params:", area);
         setMainArea(area);
       }
-    }, [locationData]);
+      // If no route params, check location context
+      else if (locationData?.readableLocation) {
+        const location = locationData.readableLocation;
+        console.log("Setting user location in FoodScreen from context:", location);
+        setUserLocation(location);
+        
+        // Extract and set the main area (e.g., "Ikorodu" from "Ikorodu, Lagos, Nigeria")
+        const area = extractMainArea(location);
+        console.log("Main area extracted in FoodScreen from context:", area);
+        setMainArea(area);
+      }
+    }, [locationData, route?.params]);
 
     // Filter and sort restaurants based on location
     useEffect(() => {
