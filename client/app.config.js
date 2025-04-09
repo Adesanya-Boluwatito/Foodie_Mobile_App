@@ -46,7 +46,7 @@ export default {
       },
       softwareKeyboardLayoutMode: "pan",
       package: "foodie.food12",
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json'
     },
     web: {
       favicon: "./assets/favicon.png",
