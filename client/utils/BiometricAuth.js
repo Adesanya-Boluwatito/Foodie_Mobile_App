@@ -117,6 +117,7 @@ export const disableBiometricAuth = async () => {
   try {
     await AsyncStorage.removeItem(BIOMETRIC_ENABLED_KEY);
     await AsyncStorage.removeItem(BIOMETRIC_USER_ID_KEY);
+    await AsyncStorage.removeItem('@bioAuthGoogleImage');
     
     return { success: true, error: null };
   } catch (error) {

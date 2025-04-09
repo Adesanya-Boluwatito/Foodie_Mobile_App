@@ -75,8 +75,22 @@ export default function BiometricAuthSwitch() {
           return;
         }
         
-        // Enable biometric authentication
-        await enableBiometricAuth();
+        // Enable biometric authentication with the current user's ID
+        const { success, error } = await enableBiometricAuth(user.uid);
+        
+        if (success) {
+          setIsEnabled(true);
+          
+          // Also save Google profile image for biometric auth if available
+          const googleProfileImage = await AsyncStorage.getItem('@googleProfileImage');
+          if (googleProfileImage) {
+            await AsyncStorage.setItem('@bioAuthGoogleImage', googleProfileImage);
+          }
+          
+          Alert.alert('Success', `${biometricType} login enabled`);
+        } else {
+          Alert.alert('Error', `Failed to enable ${biometricType} login: ${error}`);
+        }
       }
     } catch (error) {
       console.error('Error toggling biometric auth:', error);

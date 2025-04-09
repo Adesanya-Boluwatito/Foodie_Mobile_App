@@ -198,6 +198,11 @@ export default function User({ navigation, route }) {
       await AsyncStorage.removeItem('@user');
       await AsyncStorage.removeItem('@googleProfileImage');
       
+      // Clear biometric authentication settings
+      await AsyncStorage.removeItem('biometric_enabled');
+      await AsyncStorage.removeItem('biometric_user_id');
+      await AsyncStorage.removeItem('@bioAuthGoogleImage');
+      
       // Sign out from Firebase
       await signOut(auth);
       

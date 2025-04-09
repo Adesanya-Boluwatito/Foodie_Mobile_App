@@ -1,0 +1,27 @@
+# Exclude node_modules (these are installed on the build server)
+node_modules
+
+# Exclude git
+.git
+
+# Exclude build outputs
+android
+android/**
+ios
+ios/**
+web-build
+dist
+
+# Exclude large files not needed for building
+*.mp4
+*.mov
+*.tgz
+
+# Exclude environment variables and secrets (handled by EAS secrets or build profile)
+.env
+.env.*
+
+# Debugging logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log* 
