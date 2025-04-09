@@ -39,7 +39,7 @@ yarn-error.*
 
 # Native folders (for managed workflow with EAS Build)
 /android
-/ios
+# /ios
 
 /google-services.json
 
