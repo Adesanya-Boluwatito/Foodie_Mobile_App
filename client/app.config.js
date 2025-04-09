@@ -42,7 +42,7 @@ export default {
     android: {
       adaptiveIcon: {
         foregroundImage: "./assets/adaptive-icon.png",
-        backgroundColor: "white",
+        backgroundColor: "#FFFFFF",
       },
       softwareKeyboardLayoutMode: "pan",
       package: "foodie.food12",
@@ -52,17 +52,17 @@ export default {
       favicon: "./assets/favicon.png",
     },
     extra: {
-      // eas: {
-      //   projectId: "3d69b5cc-738d-4178-8e8c-60f0ec80b3d6",
-      //   firebaseApiKey: process.env.FIREBASE_API_KEY,
-      //   firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
-      //   firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
-      //   firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-      //   firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-      //   firebaseAppId: process.env.FIREBASE_APP_ID,
-      //   googleservicesJson: process.env.GOOGLE_SERVICES_JSON
+      eas: {
+        projectId: "3d69b5cc-738d-4178-8e8c-60f0ec80b3d6",
+        firebaseApiKey: process.env.FIREBASE_API_KEY,
+        firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
+        firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+        firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+        firebaseAppId: process.env.FIREBASE_APP_ID,
+        googleservicesJson: process.env.GOOGLE_SERVICES_JSON
 
-      // },
+      },
     },
   },
 };
