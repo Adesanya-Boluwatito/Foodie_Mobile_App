@@ -32,6 +32,10 @@ export default function App() {
       console.log("Configuring GoogleSignin with CLIENT_ID:", CLIENT_ID);
       GoogleSignin.configure({
         webClientId: CLIENT_ID,
+        androidClientId: Platform.select({
+          // Include both Android client IDs to cover both possible scenarios
+          android: '1067454371034-v102okq85sgfcioboium9fbq7u8tos8d.apps.googleusercontent.com'
+        }),
         offlineAccess: false,
         scopes: ['profile', 'email'],
         forceCodeForRefreshToken: true,

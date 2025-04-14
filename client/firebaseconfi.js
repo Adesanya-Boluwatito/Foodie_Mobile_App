@@ -21,7 +21,12 @@ import {
   FIREBASE_MESSAGING_SENDER_ID,
   FIREBASE_APP_ID,
   FIREBASE_MEASUREMENT_ID,
+  CLIENT_ID
 } from '@env';
+
+// Log the Firebase config for verification in production builds
+console.log('Firebase Config (API_KEY):', FIREBASE_API_KEY ? FIREBASE_API_KEY.substring(0, 5) + '...' : 'missing');
+console.log('Web Client ID:', CLIENT_ID ? CLIENT_ID.substring(0, 15) + '...' : 'missing');
 
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
@@ -47,17 +52,8 @@ const auth = initializeAuth(app, {
 const db = getFirestore(app);
 AsyncStorage.setItem('firebasePersistence', 'getReactNativePersistence');
 
-// Export Firebase configuration and Firestore functions
-export { 
-  auth, 
-  db, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  collection,
-  query,
-  where
-};
+// Export the objects
+export { app, auth, db, doc, getDoc, setDoc, collection, query, where };
 
 
 
