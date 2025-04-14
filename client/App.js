@@ -28,10 +28,19 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    GoogleSignin.configure({
-      webClientId: CLIENT_ID,
-      offlineAccess: false,
-    });
+    try {
+      console.log("Configuring GoogleSignin with CLIENT_ID:", CLIENT_ID);
+      GoogleSignin.configure({
+        webClientId: CLIENT_ID,
+        offlineAccess: false,
+        scopes: ['profile', 'email'],
+        forceCodeForRefreshToken: true,
+      });
+      console.log("GoogleSignin configured successfully");
+    } catch (error) {
+      console.error("Error configuring GoogleSignin:", error);
+    }
+    
     // Simulate loading delay with a timer (e.g., 2000 milliseconds or 2 seconds)
     const timer = setTimeout(() => {
       setLoading(false); // Set loading to false after the timer expires

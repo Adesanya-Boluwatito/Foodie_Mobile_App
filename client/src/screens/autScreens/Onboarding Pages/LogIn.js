@@ -92,17 +92,29 @@ export default function LoginScreen() {
     const handleGoogleLogin = async () => {
         setLoading(true);
         try {
-          // Start Google sign-in process
-          await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+          console.log("Starting Google sign-in process...");
+          // Check Google Play Services
+          const playServicesAvailable = await GoogleSignin.hasPlayServices({ 
+            showPlayServicesUpdateDialog: true 
+          });
+          console.log("Play services available:", playServicesAvailable);
+          
+          // Sign out from any previous session
+          console.log("Signing out from previous Google sessions...");
           await GoogleSignin.signOut();
+          console.log("Successfully signed out from previous Google sessions");
 
+          // Attempt to sign in
+          console.log("Attempting to get user info from Google...");
           const userInfo = await GoogleSignin.signIn();
+          console.log("Google Sign In Success - User Info:", userInfo);
     
+          // Get tokens
+          console.log("Retrieving tokens...");
           const tokens = await GoogleSignin.getTokens();
+          console.log("Tokens retrieved successfully");
           const { idToken, accessToken } = tokens;
-          console.log("Google ID Token:", tokens);
-          console.log("Google User Info:", userInfo);
-    
+          
           // Save Google profile image if available - this is key for biometric auth
           if (userInfo?.user?.photo) {
             await AsyncStorage.setItem('@googleProfileImage', userInfo.user.photo);
@@ -114,8 +126,11 @@ export default function LoginScreen() {
           }
       
           // Create Google credential and sign in with Firebase
+          console.log("Creating Google credential for Firebase...");
           const googleCredential = GoogleAuthProvider.credential(idToken, accessToken);
+          console.log("Signing in with Firebase credential...");
           const userCredential = await signInWithCredential(auth, googleCredential);
+          console.log("Firebase sign-in successful");
       
           // Make sure we include the Google profile photo in user data
           const userData = {
@@ -124,16 +139,47 @@ export default function LoginScreen() {
           };
       
           // Store enhanced user information
+          console.log("Storing user data in AsyncStorage...");
           await AsyncStorage.setItem('@user', JSON.stringify(userData));
           // Set auth token with expiry
           await setAuthToken(userCredential.user.uid);
+          console.log("Auth token set successfully");
           
           // Navigate based on whether location data exists
+          console.log("Navigating after successful login...");
           await navigateAfterLogin();
+          console.log("Navigation complete");
          
         } catch (error) {
           console.error("Google Sign-In Error:", error); // Log the full error object
+          console.log("Error Code:", error.code);
+          console.log("Error Message:", error.message);
+          console.log("Error Stack:", error.stack);
           console.log("Detailed Error Info:", JSON.stringify(error, Object.getOwnPropertyNames(error))); // Log all properties in error
+          
+          // Show user-friendly error message
+          let errorMessage = 'Google Sign-In failed. Please try again.';
+          
+          // Handle specific error cases
+          if (error.code === 'SIGN_IN_CANCELLED') {
+            errorMessage = 'Sign in was cancelled';
+          } else if (error.code === 'SIGN_IN_REQUIRED') {
+            errorMessage = 'Sign in is required to continue';
+          } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+            errorMessage = 'Google Play Services are not available or outdated';
+          } else if (error.code === 'DEVELOPER_ERROR') {
+            errorMessage = 'Configuration error. Please check your Firebase and Google API setup.';
+          } else if (error.message && error.message.includes('network')) {
+            errorMessage = 'Network error. Please check your internet connection.';
+          }
+          
+          // Display error message
+          Toast.show({
+            type: ALERT_TYPE.DANGER,
+            title: 'Login Error',
+            textBody: errorMessage,
+            button: 'Close',
+          });
         } finally {
           setLoading(false);
         }

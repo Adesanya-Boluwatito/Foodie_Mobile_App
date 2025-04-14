@@ -46,7 +46,10 @@ export default {
       },
       softwareKeyboardLayoutMode: "pan",
       package: "foodie.food12",
-      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json'
+      googleServicesFile: process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
+      googleSignIn: {
+        certificateHash: "d402c2323d6d8da4faae6a4337502c7b06ebc109",
+      },
     },
     web: {
       favicon: "./assets/favicon.png",
@@ -60,8 +63,7 @@ export default {
         firebaseStorageBucket: process.env.FIREBASE_STORAGE_BUCKET,
         firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
         firebaseAppId: process.env.FIREBASE_APP_ID,
-        googleservicesJson: process.env.GOOGLE_SERVICES_JSON
-
+        clientId: process.env.CLIENT_ID,
       },
     },
   },
