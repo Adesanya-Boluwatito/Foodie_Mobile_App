@@ -10,7 +10,7 @@ import { NavigationContainer, useNavigation } from '@react-navigation/native';
 
 import 'react-native-gesture-handler';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import {CLIENT_ID} from '@env'
+import {CLIENT_ID, ANDROID_CLIENT_ID} from '@env';
 import {AnimationProvider} from './src/components/AnimationContext';
 import MyScreens from './src/screens/autScreens/MainApp/MainNavigator';
 
@@ -32,10 +32,7 @@ export default function App() {
       console.log("Configuring GoogleSignin with CLIENT_ID:", CLIENT_ID);
       GoogleSignin.configure({
         webClientId: CLIENT_ID,
-        androidClientId: Platform.select({
-          // Include both Android client IDs to cover both possible scenarios
-          android: '1067454371034-v102okq85sgfcioboium9fbq7u8tos8d.apps.googleusercontent.com'
-        }),
+        androidClientId: ANDROID_CLIENT_ID,
         offlineAccess: false,
         scopes: ['profile', 'email'],
         forceCodeForRefreshToken: true,

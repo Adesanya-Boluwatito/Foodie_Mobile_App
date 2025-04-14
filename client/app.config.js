@@ -64,7 +64,8 @@ export default {
         firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
         firebaseAppId: process.env.FIREBASE_APP_ID,
         clientId: process.env.CLIENT_ID,
-        sha1Fingerprints: ["d402c2323d6d8da4faae6a4337502c7b06ebc109", "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"],
+        android_clientId: process.env.ANDROID_CLIENT_ID,
+        
       },
     },
   },
