@@ -7,6 +7,7 @@ import { useToast } from "react-native-toast-notifications";
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 import { globalStyles, fonts } from '../../global/styles/theme';
 import { useLocation } from '../../context/LocationContext';
+import { formatRating, updateRestaurantWithLiveRating } from '../../utils/RatingUtils';
 
 const { width } = Dimensions.get('window');
 
@@ -100,51 +101,85 @@ export default function HomeScreen({ route, navigation }) {
 
   // Filter and sort vendors based on location
   useEffect(() => {
-    console.log("Filtering vendors for location:", userLocation);
+    // Skip excessive logging to improve performance
+    // console.log("Filtering vendors for location:", userLocation);
     
     if (!userLocation) {
-      console.log("No user location set, skipping filtering");
+      // console.log("No user location set, skipping filtering");
       return;
     }
 
-    // Filter restaurants by location match
-    const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
-      isLocationMatch(userLocation, restaurant.details.location)
-    );
-    
-    console.log(`Found ${matchingRestaurants.length} matching restaurants`);
-    console.log("Matched restaurants:", matchingRestaurants.map(r => ({
-      name: r.name,
-      location: r.details.location
-    })));
+    // Keep track of component mount state to prevent updates after unmount
+    let isMounted = true;
 
-    // Sort restaurants by rating and take top 5
-    const topRestaurants = [...matchingRestaurants]
-      .sort((a, b) => b.details.rating - a.details.rating)
-      .slice(0, 5);
-      
-    setSortedRestaurants(topRestaurants);
-
-    // Filter and sort pharmacies by location match
-    const matchingPharmacies = restaurantsData.pharmacy.filter(pharmacy => 
-      isLocationMatch(userLocation, pharmacy.details.location)
-    );
+    // Helper function to update restaurants with live ratings in batch for better performance
+    const loadRestaurants = async () => {
+      try {
+        // Filter restaurants by location match
+        const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
+          isLocationMatch(userLocation, restaurant.details.location)
+        );
+        
+        // Skip logging for performance
+        // console.log(`Found ${matchingRestaurants.length} matching restaurants`);
+        
+        // Update restaurants with live ratings from Firebase using batch processing
+        const updatedMatchingRestaurants = await batchUpdateRestaurantsWithRatings(matchingRestaurants);
+        
+        // Check if component is still mounted before updating state
+        if (!isMounted) return;
+        
+        // Sort restaurants by rating and take top 5
+        const topRestaurants = [...updatedMatchingRestaurants]
+          .sort((a, b) => b.details.rating - a.details.rating)
+          .slice(0, 5);
+          
+        setSortedRestaurants(topRestaurants);
+        
+        // Filter and sort pharmacies by location match
+        const matchingPharmacies = restaurantsData.pharmacy.filter(pharmacy => 
+          isLocationMatch(userLocation, pharmacy.details.location)
+        );
+        
+        // Skip logging for performance
+        // console.log(`Found ${matchingPharmacies.length} matching pharmacies`);
+        
+        // Update pharmacies with live ratings in batch
+        const updatedMatchingPharmacies = await batchUpdateRestaurantsWithRatings(matchingPharmacies);
+        
+        // Check if component is still mounted before updating state
+        if (!isMounted) return;
+        
+        const topPharmacies = [...updatedMatchingPharmacies]
+          .sort((a, b) => b.details.rating - a.details.rating)
+          .slice(0, 5);
+          
+        setSortedPharmacy(topPharmacies);
+      } catch (error) {
+        console.error("Error updating restaurants with live ratings:", error);
+        
+        // Fallback to raw data in case of error
+        if (isMounted) {
+          // Use existing data as fallback
+          const fallbackRestaurants = restaurantsData.restaurants
+            .filter(restaurant => isLocationMatch(userLocation, restaurant.details.location))
+            .slice(0, 5);
+          setSortedRestaurants(fallbackRestaurants);
+          
+          const fallbackPharmacies = restaurantsData.pharmacy
+            .filter(pharmacy => isLocationMatch(userLocation, pharmacy.details.location))
+            .slice(0, 5);
+          setSortedPharmacy(fallbackPharmacies);
+        }
+      }
+    };
     
-    console.log(`Found ${matchingPharmacies.length} matching pharmacies`);
+    loadRestaurants();
     
-    const topPharmacies = [...matchingPharmacies]
-      .sort((a, b) => b.details.rating - a.details.rating)
-      .slice(0, 5);
-      
-    setSortedPharmacy(topPharmacies);
-
-    // Set nearby vendors (sorted by ID)
-    const allNearbyVendors = [...matchingRestaurants]
-      .sort((a, b) => a.id - b.id)
-      .slice(0, 6);
-      
-    setNearbyVendors(allNearbyVendors);
-    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
   }, [userLocation]);
 
   const handleFoodSearch = (category) => {
@@ -153,7 +188,25 @@ export default function HomeScreen({ route, navigation }) {
   };
 
   const handleRestaurantPress = (restaurant) => {
-    navigation.navigate('ResturantScreen', { restaurants: restaurant });
+    // Ensure restaurant has all required properties before navigating
+    if (!restaurant || !restaurant.id || !restaurant.details) {
+      console.error('Invalid restaurant data:', restaurant);
+      alert('Restaurant information is not available. Please try again.');
+      return;
+    }
+    
+    // Ensure restaurant details includes required properties
+    if (!restaurant.details.menu) {
+      console.error('Restaurant has no menu data:', restaurant);
+      alert('Restaurant menu is not available. Please try again.');
+      return;
+    }
+    
+    // Deep clone the restaurant data to avoid reference issues
+    const restaurantData = JSON.parse(JSON.stringify(restaurant));
+    
+    // Navigate with the validated restaurant data
+    navigation.navigate('ResturantScreen', { restaurants: restaurantData });
   };
 
   // Fallback message when no restaurants are available
@@ -275,7 +328,7 @@ export default function HomeScreen({ route, navigation }) {
                     <Text style={styles.restaurantname}>{restaurant.name}</Text>
                     <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
                     <View style={styles.ratingContainer}>
-                      <Text style={styles.ratingText}>⭐{restaurant.details.rating}</Text>
+                      <Text style={styles.ratingText}>⭐{formatRating(restaurant.details.rating)}</Text>
                       <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">
                         | {restaurant.details.location}
                       </Text>
@@ -308,7 +361,7 @@ export default function HomeScreen({ route, navigation }) {
                     <Text style={styles.restaurantname}>{pharmacy.name}</Text>
                     <Text style={styles.restaurantDetails}>Pharmacy | Medical | Health</Text>
                     <View style={styles.ratingContainer}>
-                      <Text style={styles.ratingText}>⭐{pharmacy.details.rating}</Text>
+                      <Text style={styles.ratingText}>⭐{formatRating(pharmacy.details.rating)}</Text>
                       <Text style={styles.explorelocation} numberOfLines={1} ellipsizeMode="tail">
                         | {pharmacy.details.location}
                       </Text>

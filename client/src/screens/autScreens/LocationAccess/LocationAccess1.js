@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Platform, Alert } from "react-native";
+import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Image, Platform, Alert, Linking } from "react-native";
 import { useNavigation } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { useLocation } from '../../../context/LocationContext';
@@ -55,16 +55,87 @@ export default function LocationAccessScreen_1() {
 const getCurrentLocation = async () => {
   setLoading(true);
   try {
+    // First check if location services are enabled at the device level
+    const isLocationServicesEnabled = await Location.hasServicesEnabledAsync();
+    
+    if (!isLocationServicesEnabled) {
+      setLoading(false);
+      Alert.alert(
+        "Location Services Disabled",
+        "Your device's location services are turned off. Please enable location services in your device settings to use your current location.",
+        [
+          { 
+            text: "Cancel",
+            style: "cancel" 
+          },
+          { 
+            text: "Open Settings", 
+            onPress: () => {
+              if (Platform.OS === 'ios') {
+                Linking.openURL('app-settings:');
+              } else {
+                Linking.openSettings();
+              }
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    // Request permission if location services are enabled
     let { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert("Error", "Permission to access location was denied");
+      setLoading(false);
+      Alert.alert(
+        "Location Permission Required",
+        "We need location access to provide relevant restaurants in your area. Please enable location permissions.",
+        [
+          { 
+            text: "Enter Manually", 
+            onPress: () => navigation.navigate('LocationAccess2'),
+            style: "cancel"
+          },
+          { 
+            text: "Try Again", 
+            onPress: () => requestLocationPermission() 
+          }
+        ]
+      );
       return;
     }
 
     // Mark that location permission has been granted
     await setLocationPermissionGranted();
 
-    let currentLocation = await Location.getCurrentPositionAsync({});
+    // Try to get current position with timeout
+    let currentLocation;
+    try {
+      currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+        timeInterval: 5000, // Limit the time to wait for location
+        mayShowUserSettingsDialog: true // Show settings dialog if needed
+      });
+    } catch (positionError) {
+      console.error("Error getting position:", positionError);
+      setLoading(false);
+      Alert.alert(
+        "Location Error",
+        "We couldn't get your current location. Make sure location services are enabled with high accuracy.",
+        [
+          { 
+            text: "Enter Manually", 
+            onPress: () => navigation.navigate('LocationAccess2') 
+          },
+          { 
+            text: "Try Again", 
+            onPress: () => getCurrentLocation() 
+          }
+        ]
+      );
+      return;
+    }
+
     const { latitude, longitude } = currentLocation.coords;
     setLocation({ latitude, longitude });
 
@@ -110,14 +181,39 @@ const getCurrentLocation = async () => {
         
       } else {
         setReadableLocation("Location not found");
+        setLoading(false);
+        Alert.alert(
+          "Location Error",
+          "We couldn't determine your location name. Please enter it manually.",
+          [{ text: "OK", onPress: () => navigation.navigate('LocationAccess2') }]
+        );
       }
     } catch (error) {
       console.error("Reverse Geocoding error:", error);
-      Alert.alert("Error", "Could not get readable location name");
+      setLoading(false);
+      Alert.alert(
+        "Location Error", 
+        "Could not get your location name. Please enter it manually.", 
+        [{ text: "OK", onPress: () => navigation.navigate('LocationAccess2') }]
+      );
     }
   } catch (error) {
     console.error(error);
-    Alert.alert("Error", "Could not get your location");
+    setLoading(false);
+    Alert.alert(
+      "Location Error",
+      "Could not access your location. Please try again or enter your location manually.",
+      [
+        { 
+          text: "Enter Manually", 
+          onPress: () => navigation.navigate('LocationAccess2') 
+        },
+        { 
+          text: "Try Again", 
+          onPress: () => requestLocationPermission() 
+        }
+      ]
+    );
   } finally {
     setLoading(false);
   }

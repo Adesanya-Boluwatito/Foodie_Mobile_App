@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isLocationRefreshNeeded, clearLocationRefreshFlag } from './AuthStorage';
 
 const LOCATION_KEY = 'user_location';
 const READABLE_LOCATION_KEY = 'user_readable_location';
@@ -153,4 +154,7 @@ export const getFormattedLocationName = async (defaultValue = 'Set Location') =>
     console.error('Error getting formatted location name:', error);
     return defaultValue;
   }
-}; 
+};
+
+// Re-export the location refresh functions
+export { isLocationRefreshNeeded, clearLocationRefreshFlag }; 

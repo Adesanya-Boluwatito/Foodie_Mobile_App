@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 import { globalStyles, fonts } from '../../global/styles/theme';
 import { useLocation } from '../../context/LocationContext';
+import { formatRating, updateRestaurantWithLiveRating } from '../../utils/RatingUtils';
 
 const categories = [
   { id: '1', name: 'Pizza', icon: require('../../../assets/ima/Pizza.jpg') },
@@ -116,35 +117,81 @@ export default function FoodScreen({ navigation, route }) {
 
     // Filter and sort restaurants based on location
     useEffect(() => {
-      console.log("Filtering restaurants for location in FoodScreen:", userLocation);
+      // Skip excessive logging
+      // console.log("Filtering restaurants for location in FoodScreen:", userLocation);
       
-      if (!userLocation) {
-        // If no location set, just get top rated restaurants
-        const sorted = [...restaurantsData.restaurants]
+      // Create a local cache for this component's restaurant data
+      let isMounted = true;
+      
+      const loadRestaurants = async () => {
+        try {
+          if (!userLocation) {
+            // If no location set, just get top rated restaurants without waiting for live ratings
+            const sorted = [...restaurantsData.restaurants];
+            
+            // Use batch processing for better performance
+            const updatedRestaurants = await batchUpdateRestaurantsWithRatings(sorted);
+            
+            if (!isMounted) return;
+            
+            // Sort by rating and take top 5
+            const topRated = [...updatedRestaurants]
+              .sort((a, b) => b.details.rating - a.details.rating)
+              .slice(0, 5);
+            
+            setSortedRestaurants(topRated);
+            setFilteredRestaurants(updatedRestaurants);
+            return;
+          }
+
+          // Pre-filter restaurants by location match for better performance
+          const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
+            isLocationMatch(userLocation, restaurant.details.location)
+          );
+          
+          // Skip excessive logging
+          // console.log(`Found ${matchingRestaurants.length} matching restaurants in FoodScreen`);
+
+          // Use batch update for better performance
+          const updatedMatchingRestaurants = await batchUpdateRestaurantsWithRatings(matchingRestaurants);
+          
+          if (!isMounted) return;
+          
+          // Sort restaurants by rating and take top 5
+          const topRestaurants = [...updatedMatchingRestaurants]
             .sort((a, b) => b.details.rating - a.details.rating)
             .slice(0, 5);
-        setSortedRestaurants(sorted);
-        setFilteredRestaurants(restaurantsData.restaurants);
-        return;
-      }
-
-      // Filter restaurants by location match
-      const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
-        isLocationMatch(userLocation, restaurant.details.location)
-      );
+          
+          setSortedRestaurants(topRestaurants);
+          
+          // For explore section - all matching restaurants or all if none match
+          if (updatedMatchingRestaurants.length > 0) {
+            setFilteredRestaurants(updatedMatchingRestaurants);
+          } else {
+            // If no matches, load all restaurants without waiting for ratings
+            const allRestaurants = await batchUpdateRestaurantsWithRatings(restaurantsData.restaurants);
+            if (isMounted) {
+              setFilteredRestaurants(allRestaurants);
+            }
+          }
+        } catch (error) {
+          console.error("Error updating restaurants with live ratings:", error);
+          
+          // Fall back to local data on error
+          if (isMounted) {
+            const fallbackRestaurants = restaurantsData.restaurants.slice(0, 5);
+            setSortedRestaurants(fallbackRestaurants);
+            setFilteredRestaurants(restaurantsData.restaurants);
+          }
+        }
+      };
       
-      console.log(`Found ${matchingRestaurants.length} matching restaurants in FoodScreen`);
-
-      // Sort restaurants by rating and take top 5
-      const topRestaurants = [...matchingRestaurants]
-        .sort((a, b) => b.details.rating - a.details.rating)
-        .slice(0, 5);
-        
-      setSortedRestaurants(topRestaurants);
+      loadRestaurants();
       
-      // For explore section - all matching restaurants or all if none match
-      setFilteredRestaurants(matchingRestaurants.length > 0 ? matchingRestaurants : restaurantsData.restaurants);
-
+      // Cleanup function to prevent state updates if component unmounts
+      return () => {
+        isMounted = false;
+      };
     }, [userLocation]);
 
     const handleRestaurantPress = (restaurants) => {
@@ -227,7 +274,7 @@ export default function FoodScreen({ navigation, route }) {
                     <Text style={styles.restaurantName}>{item.name}</Text>
                     <Text style={styles.restaurantDetails}>Japanese | Seafood | Sushi</Text>
                   <View style={styles.ratingContainer}>
-                    <Text style={styles.ratingText}>⭐ {item.details.rating}</Text>
+                    <Text style={styles.ratingText}>⭐ {formatRating(item.details.rating)}</Text>
                     <Text style={styles.ratingLocation} numberOfLines={1} ellipsizeMode="tail"> | {item.details.location}
                     </Text>
                   </View>
@@ -262,7 +309,7 @@ export default function FoodScreen({ navigation, route }) {
                     {restaurant.details.description || 'Cuisine not available'}
                     </Text>
                     <View style={styles.ratingAndLocation}>
-                        <Text style={styles.restaurantRating}>⭐ {restaurant.details.rating}</Text>
+                        <Text style={styles.restaurantRating}>⭐ {formatRating(restaurant.details.rating)}</Text>
                         <Text style={styles.restaurantDistance}>
                             {restaurant.details.distance} | {restaurant.details.deliveryTime}
                         </Text>

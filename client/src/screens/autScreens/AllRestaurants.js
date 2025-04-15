@@ -14,6 +14,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { horizontalScale, verticalScale, moderateScale } from '../../theme/Metrics';
 import { useLocation } from '../../context/LocationContext';
 import { useRoute } from '@react-navigation/native';
+import { formatRating, updateRestaurantWithLiveRating } from '../../utils/RatingUtils';
 
 // Helper function to normalize location text for comparison
 const normalizeLocationText = (text) => {
@@ -51,6 +52,24 @@ const extractMainArea = (location) => {
   
   // Return the first part as the main area
   return parts[0] || '';
+};
+
+// Add this helper function before the SearchScreen component
+const validateAndPrepareRestaurantData = (restaurant) => {
+  // Ensure restaurant has all required properties before navigating
+  if (!restaurant || !restaurant.id || !restaurant.details) {
+    console.error('Invalid restaurant data:', restaurant);
+    return null;
+  }
+  
+  // Ensure restaurant details includes required properties
+  if (!restaurant.details.menu) {
+    console.error('Restaurant has no menu data:', restaurant);
+    return null;
+  }
+  
+  // Deep clone the restaurant data to avoid reference issues
+  return JSON.parse(JSON.stringify(restaurant));
 };
 
 const SearchScreen = ({ navigation }) => {
@@ -131,25 +150,53 @@ const SearchScreen = ({ navigation }) => {
     }
   }, [locationData, route?.params]);
 
-  // Filter restaurants based on location
+  // Filter restaurants based on location and update with live ratings
   useEffect(() => {
     console.log("Filtering restaurants for location in AllRestaurants:", userLocation);
     
-    if (!userLocation) {
-      // If no location set, use all restaurants
-      setAvailableRestaurants(restaurantsData.restaurants);
-      return;
-    }
+    const updateRestaurantsWithLiveRatings = async (restaurants) => {
+      const updatedRestaurants = [];
+      for (const restaurant of restaurants) {
+        const updatedRestaurant = await updateRestaurantWithLiveRating(restaurant);
+        updatedRestaurants.push(updatedRestaurant);
+      }
+      return updatedRestaurants;
+    };
 
-    // Filter restaurants by location match
-    const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
-      isLocationMatch(userLocation, restaurant.details.location)
-    );
+    const loadRestaurants = async () => {
+      try {
+        if (!userLocation) {
+          // If no location set, use all restaurants but still update ratings
+          const updatedRestaurants = await updateRestaurantsWithLiveRatings(restaurantsData.restaurants);
+          setAvailableRestaurants(updatedRestaurants);
+          return;
+        }
+
+        // Filter restaurants by location match
+        const matchingRestaurants = restaurantsData.restaurants.filter(restaurant => 
+          isLocationMatch(userLocation, restaurant.details.location)
+        );
+        
+        console.log(`Found ${matchingRestaurants.length} matching restaurants in AllRestaurants`);
+
+        // Update matching restaurants with live ratings
+        const updatedMatchingRestaurants = await updateRestaurantsWithLiveRatings(matchingRestaurants);
+
+        // Use matched restaurants if any, otherwise update and use all restaurants
+        if (updatedMatchingRestaurants.length > 0) {
+          setAvailableRestaurants(updatedMatchingRestaurants);
+        } else {
+          const allUpdatedRestaurants = await updateRestaurantsWithLiveRatings(restaurantsData.restaurants);
+          setAvailableRestaurants(allUpdatedRestaurants);
+        }
+      } catch (error) {
+        console.error("Error updating restaurants with live ratings:", error);
+        // Fallback to original data without live ratings
+        setAvailableRestaurants(restaurantsData.restaurants);
+      }
+    };
     
-    console.log(`Found ${matchingRestaurants.length} matching restaurants in AllRestaurants`);
-
-    // Use matched restaurants if any, otherwise fall back to all restaurants
-    setAvailableRestaurants(matchingRestaurants.length > 0 ? matchingRestaurants : restaurantsData.restaurants);
+    loadRestaurants();
   }, [userLocation]);
 
   // Load recent searches on component mount
@@ -398,6 +445,16 @@ const SearchScreen = ({ navigation }) => {
       return count;
     }};
 
+  const handleRestaurantPress = (restaurant) => {
+    const validRestaurantData = validateAndPrepareRestaurantData(restaurant);
+    if (!validRestaurantData) {
+      alert('Restaurant information is not available. Please try again.');
+      return;
+    }
+    
+    navigation.navigate('ResturantScreen', { restaurants: validRestaurantData });
+  };
+
   return (
     <View style={styles.container}>
       {/* Search Header */}
@@ -448,7 +505,7 @@ const SearchScreen = ({ navigation }) => {
             onPress={() => {
                 const restaurant = dish.restaurant; 
       if (restaurant) {
-        navigation.navigate('ResturantScreen', { restaurants: restaurant });
+        handleRestaurantPress(restaurant);
       } else {
         console.error('Restaurant not found for dish:', dish);
       }
@@ -475,7 +532,7 @@ const SearchScreen = ({ navigation }) => {
           <TouchableOpacity
             key={restaurant.id} 
             style={styles.resultItem}
-            onPress={() => navigation.navigate('ResturantScreen', { restaurants: restaurant })}
+            onPress={() => handleRestaurantPress(restaurant)}
           >
             <Image 
               source={{ uri: restaurant.details.logo }} 
@@ -484,7 +541,7 @@ const SearchScreen = ({ navigation }) => {
             <View style={styles.resultInfo}>
               <Text style={styles.resultName}>{restaurant.name}</Text>
               <Text style={styles.resultLocation}>{restaurant.details.location}</Text>
-              <Text style={styles.resultRating}>⭐ {restaurant.details.rating}</Text>
+              <Text style={styles.resultRating}>⭐ {formatRating(restaurant.details.rating)}</Text>
             </View>
           </TouchableOpacity>
         ))}

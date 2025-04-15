@@ -17,6 +17,7 @@ import { useLocation } from '../../../context/LocationContext';
 import BiometricLoginButton from '../../../components/BiometricLoginButton';
 import { isBiometricEnabled, getBiometricType } from '../../../../utils/BiometricAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { isLocationRefreshNeeded, clearLocationRefreshFlag } from '../../../../utils/LocationStorage';
 
 export default function LoginScreen() {
     const [email, setEmail] = useState('')
@@ -65,23 +66,47 @@ export default function LoginScreen() {
 
     // Helper function to determine where to navigate after login
     const navigateAfterLogin = async () => {
-        // Check if location data already exists
-        const savedLocation = await getLocationData();
-        
-        if (savedLocation?.location && savedLocation?.readableLocation) {
-            console.log("Location data found, navigating to MainTab");
-            navigation.reset({
-                index: 0,
-                routes: [{ 
-                  name: 'MainTab',
-                  params: {
-                    location: savedLocation.location,
-                    readableLocation: savedLocation.readableLocation
-                  }
-                }],
-            });
-        } else {
-            console.log("No location data found, navigating to LocationAccess1");
+        try {
+            // Check if location refresh is needed (session timeout occurred)
+            const isRefreshNeeded = await isLocationRefreshNeeded();
+            
+            if (isRefreshNeeded) {
+                console.log("Session expired, location refresh needed");
+                // Clear the flag as we're handling it now
+                await clearLocationRefreshFlag();
+                // Navigate to location screen to refresh location
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'LocationAccess1' }],
+                });
+                return;
+            }
+            
+            // Check if location data already exists
+            const savedLocation = await getLocationData();
+            
+            if (savedLocation?.location && savedLocation?.readableLocation) {
+                console.log("Location data found, navigating to MainTab");
+                navigation.reset({
+                    index: 0,
+                    routes: [{ 
+                      name: 'MainTab',
+                      params: {
+                        location: savedLocation.location,
+                        readableLocation: savedLocation.readableLocation
+                      }
+                    }],
+                });
+            } else {
+                console.log("No location data found, navigating to LocationAccess1");
+                navigation.reset({
+                    index: 0,
+                    routes: [{ name: 'LocationAccess1' }],
+                });
+            }
+        } catch (error) {
+            console.error("Error during navigation after login:", error);
+            // Default to LocationAccess1 if there's an error
             navigation.reset({
                 index: 0,
                 routes: [{ name: 'LocationAccess1' }],

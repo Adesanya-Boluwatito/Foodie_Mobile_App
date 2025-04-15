@@ -4,6 +4,7 @@ import { getDocs, collection } from "firebase/firestore";
 import { auth, db } from '../../../firebaseconfi';
 import { ScrollView } from "react-native-gesture-handler";
 import { useNavigation } from '@react-navigation/native';
+import { formatRating } from '../../utils/RatingUtils';
 const emptyFavoritesImage = require('../../../assets/ima/heart (1).png');
 
 const FavouritesScreen = () => {
@@ -50,7 +51,7 @@ const FavouritesScreen = () => {
         <View style={styles.info}>
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.location}>{item.details.location}</Text>
-          <Text style={styles.rating}>Rating: {item.details.rating}</Text>
+          <Text style={styles.rating}>Rating: ⭐ {formatRating(item.details.rating)}</Text>
         </View>
       </View>
     </TouchableOpacity>

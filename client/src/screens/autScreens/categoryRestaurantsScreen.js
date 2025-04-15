@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import restaurantsData from '../../components/data/restaurants_feed.json'; // Your restaurant data
+import { formatRating } from '../../utils/RatingUtils';
 
 export default function CategoryRestaurantsScreen({ route, navigation }) {
     const { category } = route.params;
@@ -28,7 +29,7 @@ export default function CategoryRestaurantsScreen({ route, navigation }) {
                             <View style={styles.restaurantInfo}>
                                 <Text style={styles.restaurantName}>{restaurants.name}</Text>
                                 <Text style={styles.restaurantLocation}>{restaurants.details.location}</Text>
-                                <Text style={styles.restaurantRating}>Rating: {restaurants.details.rating}</Text>
+                                <Text style={styles.restaurantRating}>Rating: ⭐ {formatRating(restaurants.details.rating)}</Text>
                             </View>
                         </TouchableOpacity>
                     ))

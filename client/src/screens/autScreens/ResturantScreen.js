@@ -10,7 +10,8 @@ import {
   PanResponder,
   StatusBar,
   Dimensions,
-  Platform
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { Button, Icon } from 'react-native-elements';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -19,7 +20,8 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { auth, db } from '../../../firebaseconfi';
-import { doc, getDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, deleteDoc, setDoc, collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { fetchRestaurantRating, formatRating } from '../../utils/RatingUtils';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,6 +74,15 @@ const CartBanner = ({ itemCount, total, cartItems, restaurants, message, fromCar
   );
 };
 
+// Add a check for empty menu data
+const EmptyMenuMessage = () => (
+  <View style={styles.emptyMenuContainer}>
+    <Ionicons name="restaurant-outline" size={48} color="#CCCCCC" />
+    <Text style={styles.emptyMenuText}>No menu items available</Text>
+    <Text style={styles.emptyMenuSubtext}>The restaurant hasn't added any items yet</Text>
+  </View>
+);
+
 export default function ResturantScreen({}) {
   // Initialize cartItems as empty object to ensure we always start clean
   const [cartItems, setCartItems] = useState({});
@@ -84,6 +95,8 @@ export default function ResturantScreen({}) {
   const [isFavouriteButtonDisabled, setIsFavouriteButtonDisabled] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
   const route = useRoute();
+  const [reviewsCount, setReviewsCount] = useState(0);
+  const [averageRating, setAverageRating] = useState(5.0);
   
   // Get params but with defaults to handle null cases
   const { 
@@ -93,12 +106,20 @@ export default function ResturantScreen({}) {
     clearCart = false
   } = route.params || {};
   
-  const restaurantId = restaurants.id;
+  const restaurantId = restaurants?.id;
 
-  // Check if we're coming from the cart screen
-  const isFromCart = route.params?.fromCart || false;
-  const existingPacksCount = route.params?.existingPacks || 0;
-  
+  // Add a safeguard if restaurants is undefined or has no id
+  useEffect(() => {
+    if (!restaurants || !restaurantId) {
+      console.error('Restaurant data is missing or invalid');
+      // Set a short timeout to make sure navigation is ready
+      setTimeout(() => {
+        navigation.goBack();
+        alert('Restaurant information not available. Please try again.');
+      }, 100);
+    }
+  }, [restaurants, restaurantId, navigation]);
+
   // Replace multiple useEffects with one consolidated effect that runs once on mount
   // This prevents dependency cycles and infinite rendering
   useEffect(() => {
@@ -114,7 +135,7 @@ export default function ResturantScreen({}) {
     }, 1000);
     
     // Only populate from route.params if NOT coming from cart
-    if (route.params?.cartItems && !isFromCart) {
+    if (route.params?.cartItems && !fromCart) {
       console.log('Loading cart items from params');
       setCartItems(route.params.cartItems);
       
@@ -130,6 +151,23 @@ export default function ResturantScreen({}) {
       console.log('Restaurant screen unmounting');
     };
   }, []); // Empty dependency array - runs only once on mount
+
+  // Replace the fetchReviewsData function in useEffect with fetchRestaurantRating
+  useEffect(() => {
+    const loadRestaurantData = async () => {
+      try {
+        if (!restaurantId) return;
+        
+        const { averageRating, reviewsCount } = await fetchRestaurantRating(restaurantId);
+        setAverageRating(averageRating);
+        setReviewsCount(reviewsCount);
+      } catch (error) {
+        console.error('Error loading restaurant data:', error);
+      }
+    };
+
+    loadRestaurantData();
+  }, [restaurantId]);
 
   const handleMessageSubmit = (msg) => {
     setMessage(msg); 
@@ -316,169 +354,199 @@ export default function ResturantScreen({}) {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-      
-      {/* Animated Header Bar */}
-      <Animated.View 
-        style={[
-          styles.animatedHeader, 
-          { opacity: headerTitleOpacity }
-        ]}
-      >
-        <TouchableOpacity 
-          style={styles.headerBackButton} 
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color="#333" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle} numberOfLines={1}>{restaurants.name}</Text>
-        <TouchableOpacity 
-          style={styles.headerFavButton}
-          onPress={toggleFavourites} 
-          disabled={isFavouriteButtonDisabled}
-        >
-          <AntDesign 
-            name={isFavourite ? "heart" : "hearto"} 
-            size={22} 
-            color={ACCENT_COLOR} 
-          />
-        </TouchableOpacity>
-      </Animated.View>
-      
-      <Animated.ScrollView 
-        contentContainerStyle={{ paddingBottom: 150 }}
-        showsVerticalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-      >
-        {/* Restaurant Cover Image */}
-        <View style={styles.coverImageContainer}>
-          <Image
-            source={{ uri: restaurants.details.coverImage || fallbackImageUri }}
-            style={styles.coverImage}
-          />
-          <View style={styles.coverOverlay} />
+      {/* Only render content if restaurants and restaurantId are valid */}
+      {restaurants && restaurantId ? (
+        <>
+          <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
           
-          {/* Back Button on Cover */}
-          <Animated.View style={[styles.coverBackButton, { opacity: headerOpacity }]}>
+          {/* Animated Header Bar */}
+          <Animated.View 
+            style={[
+              styles.animatedHeader, 
+              { opacity: headerTitleOpacity }
+            ]}
+          >
             <TouchableOpacity 
-              style={styles.backButtonInner} 
+              style={styles.headerBackButton} 
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={22} color="#fff" />
+              <Ionicons name="arrow-back" size={22} color="#333" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle} numberOfLines={1}>{restaurants.name}</Text>
+            <TouchableOpacity 
+              style={styles.headerFavButton}
+              onPress={toggleFavourites} 
+              disabled={isFavouriteButtonDisabled}
+            >
+              <AntDesign 
+                name={isFavourite ? "heart" : "hearto"} 
+                size={22} 
+                color={ACCENT_COLOR} 
+              />
             </TouchableOpacity>
           </Animated.View>
           
-          {/* Restaurant Basic Info Card */}
-          <View style={styles.restaurantInfoCard}>
-            <View style={styles.restaurantBasicInfo}>
-              <View>
-                <Text style={styles.title}>{restaurants.name}</Text>
-                <View style={styles.locationRow}>
-                  <Ionicons name="location-outline" size={16} color="#666" />
-                  <Text style={styles.location}>{restaurants.details.location}</Text>
+          <Animated.ScrollView 
+            contentContainerStyle={{ paddingBottom: 150 }}
+            showsVerticalScrollIndicator={false}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+              { useNativeDriver: false }
+            )}
+            scrollEventThrottle={16}
+          >
+            {/* Restaurant Cover Image */}
+            <View style={styles.coverImageContainer}>
+              <Image
+                source={{ uri: restaurants?.details?.coverImage || fallbackImageUri }}
+                style={styles.coverImage}
+              />
+              <View style={styles.coverOverlay} />
+              
+              {/* Back Button on Cover */}
+              <Animated.View style={[styles.coverBackButton, { opacity: headerOpacity }]}>
+                <TouchableOpacity 
+                  style={styles.backButtonInner} 
+                  onPress={() => navigation.goBack()}
+                >
+                  <Ionicons name="arrow-back" size={22} color="#fff" />
+                </TouchableOpacity>
+              </Animated.View>
+              
+              {/* Restaurant Basic Info Card */}
+              <View style={styles.restaurantInfoCard}>
+                <View style={styles.restaurantBasicInfo}>
+                  <View>
+                    <Text style={styles.title}>{restaurants.name}</Text>
+                    <View style={styles.locationRow}>
+                      <Ionicons name="location-outline" size={16} color="#666" />
+                      <Text style={styles.location}>{restaurants?.details?.location || 'Location not available'}</Text>
+                    </View>
+                    
+                    <View style={styles.restaurantMetrics}>
+                      <View style={styles.metricItem}>
+                        <View style={styles.ratingBadge}>
+                          <AntDesign name="star" size={14} color="#FFD700" />
+                          <Text style={styles.ratingText}>{formatRating(averageRating)}</Text>
+                        </View>
+                        <Text style={styles.metricLabel}>Rating</Text>
+                      </View>
+                      
+                      <View style={styles.metricDivider} />
+                      
+                      <View style={styles.metricItem}>
+                        <Ionicons name="time-outline" size={16} color="#666" />
+                        <Text style={styles.metricValue}>{restaurants?.details?.deliveryTime || '30-40 min'}</Text>
+                        <Text style={styles.metricLabel}>Delivery</Text>
+                      </View>
+                      
+                      <View style={styles.metricDivider} />
+                      
+                      <TouchableOpacity 
+                        style={styles.reviewsButton}
+                        onPress={() => navigation.navigate('Reviews', { restaurantId: restaurants.id })}
+                      >
+                        <Ionicons name="chatbubble-outline" size={16} color={ACCENT_COLOR} />
+                        <Text style={styles.reviewsButtonText}>
+                          Reviews {reviewsCount > 0 ? `(${reviewsCount})` : ''}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.favouriteButton} 
+                    onPress={toggleFavourites} 
+                    disabled={isFavouriteButtonDisabled}
+                  >
+                    <AntDesign 
+                      name={isFavourite ? "heart" : "hearto"} 
+                      size={24} 
+                      color={ACCENT_COLOR} 
+                    />
+                  </TouchableOpacity>
                 </View>
                 
-                <View style={styles.restaurantMetrics}>
-                  <View style={styles.metricItem}>
-                    <View style={styles.ratingBadge}>
-                      <AntDesign name="star" size={14} color="#FFD700" />
-                      <Text style={styles.ratingText}>{restaurants.details.rating}</Text>
-                    </View>
-                    <Text style={styles.metricLabel}>Rating</Text>
-                  </View>
-                  
-                  <View style={styles.metricDivider} />
-                  
-                  <View style={styles.metricItem}>
-                    <Ionicons name="time-outline" size={16} color="#666" />
-                    <Text style={styles.metricValue}>{restaurants.details.deliveryTime}</Text>
-                    <Text style={styles.metricLabel}>Delivery</Text>
-                  </View>
+                {/* Promotion Banner */}
+                <View style={styles.offerContainer}>
+                  <MaterialIcons name="local-offer" size={18} color={ACCENT_COLOR} />
+                  <Text style={styles.offer}>10% OFF ON ALL BEVERAGES</Text>
                 </View>
               </View>
-              
-              <TouchableOpacity 
-                style={styles.favouriteButton} 
-                onPress={toggleFavourites} 
-                disabled={isFavouriteButtonDisabled}
-              >
-                <AntDesign 
-                  name={isFavourite ? "heart" : "hearto"} 
-                  size={24} 
-                  color={ACCENT_COLOR} 
-                />
-              </TouchableOpacity>
             </View>
             
-            {/* Promotion Banner */}
-            <View style={styles.offerContainer}>
-              <MaterialIcons name="local-offer" size={18} color={ACCENT_COLOR} />
-              <Text style={styles.offer}>10% OFF ON ALL BEVERAGES</Text>
+            {/* Menu Title */}
+            <View style={styles.menuSectionHeader}>
+              <Text style={styles.menuSectionTitle}>Menu</Text>
+              <View style={styles.menuSectionDivider} />
             </View>
-          </View>
-        </View>
-        
-        {/* Menu Title */}
-        <View style={styles.menuSectionHeader}>
-          <Text style={styles.menuSectionTitle}>Menu</Text>
-          <View style={styles.menuSectionDivider} />
-        </View>
-        
-        {/* Menu Items */}
-        <View style={styles.menuItemsContainer}>
-          {restaurants.details.menu.map((item) => (
-            <View style={styles.menuItem} key={item.id}>
-              <View style={styles.menuItemMain}>
-                <View style={styles.menuText}>
-                  <Text style={styles.menuTitle}>{item.name}</Text>
-                  <Text style={styles.menuDescription} numberOfLines={2}>
-                    {item.description || "Delicious dish prepared with fresh ingredients"}
-                  </Text>
-                  <Text style={styles.menuPrice}>₦ {item.price.toFixed(2)}</Text>
-                </View>
-                <Image source={{ uri: item.image }} style={styles.menuImage} />
-              </View>
-              <View style={styles.menuItemActions}>
-                {renderItemButtons(item)}
-              </View>
+            
+            {/* Menu Items */}
+            <View style={styles.menuItemsContainer}>
+              {restaurants?.details?.menu?.length > 0 ? (
+                restaurants.details.menu.map((item) => (
+                  <View style={styles.menuItem} key={item.id}>
+                    <View style={styles.menuItemMain}>
+                      <View style={styles.menuText}>
+                        <Text style={styles.menuTitle}>{item.name}</Text>
+                        <Text style={styles.menuDescription} numberOfLines={2}>
+                          {item.description || "Delicious dish prepared with fresh ingredients"}
+                        </Text>
+                        <Text style={styles.menuPrice}>₦ {item.price.toFixed(2)}</Text>
+                      </View>
+                      <Image 
+                        source={{ uri: item.image || fallbackImageUri }} 
+                        style={styles.menuImage}
+                        defaultSource={require('../../../assets/icon.png')}
+                      />
+                    </View>
+                    <View style={styles.menuItemActions}>
+                      {renderItemButtons(item)}
+                    </View>
+                  </View>
+                ))
+              ) : (
+                <EmptyMenuMessage />
+              )}
             </View>
-          ))}
-        </View>
-      </Animated.ScrollView>
+          </Animated.ScrollView>
 
-      {/* Chat Modal */}
-      <ChatModal
-        visible={isModalVisible}
-        onClose={() => setModalVisible(false)}
-        onSubmit={handleMessageSubmit}
-        message={message}
-      />
-      
-      {/* Floating Chat Button */}
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={[pan.getLayout(), styles.chatButton]}
-      >
-        <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.chatButtonInner}>
-          <Ionicons name="chatbubble-ellipses" size={24} color="white" />
-        </TouchableOpacity>
-      </Animated.View>
-      
-      {/* Cart Banner */}
-      {getItemCount() > 0 && (
-        <CartBanner 
-          itemCount={getItemCount()} 
-          total={total} 
-          cartItems={cartItems} 
-          restaurants={restaurants} 
-          message={message}
-          fromCart={isFromCart}
-          existingPacks={existingPacksCount}
-        />
+          {/* Chat Modal */}
+          <ChatModal
+            visible={isModalVisible}
+            onClose={() => setModalVisible(false)}
+            onSubmit={handleMessageSubmit}
+            message={message}
+          />
+          
+          {/* Floating Chat Button */}
+          <Animated.View
+            {...panResponder.panHandlers}
+            style={[pan.getLayout(), styles.chatButton]}
+          >
+            <TouchableOpacity onPress={() => setModalVisible(true)} style={styles.chatButtonInner}>
+              <Ionicons name="chatbubble-ellipses" size={24} color="white" />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          {/* Cart Banner */}
+          {getItemCount() > 0 && (
+            <CartBanner 
+              itemCount={getItemCount()} 
+              total={total} 
+              cartItems={cartItems} 
+              restaurants={restaurants} 
+              message={message}
+              fromCart={fromCart}
+              existingPacks={existingPacks}
+            />
+          )}
+        </>
+      ) : (
+        <View style={[styles.container, {justifyContent: 'center', alignItems: 'center'}]}>
+          <ActivityIndicator size="large" color={ACCENT_COLOR} />
+          <Text style={{marginTop: 20, fontSize: 16}}>Loading restaurant information...</Text>
+        </View>
       )}
     </View>
   );
@@ -824,5 +892,44 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  reviewsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF0F0',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+  },
+  reviewsButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: ACCENT_COLOR,
+    marginLeft: 4,
+  },
+  emptyMenuContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 40,
+    backgroundColor: 'white',
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    marginBottom: 20,
+  },
+  emptyMenuText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#222',
+    marginTop: 10,
+  },
+  emptyMenuSubtext: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+    textAlign: 'center',
   },
 });

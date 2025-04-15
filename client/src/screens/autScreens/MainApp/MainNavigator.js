@@ -38,6 +38,7 @@ import ManageAddressScreen from '../manageScreen';
 import ChatScreen from '../ChatScreen';
 import CategoryRestaurantsScreen from '../categoryRestaurantsScreen';
 import FavouritesScreen from '../FavouriteScreen';
+import ReviewsScreen from '../ReviewsScreen';
 import { HomeIcon, Food, MartIcon, Pharmart, ProfileIcon } from '../../../global/styles/icons/TabIcons';
 import { horizontalScale, verticalScale, moderateScale } from "../../../theme/Metrics"
 import { globalStyles, fonts } from "../../../global/styles/theme";
@@ -230,54 +231,68 @@ export default function MyScreens() {
 
   useEffect(() => {
     const checkAuthAndOnboardingStatus = async () => {
-      const onboardingCompleted = await isOnboardingCompleted();
-      const authToken = await getAuthToken();
-      const savedLocationData = await getLocationData();
-      const locationPermissionGranted = await isLocationPermissionGranted();
-      
-      console.log('Auth check: Token exists:', !!authToken);
-      console.log('Onboarding completed:', onboardingCompleted);
-      console.log('Location permission granted:', locationPermissionGranted);
-      console.log('Saved location data exists:', !!savedLocationData?.location && !!savedLocationData?.readableLocation);
-      
-      // If we have saved location data that isn't in context yet, load it
-      if (savedLocationData?.location && 
-          savedLocationData?.readableLocation && 
-          (!locationData?.location || !locationData?.readableLocation)) {
-        console.log('Loading saved location data into context:', savedLocationData);
-        await setLocationData(savedLocationData);
+      try {
+        setIsLoading(true);
         
-        // Also prepare to pass it as route params when directly navigating to MainTab
-        setInitialRouteParams({
-          location: savedLocationData.location,
-          readableLocation: savedLocationData.readableLocation
-        });
-      }
-
-      if (authToken) {
-        // User is logged in, determine if we need location or can go directly to MainTab
-        if (locationPermissionGranted) {
-          // If permission was granted previously, go directly to MainTab
-          setInitialRoute('MainTab');
-          console.log('Auth and location permission granted, navigating to MainTab');
-        } else if (locationData?.location && locationData?.readableLocation) {
-          // We have location data in context but no permission flag, set the flag and go to MainTab
-          setInitialRoute('MainTab');
-          console.log('Auth and location data exist, navigating to MainTab');
-        } else {
-          // User is logged in but needs location, go to LocationAccess1
-          setInitialRoute('LocationAccess1');
-          console.log('Auth granted but location needed, navigating to LocationAccess1');
+        // First perform the minimum checks needed to determine the initial route
+        // This makes the app load faster by avoiding unnecessary parallel operations
+        
+        // Check authentication first since it's the most important
+        const authToken = await getAuthToken();
+        
+        if (authToken) {
+          // User is logged in, quickly check if we have location data
+          const savedLocationData = await getLocationData();
+          
+          if (savedLocationData?.location && savedLocationData?.readableLocation) {
+            // We have both auth and location, prepare to navigate to MainTab
+            console.log('Auth and location data exist, preparing for MainTab');
+            
+            // Prepare route params
+            setInitialRouteParams({
+              location: savedLocationData.location,
+              readableLocation: savedLocationData.readableLocation
+            });
+            
+            // Load the data into context (but don't wait for it to complete)
+            if (!locationData?.location || !locationData?.readableLocation) {
+              setLocationData(savedLocationData).catch(console.error);
+            }
+            
+            setInitialRoute('MainTab');
+            setIsLoading(false);
+            
+            // Check permissions in the background after navigation
+            isLocationPermissionGranted().catch(console.error);
+            
+            return;
+          } else {
+            // Need location, go to location screen
+            console.log('Auth granted but location needed, navigating to LocationAccess1');
+            setInitialRoute('LocationAccess1');
+            setIsLoading(false);
+            return;
+          }
         }
-      } else if (onboardingCompleted) {
-        setInitialRoute('Sign In'); // Onboarding completed but not logged in, go to Sign In
-        console.log('Onboarding completed, navigating to Sign In');
-      } else {
-        setInitialRoute('Onboarding1'); // Show onboarding screens
-        console.log('Onboarding needed, navigating to Onboarding1');
+        
+        // Not logged in, check onboarding status
+        const onboardingCompleted = await isOnboardingCompleted();
+        
+        if (onboardingCompleted === true) {
+          console.log('Onboarding completed, navigating to Sign In');
+          setInitialRoute('Sign In');
+        } else {
+          console.log('Onboarding needed, navigating to Onboarding1');
+          setInitialRoute('Onboarding1');
+        }
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error checking app status:', error);
+        // Default to onboarding in case of errors
+        setInitialRoute('Onboarding1');
+        setIsLoading(false);
       }
-
-      setIsLoading(false);
     };
 
     checkAuthAndOnboardingStatus();
@@ -329,6 +344,7 @@ export default function MyScreens() {
       <Stack.Screen name="GroupOrder" component={GroupOrderScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="CategoryRestaurantsScreen" component={CategoryRestaurantsScreen} />
       <Stack.Screen name="Edit Profile" component={EditProfile} options={{ headerShown: false }} />
+      <Stack.Screen name="Reviews" component={ReviewsScreen} options={{ headerShown: false }} />
 
 
 
